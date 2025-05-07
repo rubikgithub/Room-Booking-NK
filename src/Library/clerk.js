@@ -8,6 +8,7 @@ const loadClerk = async () => {
   try {
     await clerk.load();
     console.log('Clerk loaded successfully');
+    return true
   } catch (error) {
     console.error('Error loading Clerk:', error);
   }

@@ -4,7 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"
 import { clerk, loadClerk } from '../Library/clerk';
 import { Card, CardContent } from "@/components/ui/card"
-
+import APIrequest from "../Library/axios";
+import { User } from "../Library/API";
+import { useNavigate } from "react-router-dom";
+import { $ajax_post } from "../Library/Library";
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -13,6 +16,7 @@ const Register = () => {
         email: "",
         password: ""
     });
+    const navigate = useNavigate();
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -54,10 +58,31 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        // try {
+        //     $ajax_post("createUser", { ...formData }, (response) => {
+        //         console.log(response, 'response')
+        //         const { success } = response
+        //         navigate('/');
+        //         // if (success) {
+        //         //     alert("Registration successful!");
+
+        //         // } else {
+        //         //     alert("Registration failed!");
+        //         // }
+
+        //     })
+
+
+        // } catch (error) {
+        //     console.log(error)
+        // }
+
         try {
-            console.log("Submitting:", formData);
+            $ajax_post("createUser", { ...formData }, function (response) {
+                navigate('/');
+            });
         } catch (error) {
-            console.log(error)
+            console.error("There was an error!", error);
         }
     };
 

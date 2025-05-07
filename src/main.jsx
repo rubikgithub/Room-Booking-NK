@@ -9,9 +9,8 @@ import './index.css';
 import SecurityCheck from './LoginRegister/index.jsx';
 import AppRoute from "./AppRoute.jsx";
 import { ClerkProvider } from '@clerk/clerk-react';
-import { loadClerk } from './Library/clerk.js';
-const PUBLISHABLE_KEY = "pk_test_bGlnaHQtaWd1YW5hLTgzLmNsZXJrLmFjY291bnRzLmRldiQ";
 
+const PUBLISHABLE_KEY = "pk_test_bGlnaHQtaWd1YW5hLTgzLmNsZXJrLmFjY291bnRzLmRldiQ";
 
 
 // Configuration.setapi("https://curiousrubik.us/dev/pmsdevapi.php?gyu=");
