@@ -4,20 +4,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"
 import { clerk, loadClerk } from '../Library/clerk';
 import { Card, CardContent } from "@/components/ui/card"
-
+import APIrequest from "../Library/axios";
+import { User } from "../Library/API";
+import { useNavigate } from "react-router-dom";
+import { $ajax_post } from "../Library/Library";
 
 const Register = () => {
     const [formData, setFormData] = useState({
-        fistName: "",
+        firstName: "",
         lastName: "",
         email: "",
         password: ""
     });
+    const navigate = useNavigate();
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        console.log(name, value)
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -53,20 +58,31 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        try {
-            if (validate()) {
-                setIsSubmitting(true);
+        // try {
+        //     $ajax_post("createUser", { ...formData }, (response) => {
+        //         console.log(response, 'response')
+        //         const { success } = response
+        //         navigate('/');
+        //         // if (success) {
+        //         //     alert("Registration successful!");
 
-                // Simulate API call
-                console.log("Submitting:", formData);
-                // Replace with actual login logic
-                setTimeout(() => {
-                    setIsSubmitting(false);
-                    alert("Login successful!");
-                }, 1000);
-            }
+        //         // } else {
+        //         //     alert("Registration failed!");
+        //         // }
+
+        //     })
+
+
+        // } catch (error) {
+        //     console.log(error)
+        // }
+
+        try {
+            $ajax_post("createUser", { ...formData }, function (response) {
+                navigate('/');
+            });
         } catch (error) {
-            console.log(error)
+            console.error("There was an error!", error);
         }
     };
 
@@ -74,6 +90,10 @@ const Register = () => {
         loadClerk()
 
     })
+
+    const handleRedirect = () => {
+        window.location.hash = '#/'; // Navigates to #/register
+    };
 
     return (
         <>
@@ -87,15 +107,14 @@ const Register = () => {
                                 </Label>
                                 <Input
                                     className="h-[40px]"
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    placeholder="email@example.com"
-                                    value={formData.fistName}
+                                    id="firstName"
+                                    name="firstName"
+                                    type="text"
+                                    value={formData.firstName}
                                     onChange={handleChange}
                                 />
                                 {errors.email && (
-                                    <p className="text-sm text-red-500">{errors.fistName}</p>
+                                    <p className="text-sm text-red-500">{errors.firstName}</p>
                                 )}
                             </div>
                             <div className="mb-4">
@@ -104,10 +123,10 @@ const Register = () => {
                                 </Label>
                                 <Input
                                     className="h-[40px]"
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    placeholder="email@example.com"
+                                    id="lastName"
+                                    name="lastName"
+                                    type="text"
+
                                     value={formData.lastName}
                                     onChange={handleChange}
                                 />
@@ -124,7 +143,7 @@ const Register = () => {
                                     id="email"
                                     name="email"
                                     type="email"
-                                    placeholder="email@example.com"
+
                                     value={formData.email}
                                     onChange={handleChange}
                                 />
@@ -142,7 +161,6 @@ const Register = () => {
                                     id="password"
                                     name="password"
                                     type="password"
-                                    placeholder="••••••••"
                                     value={formData.password}
                                     onChange={handleChange}
                                 />
@@ -159,6 +177,12 @@ const Register = () => {
                                 {isSubmitting ? "Registering..." : "Register"}
                             </Button>
                         </form>
+                        <span>
+                            If you have  account click here ,{' '}
+                            <a onClick={handleRedirect} style={{ cursor: 'pointer', color: 'black', textDecoration: 'none' }}>
+                                Login
+                            </a>
+                        </span>
                     </CardContent>
                 </Card>
             </main>
