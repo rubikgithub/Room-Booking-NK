@@ -4,6 +4,7 @@ const path = require("path");
 require("dotenv").config();
 const createCustomerRoutes = require("./APIS/Customer/CustomerRegister");
 const customerDetailsRoutes = require("./APIS/Customer/CustomerDetails");
+const buildingRoomsRoutes = require("./APIS/BuildingsRooms/BuildingRoomsList");
 
 const app = express();
 const PORT = 5000;
@@ -15,6 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", createCustomerRoutes);
 app.use("/api", customerDetailsRoutes);
+app.use("/api", buildingRoomsRoutes);
 
 // // Enable CORS
 // app.use(
