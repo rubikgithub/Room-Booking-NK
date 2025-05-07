@@ -1,12 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useRoutes, Navigate, useNavigate } from "react-router-dom";
-// import { Portal, Flex, FormControl, Input } from "unygc";
-// import { BookingCalender, Dashboard, MyBookings, Settings, RoomsAndBuildings } from "./pages";
-// import LogoConfig from "./configuration/logo.jsx";
 import Dashboard from "./UserPages/Dashboard/index.jsx";
-import Login from "./LoginRegister/login.jsx";
-import Register from "./LoginRegister/register.jsx";
-// import { UserServices } from "./services/index.js";
 
 const AppRoute = () => {
   const unylogo = "";
@@ -71,20 +65,12 @@ const AppRoute = () => {
 
   const AllRoutes = useRoutes([
     {
-      path: "/dashboard",
-      element: <Dashboard />,
-    },
-    {
       path: "/",
-      element: <Login />,
+      element: <Dashboard />,
     },
   ]);
 
   return <>
-    <div>
-      <div>
-      </div>
-    </div>
     {AllRoutes}
   </>;
 };

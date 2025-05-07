@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"
@@ -7,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card"
 
 
 const Login = () => {
+    // const navigate = useNavigate();
+
     const [formData, setFormData] = useState({
         email: "",
         password: ""
@@ -60,6 +63,7 @@ const Login = () => {
                 localStorage.setItem('userData', JSON.stringify(signInAttempt))
 
                 alert("Login successful!");
+                window.location.reload();
 
             }
         } catch (error) {
@@ -73,6 +77,10 @@ const Login = () => {
         loadClerk()
 
     })
+
+    const handleRedirect = () => {
+        window.location.hash = '#/register'; // Navigates to #/register
+    };
 
     return (
         <>
@@ -115,7 +123,7 @@ const Login = () => {
                                     <p className="text-sm text-red-500">{errors.password}</p>
                                 )}
                             </div>
-
+                                <span className="text-sm" style={{ cursor: 'pointer'}} onClick={() => window.location.hash = '#/forget-password'}>Forget Password</span>
                             <Button
                                 type="submit"
                                 className="w-full bg-[#000] text-white h-[40px] cursor-pointer"
@@ -124,6 +132,12 @@ const Login = () => {
                                 {isSubmitting ? "Logging in..." : "Login"}
                             </Button>
                         </form>
+                        <span>
+                            If you have no account yet,{' '}
+                            <a onClick={handleRedirect} style={{ cursor: 'pointer', color: 'black', textDecoration: 'none' }}>
+                                Register
+                            </a>
+                        </span>
                     </CardContent>
                 </Card>
             </main>
