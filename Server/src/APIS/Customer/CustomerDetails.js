@@ -1,14 +1,22 @@
 const express = require("express");
 
+const supabase = require("../../../config/supabaseClient");
 const router = express.Router();
 
-router.get("/getUser", (req, res) => {
-   res.send({
-      status: 'success',
-      message: 'User fetched successfully',
-      data: req.user
-   })
+router.post("/users", async (req, res) => {
+  try {
+    const { data, error } = await supabase.from("users").select("*");
+    if (error) throw error;
+    res.status(200).json({
+      status: "success",
+      message: "Users fetched successfully.",
+      data,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Failed to fetch users", error: error.message });
+  }
 });
-
 
 module.exports = router;
