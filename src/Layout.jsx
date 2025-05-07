@@ -46,7 +46,7 @@ const Layout = ({ children }) => {
   return (
     <div>
       <SidebarProvider open={open}>
-        <Sidebar variant="sidebar" className="bg-white shadow-lg border-none">
+        <Sidebar variant="sidebar" className="bg-zinc-50 shadow-lg border-none">
           <SidebarContent>
             <SidebarGroup>
               <SidebarHeader className="text-md fw-bold border-b border-gray-200 mb-4">
@@ -62,7 +62,7 @@ const Layout = ({ children }) => {
                 <SidebarMenu>
                   {items.map((item) => (
                     <SidebarMenuItem
-                      className="hover:bg-gray-50 rounded-md"
+                      className="hover:bg-gray-100 rounded-md"
                       key={item.title}
                     >
                       <SidebarMenuButton asChild>
@@ -81,10 +81,7 @@ const Layout = ({ children }) => {
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter className="border-t border-gray-200 ">
-            <SidebarMenuItem
-              className="hover:bg-gray-50 rounded-md"
-            
-            >
+            <SidebarMenuItem className="hover:bg-gray-100 rounded-md">
               <SidebarMenuButton>
                 <a
                   href={"/#/settings"}

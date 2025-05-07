@@ -1,6 +1,9 @@
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import User from "./User";
+import Rooms from "./Rooms";
+import Buildings from "./Building";
+import Status from "./Status";
 
 const Settings = () => {
   return (
@@ -17,13 +20,13 @@ const Settings = () => {
           <User />
         </TabsContent>
         <TabsContent value="rooms">
-          Make changes to your account here.
+          <Rooms />
         </TabsContent>
         <TabsContent value="building">
-          Make changes to your account here.
+          <Buildings />
         </TabsContent>
         <TabsContent value="status">
-          Make changes to your account here.
+          <Status />
         </TabsContent>
         <TabsContent value="authentication">
           Change your password here.

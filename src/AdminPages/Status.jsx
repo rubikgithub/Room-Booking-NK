@@ -7,56 +7,76 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { $ajax_post } from "../Library/Library";
+// import { ColorPicker } from "@/components/ui/color-picker"; // Adjust import path
+// import { Notification } from "@/components/ui/notification"; // Adjust import path
+// import { StatusServices } from "../../../services";
 
-const Buildings = () => {
-  const [data, setData] = useState([]);
+const Status = ({ statusList, getStatusList }) => {
+  const [data, setData] = useState(statusList || []);
 
-  const handleOpenDrawer = (row) => {
-    console.log("Open drawer for", row);
-    // Implement drawer logic here
+  const statusMapping = {
+    Pending: "Pending Confirmation",
+    Booked: "Booking Confirmed",
+    Completed: "Completed",
+    
+    Cancelled: "Cancelled",
   };
 
-  const [columns] = useState([
-    {
-      field: "name",
-      headerName: "Name",
-      type: "text",
-      renderCell: (params) => (
-        <a
-          style={{ cursor: "pointer", color: "blue" }}
-          onClick={() => handleOpenDrawer(params?.row)}
-        >
-          {params?.value}
-        </a>
-      ),
-    },
-    {
-      field: "location",
-      headerName: "Location",
-      type: "text",
-    },
-    {
-      field: "area",
-      headerName: "Area (sq ft)",
-      type: "number",
-    },
+  useEffect(() => {
+    if (statusList?.length > 0) {
+      const updatedData = statusList.map((item) => ({
+        ...item,
+        status: statusMapping[item.status] || item.status,
+      }));
+      setData(updatedData);
+    }
+  }, [statusList]);
+
+  const handleColorChange = async (id, newColor) => {
+    try {
+    //   const bodyData = { id, color: newColor };
+    //   const response = await StatusServices.updateStatusColor(bodyData);
+    //   if (response?.success) {
+    //     Notification.open(
+    //       "success",
+    //       "Success",
+    //       "Status updated successfully",
+    //       3000,
+    //       "bottom-right"
+    //     );
+    //     getStatusList();
+    //   } else {
+    //     Notification.open(
+    //       "error",
+    //       "Error",
+    //       "Failed to update status, please try again",
+    //       3000,
+    //       "top-right"
+    //     );
+    //   }
+    } catch (error) {
+      console.error("Error updating status:", error);
+    }
+  };
+
+  const columns = [
     {
       field: "status",
       headerName: "Status",
       type: "text",
     },
-  ]);
-
-  const getBuildings = async () => {
-    $ajax_post("buildings", {}, function (response) {
-      setData(response || []);
-    });
-  };
-
-  useEffect(() => {
-    getBuildings();
-  }, []);
+    {
+      field: "indicator",
+      headerName: "Indicator",
+      type: "text",
+    //   renderCell: (params) => (
+    //     <ColorPicker
+    //       value={params.row.color}
+    //       onChange={(color) => handleColorChange(params.row.id, color)}
+    //     />
+    //   ),
+    },
+  ];
 
   return (
     <div className="p-4">
@@ -101,7 +121,7 @@ const Buildings = () => {
                   colSpan={columns.length}
                   className="px-4 py-6 text-center text-sm text-gray-500"
                 >
-                  No data available.
+                  No status data available.
                 </TableCell>
               </TableRow>
             )}
@@ -112,4 +132,4 @@ const Buildings = () => {
   );
 };
 
-export default Buildings;
+export default Status;
