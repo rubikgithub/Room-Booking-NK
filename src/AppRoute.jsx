@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useRoutes, Navigate, useNavigate } from "react-router-dom";
 import Dashboard from "./UserPages/Dashboard/index.jsx";
+import Layout from "./Layout.jsx";
 
 const AppRoute = () => {
   const unylogo = "";
@@ -12,8 +13,7 @@ const AppRoute = () => {
   ]);
   const [userData, setUserData] = useState({});
 
-  useEffect(() => {
-  }, []);
+  useEffect(() => {}, []);
   const handleMenuClick = (menuName, path) => {
     setBreadcrumbItems([
       // { label: <h3>HR Admin Portal</h3> },
@@ -70,9 +70,11 @@ const AppRoute = () => {
     },
   ]);
 
-  return <>
-    {AllRoutes}
-  </>;
+  return (
+    <>
+      <Layout>{AllRoutes}</Layout>
+    </>
+  );
 };
 
 export default AppRoute;
