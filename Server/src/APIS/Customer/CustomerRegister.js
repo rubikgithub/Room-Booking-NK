@@ -4,9 +4,16 @@ const clearkClientInstance = require("../../../config/clerkClient");
 const { v4: uuidv4 } = require('uuid');
 const supabase = require("../../../config/supabaseClient")
 
-
-const createUserSupabase = async () => {
+const createUserSupabase = async (userData) => {
     try {
+        const user = {
+            id: uuidv4(),
+            first_name: userData?.firstName,
+            last_name: userData?.lastName,
+            email: userData?.email,
+            address: '141, new test',
+            phone_number: '9893600766',
+        }
         const { data: existingUser, error: checkError } = await supabase
             .from("users")
             .select("*")
@@ -45,39 +52,50 @@ const createUserSupabase = async () => {
 }
 
 router.post("/createUser", async (req, res) => {
-    try {
-        const { email, password, firstName, lastName } = req.body.body;
-        const clerk = clearkClientInstance();
-        const uuid = uuidv4();
-        const userData = {
-            "external_id": uuid,
-            "first_name": firstName,
-            "last_name": lastName,
-            "email_address": [email],
-            "username": `${firstName}${uuid}`,
-            "password": password,
-            "skip_password_checks": true,
-            "skip_password_requirement": true,
-            "delete_self_enabled": true,
-            "create_organization_enabled": true,
-            "create_organizations_limit": 0
+    const user = req.body.body;
+    const { success, message, data, error } = await createUserSupabase(user);
+    if (success) {
+        try {
+            const { email, password, firstName, lastName } = req.body.body;
+            const clerk = clearkClientInstance();
+            const uuid = uuidv4();
+            const userData = {
+                "external_id": uuid,
+                "first_name": firstName,
+                "last_name": lastName,
+                "email_address": [email],
+                "username": `${firstName}${uuid}`,
+                "password": password,
+                "skip_password_checks": true,
+                "skip_password_requirement": true,
+                "delete_self_enabled": true,
+                "create_organization_enabled": true,
+                "create_organizations_limit": 0
+            }
+
+            const user = await clerk.users.createUser(userData)
+            res.send({
+                status: 'success',
+                message: 'User created successfully',
+                data: user
+            })
+
+        } catch (err) {
+            console.log(err)
+            res.status(500).send({
+                status: 'error',
+                message: 'User creation failed',
+                error: err
+            })
         }
-
-        const user = await clerk.users.createUser(userData)
-        res.send({
-            status: 'success',
-            message: 'User created successfully',
-            data: user
-        })
-
-    } catch (err) {
-        console.log(err)
+    } else {
         res.status(500).send({
-            status: 'error',
-            message: 'User creation failed',
-            error: err
+            status: "error",
+            message: message,
+            error: error,
         })
     }
+
 });
 
 

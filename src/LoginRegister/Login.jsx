@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"
-import { clerk, loadClerk } from '../Library/clerk';
+import { clerk, loadClerk } from '../LoginRegister/clerk';
 import { Card, CardContent } from "@/components/ui/card"
 
 
@@ -60,14 +60,12 @@ const Login = () => {
                 const signInAttempt = await clerk.client.signIn.create(authData)
                 console.log(signInAttempt, 'data')
                 localStorage.setItem('userData', JSON.stringify(signInAttempt))
-
-                alert("Login successful!");
                 window.location.reload();
 
             }
         } catch (error) {
             console.log(error)
-            alert("Invalid ");
+            alert("Invalid Credentials");
             setIsSubmitting(false);
         }
     };

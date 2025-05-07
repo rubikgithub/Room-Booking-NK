@@ -2,22 +2,12 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   HashRouter as Router,
-  Routes,
-  Route,
 } from "react-router-dom";
 import './index.css';
 import SecurityCheck from './LoginRegister/index.jsx';
-import AppRoute from "./AppRoute.jsx";
 import { ClerkProvider } from '@clerk/clerk-react';
 
 const PUBLISHABLE_KEY = "pk_test_bGlnaHQtaWd1YW5hLTgzLmNsZXJrLmFjY291bnRzLmRldiQ";
-
-
-// Configuration.setapi("https://curiousrubik.us/dev/pmsdevapi.php?gyu=");
-// Configuration.setup({
-//   editFieldHelp:true
-// })
-
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

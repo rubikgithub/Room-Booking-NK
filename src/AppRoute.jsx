@@ -3,6 +3,8 @@ import { useRoutes, Navigate, useNavigate } from "react-router-dom";
 import Dashboard from "./UserPages/Dashboard/index.jsx";
 import Layout from "./Layout.jsx";
 import Settings from "./AdminPages/index.jsx";
+import RoomsAndBuildings from "./UserPages/Rooms&Buildings/index.jsx";
+import Bookings from "./UserPages/MyBookings/index.jsx";
 
 const AppRoute = () => {
   const unylogo = "";
@@ -28,6 +30,7 @@ const AppRoute = () => {
       label: "Register",
       onClick: () => handleMenuClick("Dashboard", "/register"),
     },
+
     // {
     //   key: "2",
     //   label: "Booking Calendar",
@@ -68,6 +71,14 @@ const AppRoute = () => {
     {
       path: "/",
       element: <Dashboard />,
+    },
+    {
+      path: "/rooms-buildings",
+      element: <RoomsAndBuildings />,
+    },
+    {
+      path: "/my-bookings",
+      element: <Bookings />,
     },
     {
       path: "/settings",

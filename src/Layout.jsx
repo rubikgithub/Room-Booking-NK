@@ -32,16 +32,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { clerk } from "./LoginRegister/clerk";
 
 const Layout = ({ children }) => {
   const [open, setOpen] = useState(true);
 
   const items = [
-    { title: "Dashboard", url: "#", icon: Home },
-    { title: "Booking Calendar", url: "#", icon: Inbox },
-    { title: "My Bookings", url: "#", icon: Calendar },
-    { title: "Rooms & Buildings", url: "#", icon: Search },
+    { title: "Dashboard", url: "/#/", icon: Home },
+    { title: "Booking Calendar", url: "", icon: Inbox },
+    { title: "My Bookings", url: "/#/my-bookings", icon: Calendar },
+    { title: "Rooms & Buildings", url: "/#/rooms-buildings", icon: Search },
   ];
+
+  const userLogOut = () => {
+    try {
+      clerk.load().then(() => {
+        clerk.session.end();
+      });
+      window.location.reload();
+    } catch (error) {
+      console.error('Error loading Clerk:', error);
+    }
+  };
 
   return (
     <div>
@@ -130,7 +142,7 @@ const Layout = ({ children }) => {
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
 
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={userLogOut}>
                     <LogOut />
                     <span>Log out</span>
                     <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
