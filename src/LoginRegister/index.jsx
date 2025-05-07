@@ -2,10 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Login from './Login';
 import AppRoute from '../AppRoute';
-import { clerk } from '../Library/clerk';
+import { clerk, loadClerk } from '../LoginRegister/clerk';
 import Register from './Register';
 import ForgetPassword from './ForgetPassword';
-import { loadClerk } from '../Library/clerk';
 
 const SecurityCheck = () => {
   const [isReady, setIsReady] = useState(false);

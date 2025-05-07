@@ -2,10 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"
-import { clerk, loadClerk } from '../Library/clerk';
+import { clerk, loadClerk } from '../LoginRegister/clerk';
 import { Card, CardContent } from "@/components/ui/card"
-import APIrequest from "../Library/axios";
-import { User } from "../Library/API";
 import { useNavigate } from "react-router-dom";
 import { $ajax_post } from "../Library/Library";
 
@@ -44,8 +42,8 @@ const Register = () => {
             newErrors.password = "Password must be at least 6 characters";
         }
 
-        if (!formData.fistName) {
-            newErrors.fistName = "First Name is required";
+        if (!formData.firstName) {
+            newErrors.firstName = "First Name is required";
         }
 
         if (!formData.lastName) {
@@ -76,13 +74,15 @@ const Register = () => {
         // } catch (error) {
         //     console.log(error)
         // }
-
-        try {
-            $ajax_post("createUser", { ...formData }, function (response) {
-                navigate('/');
-            });
-        } catch (error) {
-            console.error("There was an error!", error);
+        if (validate()) {
+            setIsSubmitting(true);
+            try {
+                $ajax_post("createUser", { ...formData }, function (response) {
+                    navigate('/');
+                });
+            } catch (error) {
+                console.error("There was an error!", error);
+            }
         }
     };
 
@@ -103,7 +103,7 @@ const Register = () => {
                         <form onSubmit={handleSubmit} className="">
                             <div className="mb-4">
                                 <Label className="mb-2" htmlFor="email">
-                                    FirstName
+                                    First Name
                                 </Label>
                                 <Input
                                     className="h-[40px]"
@@ -119,7 +119,7 @@ const Register = () => {
                             </div>
                             <div className="mb-4">
                                 <Label className="mb-2" htmlFor="email">
-                                    LastName
+                                    Last Name
                                 </Label>
                                 <Input
                                     className="h-[40px]"

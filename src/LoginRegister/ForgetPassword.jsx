@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"
-import { clerk, loadClerk } from '../Library/clerk';
+import { clerk, loadClerk } from '../LoginRegister/clerk';
 import { Card, CardContent } from "@/components/ui/card"
 
 
