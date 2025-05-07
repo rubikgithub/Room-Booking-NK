@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useRoutes, Navigate, useNavigate } from "react-router-dom";
 import Dashboard from "./UserPages/Dashboard/index.jsx";
 import Layout from "./Layout.jsx";
+import Settings from "./AdminPages/index.jsx";
 
 const AppRoute = () => {
   const unylogo = "";
@@ -67,6 +68,14 @@ const AppRoute = () => {
     {
       path: "/",
       element: <Dashboard />,
+    },
+    {
+      path: "/settings",
+      element: <Settings />,
+    },
+    {
+      path: "*",
+      element: <Navigate to="/" />,
     },
   ]);
 
