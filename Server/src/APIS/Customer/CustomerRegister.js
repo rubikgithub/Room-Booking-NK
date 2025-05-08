@@ -8,11 +8,9 @@ const createUserSupabase = async (userData) => {
     try {
         const user = {
             id: uuidv4(),
-            first_name: userData?.firstName,
-            last_name: userData?.lastName,
+            first_name: userData?.first_name,
+            last_name: userData?.last_name,
             email: userData?.email,
-            address: '141, new test',
-            phone_number: '9893600766',
         }
         const { data: existingUser, error: checkError } = await supabase
             .from("users")
@@ -56,15 +54,15 @@ router.post("/createUser", async (req, res) => {
     const { success, message, data, error } = await createUserSupabase(user);
     if (success) {
         try {
-            const { email, password, firstName, lastName } = req.body.body;
+            const { email, password, first_name, last_name } = req.body.body;
             const clerk = clearkClientInstance();
             const uuid = uuidv4();
             const userData = {
                 "external_id": uuid,
-                "first_name": firstName,
-                "last_name": lastName,
+                "first_name": first_name,
+                "last_name": last_name,
                 "email_address": [email],
-                "username": `${firstName}${uuid}`,
+                "username": `${first_name}${uuid}`,
                 "password": password,
                 "skip_password_checks": true,
                 "skip_password_requirement": true,
