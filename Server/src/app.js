@@ -4,6 +4,7 @@ const path = require("path");
 require("dotenv").config();
 const createCustomerRoutes = require("./APIS/Customer/CustomerRegister");
 const customerDetailsRoutes = require("./APIS/Customer/CustomerDetails");
+const customerUpdateRoutes = require("./APIS/Customer/UpdateCustomer");
 const buildingRoomsRoutes = require("./APIS/BuildingsRooms/BuildingRoomsList");
 const allBookingsRoutes = require("./APIS/Bookings/BookingsList");
 const updateCustomerRoutes = require("./APIS/Customer/UpdateCustomer");
@@ -20,6 +21,7 @@ app.use("/api", customerDetailsRoutes);
 app.use("/api", buildingRoomsRoutes);
 app.use("/api", allBookingsRoutes);
 app.use("/api", updateCustomerRoutes)
+app.use("/api", customerUpdateRoutes);
 
 // // Enable CORS
 // app.use(
@@ -36,7 +38,7 @@ app.use("/api", updateCustomerRoutes)
 
 // // Optional logger
 
-app.use(cors('*'));
+app.use(cors("*"));
 
 app.use((req, res, next) => {
   console.log(`[${req.method}] ${req.url}`);
@@ -44,7 +46,6 @@ app.use((req, res, next) => {
 });
 
 // Import and use centralized route manager
-
 
 // Start server
 app.listen(PORT, () => {

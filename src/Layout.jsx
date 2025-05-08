@@ -51,7 +51,7 @@ const Layout = ({ children }) => {
       });
       window.location.reload();
     } catch (error) {
-      console.error('Error loading Clerk:', error);
+      console.error("Error loading Clerk:", error);
     }
   };
 
@@ -122,7 +122,7 @@ const Layout = ({ children }) => {
             )}
 
             <div className="ml-auto">
-              <DropdownMenu>
+              <DropdownMenu className="bg-white shadow-lg rounded-md">
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">Test User</Button>
                 </DropdownMenuTrigger>
