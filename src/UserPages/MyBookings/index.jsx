@@ -4,20 +4,24 @@ import AllBookings from "./AllBookings";
 import MyBookings from "./MyBookings";
 
 const Bookings = () => {
-    return (
-        <Tabs className="w-full" defaultValue="mybookings">
-            <TabsList>
-                <TabsTrigger value="mybookings">My Bookings</TabsTrigger>
-                <TabsTrigger value="allbookings">All Bookings</TabsTrigger>
-            </TabsList>
-            <TabsContent className="w-full px-2" value="mybookings">
-              <MyBookings />
-            </TabsContent>
-            <TabsContent value="allbookings">
-              <AllBookings />
-            </TabsContent>
-        </Tabs>
-    )
+  return (
+    <Tabs className="w-full" defaultValue="allbookings">
+      <TabsList>
+        {
+          localStorage.getItem("role") === "admin" && (
+            <TabsTrigger value="allbookings">All Bookings</TabsTrigger>
+          )
+        }
+        <TabsTrigger value="mybookings">My Bookings</TabsTrigger>
+      </TabsList>
+      <TabsContent className="w-full px-2" value="mybookings">
+        <MyBookings />
+      </TabsContent>
+      <TabsContent value="allbookings">
+        <AllBookings />
+      </TabsContent>
+    </Tabs>
+  )
 }
 
 export default Bookings

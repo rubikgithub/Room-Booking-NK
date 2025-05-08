@@ -39,7 +39,7 @@ const Layout = ({ children }) => {
 
   const items = [
     { title: "Dashboard", url: "/#/", icon: Home },
-    { title: "Booking Calendar", url: "", icon: Inbox },
+    { title: "Booking Calendar", url: "/#/booking-calender", icon: Inbox },
     { title: "My Bookings", url: "/#/my-bookings", icon: Calendar },
     { title: "Rooms & Buildings", url: "/#/rooms-buildings", icon: Search },
   ];
@@ -93,17 +93,22 @@ const Layout = ({ children }) => {
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter className="border-t border-gray-200 ">
-            <SidebarMenuItem className="hover:bg-gray-100 rounded-md">
-              <SidebarMenuButton>
-                <a
-                  href={"/#/settings"}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <Settings />
-                  <span>Settings</span>
-                </a>
-              </SidebarMenuButton>
+              {
+                localStorage.getItem("role") === "admin" && (
+                  <SidebarMenuItem className="hover:bg-gray-100 rounded-md">
+                  <SidebarMenuButton>
+                    <a
+                      href={"/#/settings"}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <Settings />
+                      <span>Settings</span>
+                    </a>
+                  </SidebarMenuButton>
             </SidebarMenuItem>
+                )
+              }
+
           </SidebarFooter>
         </Sidebar>
 

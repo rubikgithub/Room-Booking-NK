@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const clearkClientInstance = require("../../../config/clerkClient");
 const { v4: uuidv4 } = require('uuid');
-const supabase = require("../../../config/supabaseClient")
+const supabase = require("../../../config/supabaseClient");
 
 const createUserSupabase = async (userData) => {
     try {
@@ -11,6 +11,10 @@ const createUserSupabase = async (userData) => {
             first_name: userData?.first_name,
             last_name: userData?.last_name,
             email: userData?.email,
+            address: '141, new test',
+            phone_number: '9893600766',
+            clerk_id: userData?.clerk_id,
+            role:"admin"
         }
         const { data: existingUser, error: checkError } = await supabase
             .from("users")
@@ -51,8 +55,8 @@ const createUserSupabase = async (userData) => {
 
 router.post("/createUser", async (req, res) => {
     const user = req.body.body;
-    const { success, message, data, error } = await createUserSupabase(user);
-    if (success) {
+    // const { success, message, data, error } = await createUserSupabase(user);
+    // if (success) {
         try {
             const { email, password, first_name, last_name } = req.body.body;
             const clerk = clearkClientInstance();
@@ -71,7 +75,9 @@ router.post("/createUser", async (req, res) => {
                 "create_organizations_limit": 0
             }
 
-            const user = await clerk.users.createUser(userData)
+            const userResp = await clerk.users.createUser(userData)
+            console.log(userResp.id, 'userResp');
+            await createUserSupabase({...user, clerk_id: userResp.id});
             res.send({
                 status: 'success',
                 message: 'User created successfully',
@@ -86,15 +92,35 @@ router.post("/createUser", async (req, res) => {
                 error: err
             })
         }
-    } else {
-        res.status(500).send({
-            status: "error",
-            message: message,
-            error: error,
-        })
-    }
+    // } else {
+    //     res.status(500).send({
+    //         status: "error",
+    //         message: message,
+    //         error: error,
+    //     })
+    // }
 
 });
 
+router.post('/revokeSession/:sessionId', async (req, res) => {
+    try {
+        console.log('run', req.params.sessionId)
+        const { sessionId } = req.params
+        const clerk = clearkClientInstance();
+        const session = await clerk.sessions.revokeSession(sessionId)
+        res.send({
+             status: 'success',
+            data: session,
+            message: 'User logged out successfully'
+        })
+
+    } catch (err) {
+        res.send({
+            success: false,
+            data: err,
+            message: 'Internal Server Error'
+        })
+    }
+})
 
 module.exports = router;

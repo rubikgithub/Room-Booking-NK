@@ -4,11 +4,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"
 import { clerk, loadClerk } from '../LoginRegister/clerk';
 import { Card, CardContent } from "@/components/ui/card"
-
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import ForgetPassword from "./ForgetPassword";
 
 const Login = () => {
     // const navigate = useNavigate();
-
+    const [isOpenDialog, setIsOpenDialog] = useState(false);
     const [formData, setFormData] = useState({
         email: "",
         password: ""
@@ -81,6 +90,15 @@ const Login = () => {
 
     return (
         <>
+
+            <Dialog open={isOpenDialog} onOpenChange={setIsOpenDialog}>
+            <DialogContent className="sm:max-w-[425px]" style={{ backgroundColor: 'white' }}>
+                {/* <DialogHeader>
+                    <DialogTitle>Forget Password</DialogTitle>
+                </DialogHeader> */}
+                <ForgetPassword  setIsOpenDialog={setIsOpenDialog}/>
+            </DialogContent>
+
             <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#7939d7] to-[#a770f7]">
                 <Card className="w-[450px] bg-white border-none p-6 shadow-none">
                     <CardContent className="p-0">
@@ -120,7 +138,9 @@ const Login = () => {
                                     <p className="text-sm text-red-500">{errors.password}</p>
                                 )}
                             </div>
-                                <span className="text-sm" style={{ cursor: 'pointer'}} onClick={() => window.location.hash = '#/forget-password'}>Forget Password</span>
+                            <DialogTrigger asChild >
+                                <p className="text-sm mb-2" style={{ cursor: 'pointer' }}>Forget Password</p>
+                            </DialogTrigger>
                             <Button
                                 type="submit"
                                 className="w-full bg-[#000] text-white h-[40px] cursor-pointer"
@@ -129,15 +149,16 @@ const Login = () => {
                                 {isSubmitting ? "Logging in..." : "Login"}
                             </Button>
                         </form>
-                        <span>
-                            If you have no account yet,{' '}
+                        <p className="text-sm text-center mt-2">
+                            If you have no account yet{' '}
                             <a onClick={handleRedirect} style={{ cursor: 'pointer', color: 'black', textDecoration: 'none' }}>
-                                Register
+                                Click Here
                             </a>
-                        </span>
+                        </p>
                     </CardContent>
                 </Card>
             </main>
+        </Dialog >
         </>
     )
 }
