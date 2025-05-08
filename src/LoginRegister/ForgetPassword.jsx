@@ -3,11 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"
+
+
 import { clerk, loadClerk } from '../LoginRegister/clerk';
 import { Card, CardContent } from "@/components/ui/card"
+import { useSignIn, useClerk } from "@clerk/clerk-react";
+import { $ajax_post } from "../Library";
 
-
-const ForgetPassword = () => {
+const ForgetPassword = ({ setIsOpenDialog }) => {
     // const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -17,6 +20,17 @@ const ForgetPassword = () => {
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+
+    const { signIn, setSession } = useSignIn();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [verifyCode, setVerifyCode] = useState(false);
+    const [code, setCode] = useState('');
+    const [pending, setPending] = useState(false);
+    const [identifier, setIdentifier] = useState(null);
+    const { client } = useClerk();
+    const [updatePassword, setUpdatePassword] = useState(false);
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -33,16 +47,57 @@ const ForgetPassword = () => {
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
             newErrors.email = "Email is invalid";
         }
-
-        if (!formData.password) {
-            newErrors.password = "Password is required";
-        } else if (formData.password.length < 6) {
-            newErrors.password = "Password must be at least 6 characters";
-        }
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
+
+    const handleSendCode = async () => {
+        try {
+            const result = await signIn.create({ identifier: email });
+            const emailFactor = result.supportedFirstFactors.find(
+                factor => factor.strategy === "email_code"
+            );
+            const respo = await signIn.prepareFirstFactor({ strategy: "email_code", emailAddressId: emailFactor.emailAddressId });
+            console.log(respo, 'respo');
+            setPending(true);
+            setEmail('');
+            setIdentifier(emailFactor.emailAddressId);
+        } catch (err) {
+            alert(err?.message);
+        }
+    };
+
+    const handleVerifyCode = async () => {
+        console.log(identifier, code, 'sdfsf');
+        try {
+            const attempt = await signIn.attemptFirstFactor({
+                strategy: "email_code",
+                code: code
+            });
+            console.log(attempt?.createdSessionId, 'attempt');
+            $ajax_post(`/revokeSession/${attempt?.createdSessionId}`, {}, function (response) {
+                console.log(response?.userId, 'response');
+                localStorage.setItem('userId', response?.userId);
+                setVerifyCode(true);
+
+            });
+        } catch (err) {
+            alert(err?.message);
+        }
+    };
+
+    const handleUpdatePassword = async () => {
+        try {
+            $ajax_post(`/updatePassword/${localStorage.getItem('userId')}`, { "password": password }, function (response) {
+                console.log(response, 'responseupdate');
+                alert("Password updated successfully");
+                setIsOpenDialog(false);
+            });
+        } catch (err) {
+            alert(err?.message);
+        }
+    };
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -75,12 +130,122 @@ const ForgetPassword = () => {
 
     useEffect(() => {
         loadClerk()
-
     })
 
     return (
         <>
-            <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#7939d7] to-[#a770f7]">
+            {
+                !verifyCode ? <div className="grid gap-4 py-4">
+                    {
+                        !pending ? (
+                            <div>
+                                <p className="text-2xl font-bold mb-4">Forget Password</p>
+                                <div className="grid grid-cols-4 items-center gap-4 mb-4">
+                                    <Input
+                                        id="email"
+                                        className="col-span-4"
+                                        placeholder="Enter email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <Button
+                                        type="submit"
+                                        className="w-full bg-[#000] text-white h-[40px] cursor-pointer"
+                                        // disabled={isSubmitting}
+                                        onClick={handleSendCode}
+                                    >
+                                        Send
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div>
+                                <p className="text-2xl font-bold mb-4">Verify Code</p>
+                                <div className="grid grid-cols-4 items-center gap-4 mb-4">
+                                    <Input
+                                        id="otp"
+                                        className="col-span-4"
+                                        placeholder="Enter Code"
+                                        value={code}
+                                        onChange={(e) => setCode(e.target.value)}
+                                    />
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    className="w-full bg-[#000] text-white h-[40px] cursor-pointer"
+                                    disabled={isSubmitting}
+                                    onClick={handleVerifyCode}
+                                >
+                                    Verfiy Code
+                                </Button>
+                            </div>
+                        )
+                    }
+
+
+                </div> :
+                    <div>
+                        <p className="text-2xl font-bold mb-4">Update Password</p>
+                        <div className="grid grid-cols-4 items-center gap-4 mb-4">
+                            <Input
+                                id="password"
+                                className="col-span-4"
+                                placeholder="Enter Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4 mb-4">
+                            <Input
+                                id="confirm-password"
+                                className="col-span-4"
+                                placeholder="Enter Confirm Password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <Button
+                                type="submit"
+                                className="w-full bg-[#000] text-white h-[40px] cursor-pointer"
+                                // disabled={isSubmitting}
+                                // onClick={handleSendCode}
+                                onClick={handleUpdatePassword}
+                            >
+                                Update Password
+                            </Button>
+                        </div>
+                    </div>
+            }
+
+
+
+
+            {/* <div>
+                <input
+                    type="email"
+                    placeholder="Enter email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                />
+                {!pending ? (
+                    <button onClick={handleSendCode}>Send Code</button>
+                ) : (
+                    <>
+                        <input
+                            type="text"
+                            placeholder="Enter code"
+                            value={code}
+                            onChange={(e) => setCode(e.target.value)}
+                        />
+                        <button onClick={handleVerifyCode}>Verify Code</button>
+                    </>
+                )}
+            </div> */}
+            {/* <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#7939d7] to-[#a770f7]">
                 <Card className="w-[450px] bg-white border-none p-6 shadow-none">
                     <CardContent className="p-0">
                         <form onSubmit={handleSubmit} className="">
@@ -109,15 +274,9 @@ const ForgetPassword = () => {
                                 {isSubmitting ? "Sending..." : "Send"}
                             </Button>
                         </form>
-                        {/* <span>
-                            If you have no account yet,{' '}
-                            <a onClick={handleRedirect} style={{ cursor: 'pointer', color: 'black', textDecoration: 'none' }}>
-                                Register
-                            </a>
-                        </span> */}
                     </CardContent>
                 </Card>
-            </main>
+            </main> */}
         </>
     )
 }

@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useNavigate } from "react-router-dom";
 import { $ajax_post } from "../Library/Library";
 
+
 const Register = () => {
     const [formData, setFormData] = useState({
         firstName: "",
@@ -56,24 +57,6 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // try {
-        //     $ajax_post("createUser", { ...formData }, (response) => {
-        //         console.log(response, 'response')
-        //         const { success } = response
-        //         navigate('/');
-        //         // if (success) {
-        //         //     alert("Registration successful!");
-
-        //         // } else {
-        //         //     alert("Registration failed!");
-        //         // }
-
-        //     })
-
-
-        // } catch (error) {
-        //     console.log(error)
-        // }
         if (validate()) {
             setIsSubmitting(true);
             try {
@@ -97,6 +80,7 @@ const Register = () => {
 
     return (
         <>
+
             <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#7939d7] to-[#a770f7]">
                 <Card className="w-[450px] bg-white border-none p-6 shadow-none">
                     <CardContent className="p-0">
@@ -177,12 +161,12 @@ const Register = () => {
                                 {isSubmitting ? "Registering..." : "Register"}
                             </Button>
                         </form>
-                        <span>
-                            If you have  account click here ,{' '}
+                        <p className="text-sm text-center mt-4">
+                            If you have account{' '}
                             <a onClick={handleRedirect} style={{ cursor: 'pointer', color: 'black', textDecoration: 'none' }}>
-                                Login
+                                Click Here
                             </a>
-                        </span>
+                        </p>
                     </CardContent>
                 </Card>
             </main>

@@ -5,6 +5,7 @@ import Layout from "./Layout.jsx";
 import Settings from "./AdminPages/index.jsx";
 import RoomsAndBuildings from "./UserPages/Rooms&Buildings/index.jsx";
 import Bookings from "./UserPages/MyBookings/index.jsx";
+import BookingCalender from "./UserPages/BookingCalendar/index.jsx";
 
 const AppRoute = () => {
   const unylogo = "";
@@ -71,6 +72,10 @@ const AppRoute = () => {
     {
       path: "/",
       element: <Dashboard />,
+    },
+    {
+      path: "/booking-calender",
+      element: <BookingCalender />,
     },
     {
       path: "/rooms-buildings",

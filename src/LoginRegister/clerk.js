@@ -6,6 +6,7 @@ const clerk = new Clerk(clerkFrontendApi);
 
 const loadClerk = async () => {
   try {
+    
     await clerk.load();
     console.log('Clerk loaded successfully');
     return true
