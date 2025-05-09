@@ -20,7 +20,7 @@ router.post("/allBookings", async (req, res) => {
 
         const { data, error } = await query;
 
-        if (error) throw error;
+
 
         res.status(200).json({
             status: "success",
@@ -45,7 +45,7 @@ router.post("/myBookings/:clerkId", async (req, res) => {
             .eq("clerk_id", clerkId)
             .single();
 
-        if (checkError) throw checkError;
+        // if (checkError) throw checkError;
 
         const { data, error } = await supabase
             .from("bookings")
@@ -59,16 +59,17 @@ router.post("/myBookings/:clerkId", async (req, res) => {
             )
             .eq("user_id", existingUser?.id);
 
-        if (error) throw error;
+
 
         res.status(200).json({
             status: 'success',
-            message: data.length
+            message: data?.length
                 ? "Bookings fetched successfully for user."
                 : "No bookings found for the user.",
             data,
         });
     } catch (error) {
+        console.log(error)
         res.status(500).json({
             status: 'error',
             message: "Failed to fetch bookings by user.",

@@ -47,6 +47,7 @@ const Layout = ({ children }) => {
   const userLogOut = () => {
     try {
       clerk.load().then(() => {
+        localStorage.clear();
         clerk.session.end();
       });
       window.location.reload();

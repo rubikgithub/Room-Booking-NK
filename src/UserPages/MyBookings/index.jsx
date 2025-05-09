@@ -5,7 +5,7 @@ import MyBookings from "./MyBookings";
 
 const Bookings = () => {
   return (
-    <Tabs className="w-full" defaultValue="allbookings">
+    <Tabs className="w-full" defaultValue="mybookings">
       <TabsList>
         {
           localStorage.getItem("role") === "admin" && (
@@ -17,9 +17,16 @@ const Bookings = () => {
       <TabsContent className="w-full px-2" value="mybookings">
         <MyBookings />
       </TabsContent>
-      <TabsContent value="allbookings">
+      {
+        localStorage.getItem("role") === "admin" && (
+          <TabsContent value="allbookings">
+            <AllBookings />
+          </TabsContent>
+        )
+      }
+      {/* <TabsContent value="allbookings">
         <AllBookings />
-      </TabsContent>
+      </TabsContent> */}
     </Tabs>
   )
 }
