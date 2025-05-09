@@ -94,22 +94,19 @@ const Layout = ({ children }) => {
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter className="border-t border-gray-200 ">
-              {
-                localStorage.getItem("role") === "admin" && (
-                  <SidebarMenuItem className="hover:bg-gray-100 rounded-md">
-                  <SidebarMenuButton>
-                    <a
-                      href={"/#/settings"}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <Settings />
-                      <span>Settings</span>
-                    </a>
-                  </SidebarMenuButton>
-            </SidebarMenuItem>
-                )
-              }
-
+            {localStorage.getItem("role") === "admin" && (
+              <SidebarMenuItem className="hover:bg-gray-100 rounded-md">
+                <SidebarMenuButton>
+                  <a
+                    href={"/#/settings"}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Settings />
+                    <span>Settings</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
           </SidebarFooter>
         </Sidebar>
 
@@ -123,7 +120,7 @@ const Layout = ({ children }) => {
             )}
 
             <div className="ml-auto">
-              <DropdownMenu className="bg-white shadow-lg rounded-md">
+              {/* <DropdownMenu className="bg-white shadow-lg rounded-md z-50">
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">Test User</Button>
                 </DropdownMenuTrigger>
@@ -154,7 +151,10 @@ const Layout = ({ children }) => {
                     <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
+              </DropdownMenu> */}
+              <Button className="bg-red-600" onClick={userLogOut}>
+                Logout
+              </Button>
             </div>
           </header>
 
