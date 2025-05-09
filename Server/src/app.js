@@ -8,6 +8,9 @@ const customerUpdateRoutes = require("./APIS/Customer/UpdateCustomer");
 const buildingRoomsRoutes = require("./APIS/BuildingsRooms/BuildingRoomsList");
 const allBookingsRoutes = require("./APIS/Bookings/BookingsList");
 const updateCustomerRoutes = require("./APIS/Customer/UpdateCustomer");
+const statusColorsListRoutes = require("./APIS/TimeStatus/statusColorsList");
+const bookingServicesRoutes = require("./APIS/Bookings/BookingsServices");
+const timeConfigRoutes = require("./APIS/TimeStatus/timeConfigList");
 const app = express();
 const PORT = 5000;
 
@@ -20,8 +23,11 @@ app.use("/api", createCustomerRoutes);
 app.use("/api", customerDetailsRoutes);
 app.use("/api", buildingRoomsRoutes);
 app.use("/api", allBookingsRoutes);
-app.use("/api", updateCustomerRoutes)
+app.use("/api", updateCustomerRoutes);
 app.use("/api", customerUpdateRoutes);
+app.use("/api", statusColorsListRoutes);
+app.use("/api", bookingServicesRoutes);
+app.use("/api", timeConfigRoutes);
 
 // // Enable CORS
 // app.use(

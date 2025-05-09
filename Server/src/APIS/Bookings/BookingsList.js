@@ -1,6 +1,5 @@
 const express = require("express");
 const supabase = require("../../../config/supabaseClient");
-const { stat } = require("fs");
 const router = express.Router();
 
 router.post("/allBookings", async (req, res) => {
