@@ -23,8 +23,6 @@ router.post('/getUser/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     const { data, error } = await supabase.from("users").select("*").eq("clerk_id", userId).single();
-    
-    // if (error) throw error;
     res.status(200).json({
       status: "success",
       message: "User fetched successfully.",

@@ -5,6 +5,7 @@ import AppRoute from '../AppRoute';
 import { clerk, loadClerk } from '../LoginRegister/clerk';
 import Register from './Register';
 import ForgetPassword from './ForgetPassword';
+import { $ajax_post } from '../Library';
 
 const SecurityCheck = () => {
   const [isReady, setIsReady] = useState(false);
@@ -17,9 +18,22 @@ const SecurityCheck = () => {
         setIsReady(true);
 
         // Now check auth status
-        const isAuthenticated = !!clerk.user;
-            console.log(clerk.user);
-        setIsLoggedIn(isAuthenticated);
+        // const isAuthenticated = !!clerk.user;
+        //     console.log(clerk.user);
+        // setIsLoggedIn(isAuthenticated);
+        if(clerk.user){
+         
+            console.log(clerk.user,'clerk.user');
+            //user_2wogJroXsrv2qL3Yufp2POUpLlS
+            $ajax_post(`getUser/${clerk.user.id}`, {}, function (response) {
+                console.log(response?.role, 'userssss');
+                localStorage.setItem('role', response?.role);
+                setIsLoggedIn(true);
+            });
+        
+        }else{
+          setIsLoggedIn(false);
+        }
       } catch (err) {
         console.error("Failed to load Clerk:", err);
         setIsLoggedIn(false);

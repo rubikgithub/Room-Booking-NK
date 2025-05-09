@@ -9,6 +9,7 @@ import { clerk, loadClerk } from '../LoginRegister/clerk';
 import { Card, CardContent } from "@/components/ui/card"
 import { useSignIn, useClerk } from "@clerk/clerk-react";
 import { $ajax_post } from "../Library";
+import { Eye, EyeOff } from "lucide-react"
 
 const ForgetPassword = ({ setIsOpenDialog }) => {
     // const navigate = useNavigate();
@@ -31,6 +32,8 @@ const ForgetPassword = ({ setIsOpenDialog }) => {
     const [identifier, setIdentifier] = useState(null);
     const { client } = useClerk();
     const [updatePassword, setUpdatePassword] = useState(false);
+    const [showPassword, setShowPassword] = useState(false)
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -42,11 +45,19 @@ const ForgetPassword = ({ setIsOpenDialog }) => {
     const validate = () => {
         const newErrors = {};
 
-        if (!formData.email) {
-            newErrors.email = "Email is required";
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = "Email is invalid";
+        // if (!formData.email) {
+        //     newErrors.email = "Email is required";
+        // } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        //     newErrors.email = "Email is invalid";
+        // }
+
+        if (!password) {
+            newErrors.password_req = "Password is required";
+        } else if (password.length < 6) {
+            newErrors.password_req = "Password must be at least 6 characters";
         }
+        password !== confirmPassword ? newErrors.password = "Passwords do not match" : null
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -88,11 +99,13 @@ const ForgetPassword = ({ setIsOpenDialog }) => {
 
     const handleUpdatePassword = async () => {
         try {
-            $ajax_post(`/updatePassword/${localStorage.getItem('userId')}`, { "password": password }, function (response) {
-                console.log(response, 'responseupdate');
-                alert("Password updated successfully");
-                setIsOpenDialog(false);
-            });
+            if (validate()) {
+                $ajax_post(`/updatePassword/${localStorage.getItem('userId')}`, { "password": password }, function (response) {
+                    console.log(response, 'responseupdate');
+                    alert("Password updated successfully");
+                    setIsOpenDialog(false);
+                });
+            }
         } catch (err) {
             alert(err?.message);
         }
@@ -134,6 +147,8 @@ const ForgetPassword = ({ setIsOpenDialog }) => {
 
     return (
         <>
+
+
             {
                 !verifyCode ? <div className="grid gap-4 py-4">
                     {
@@ -171,6 +186,7 @@ const ForgetPassword = ({ setIsOpenDialog }) => {
                                         value={code}
                                         onChange={(e) => setCode(e.target.value)}
                                     />
+
                                 </div>
 
                                 <Button
@@ -194,18 +210,36 @@ const ForgetPassword = ({ setIsOpenDialog }) => {
                                 id="password"
                                 className="col-span-4"
                                 placeholder="Enter Password"
+                                type={"password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
+                            {errors.password_req && (
+                                <p className="text-sm text-red-500" style={{ width: "500px" }}>{errors.password_req}</p>
+                            )}
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4 mb-4">
                             <Input
                                 id="confirm-password"
                                 className="col-span-4"
+                                type={showPassword ? "text" : "password"}
                                 placeholder="Enter Confirm Password"
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
+
                             />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-6 top-31 -translate-y-0"
+                                onClick={() => setShowPassword(!showPassword)}
+                            >
+                                {showPassword ? <EyeOff className="w-4 h-4" onClick={() => setShowPassword(false)} /> : <Eye className="w-4 h-4" onClick={() => setShowPassword(true)} />}
+                            </Button>
+                            {errors.password && (
+                                <p className="text-sm text-red-500" style={{ width: "500px" }}>{errors.password}</p>
+                            )}
                         </div>
                         <div>
                             <Button

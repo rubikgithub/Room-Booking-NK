@@ -14,7 +14,7 @@ const createUserSupabase = async (userData) => {
             address: '141, new test',
             phone_number: '9893600766',
             clerk_id: userData?.clerk_id,
-            role:"admin"
+            role:"user"
         }
         const { data: existingUser, error: checkError } = await supabase
             .from("users")

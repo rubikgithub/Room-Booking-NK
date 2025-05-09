@@ -79,9 +79,9 @@ const MyBookings = () => {
   ];
 
   const getMyBookings = () => {
+    console.log(clerk?.user?.id, 'clerk.user')
     if (!clerk?.user?.id) return;
-    
-    $ajax_post(`myBookings/${'user_2qnKSpIpsZ2QtF4B3JkQZWu9M5p'}`, {}, function (response) {
+    $ajax_post(`myBookings/${clerk?.user?.id}`, {}, function (response) {
       console.log(response, 'mybookings');
       setMyBookings(response || []);
     });
