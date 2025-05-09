@@ -9,7 +9,7 @@ router.post("/rooms", async (req, res) => {
       .from("rooms")
       .select(`*, building:buildings(name)`);
 
-    if (error) throw error;
+    // if (error) throw error;
 
     const processedData = data.map((room) => ({
       ...room,
@@ -31,7 +31,7 @@ router.post("/rooms", async (req, res) => {
 router.post("/buildings", async (req, res) => {
   try {
     const { data, error } = await supabase.from("buildings").select("*");
-    if (error) throw error;
+    // if (error) throw error;
     res.status(200).json({
       status: "success",
       message: "Buildings fetched successfully.",

@@ -1,364 +1,293 @@
-import { useEffect, useState } from "react";
-import { FormRow, Kanban, Button } from "unygc";
-import axios from "axios";
-const RoomsAndBuildings = () => {
+import React, { useEffect, useState } from "react";
+import { Kanban, Drawer } from "unygc";
+import { $ajax_post } from "../../Library";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label"
 
-    const [columns] = useState([]);
-    const [data, setData] = useState([
-      {
-        id: "App1",
-        title: "",
-        status: 1,
-        statusText: "To Do",
-        priority: 3,
-        priorityText: "Low",
-        startedAssignees: [
-          {
-            id: 1,
-            name: "Tekeshwar",
-          },
-          {
-            id: 2,
-            name: "Suresh",
-          },
-        ],
-        totalHours: 10,
-        assignees: [
-          {
-            id: 1,
-            name: "Tekeshwar",
-          },
-          {
-            id: 2,
-            name: "Suresh",
-          },
-          {
-            id: 3,
-            name: "Ramesh",
-          },
-          {
-            id: 4,
-            name: "Rajesh",
-          },
-        ],
-      },
-      {
-        id: "App2",
-        title: "Task 2",
-        status: 2,
-        statusText: "In Progress",
-        priority: 1,
-        priorityText: "High",
-      },
-      {
-        id: "App3",
-        title: "Task 3",
-        status: 2,
-        statusText: "In Progress",
-        priority: 2,
-        priorityText: "Medium",
-      },
-      {
-        id: "App4",
-        title: "Task 4",
-        status: 1,
-        statusText: "To Do",
-        priority: 3,
-        priorityText: "Low",
-      },
-      {
-        id: "App5",
-        title: "Task 5",
-        status: 2,
-        statusText: "In Progress",
-        priority: 2,
-        priorityText: "Medium",
-      },
-      {
-        id: "App6",
-        title: "Task 6",
-        status: 2,
-        statusText: "In Progress",
-        priority: 3,
-        priorityText: "Low",
-      },
-      {
-        id: "App7",
-        title: "Task 7",
-        status: 1,
-        statusText: "To Do",
-        priority: 1,
-        priorityText: "High",
-      },
-    ]);
-    const [stickyFilterContent, setStickyFilterContent] = useState(null);
-    const [filterSearchBtn, setFilterSearchBtn] = useState(null);
-    const [loading, setLoading] = useState(false);
-  
-    const [fixedFilters, setFixedFilters] = useState([
-      {
-        field: "customerText",
-        operator: "contains",
-        value: "Careymon",
-      },
-    ]);
-    const fetchData = async () => {
-      try {
-        // Save to the server
-        setLoading(true);
-        const response = await axios.post(
-          "https://curiousrubik.us/dev/pmsdevapi.php?gyu=" +
-            "cmp/pm/amenity-booking-list",
-          {
-            ref: "cmp/pm/amenity-booking-list",
-            body: {},
-          }
-        );
-        console.log("Kanban Data : ", response?.data?.data?.slice(0, 20));
-        setData(response.data?.data);
-      } catch (error) {
-        console.error("Error in set:", error);
-        throw error; // Re-throw the error for caller handling
-      }
-      setLoading(false);
+const RoomsAndBuildings = () => {
+    const [rooms, setRooms] = useState([]);
+    const [buildings, setBuildings] = useState([]);
+    const [columns, setColumns] = useState([]);
+    const [data, setData] = useState([]);
+    const [selectedRoomDrawer, setSelectedRoomDrawer] = useState(false);
+    const [selectedRoomData, setSelectedRoomData] = useState({});
+    const [formData, setFormData] = useState({
+
+    });
+
+    const handleChange = (e) => {
+
     };
-    const handleDragEnd = () => {};
-  
+
     const filtersListArr = [
-      {
-        value: "customrecord_rioo_property_setup",
-        label: "Property Setup",
-        key: "property",
-      },
-      {
-        value: "customrecord_rioo_amenity_booking_status",
-        label: "Amenity Booking Status",
-        key: "booking_status",
-      },
+        {
+            value: "customrecord_rioo_property_setup",
+            label: "Property Setup",
+            key: "property",
+        },
+        {
+            value: "customrecord_rioo_amenity_booking_status",
+            label: "Amenity Booking Status",
+            key: "booking_status",
+        },
     ];
-  
+
     const userSettings = {
-      // HeaderSourceTo:(content)=>{
-      //   console.log({content})
-      // },
-      // onApplyFilters: (filters) => {
-      //   console.log(" testfilters onApplyFilters", filters);
-      //   setData([...data]);
-      // },
-      filterOptions: {
-        fixedFilters: fixedFilters,
-      },
-      groupByOptions: [
-        {
-          value: "customrecord_rioo_property_setup",
-          label: "Property Setup",
-          key: "property",
+        groupByKey: "building_id",
+        enableFilters: true,
+        enableGlobalSearch: true,
+        defaultSettingOptions: {
+            cardSettings: true,
+            groupSettings: true,
+            settings: true,
         },
-        {
-          value: "customrecord_rioo_amenity_booking_status",
-          label: "Amenity Booking Status",
-          key: "booking_status",
+        defaultGroupByKey: "building_id",
+        dataFields: [
+            {
+                id: "id",
+                nameText: "Room ID",
+                type: "text",
+            },
+            {
+                id: "name",
+                nameText: "Room Name",
+                type: "text",
+            },
+            {
+                id: "type",
+                nameText: "Room Type",
+                type: "singleSelect",
+                valueOptions: [
+                    { value: "Deluxe", label: "Deluxe" },
+                    { value: "Suite", label: "Suite" },
+                    { value: "Economy", label: "Economy" },
+                    { value: "Cabin", label: "Cabin" },
+                    { value: "Conference Room", label: "Conference Room" },
+                ],
+            },
+            {
+                id: "capacity",
+                nameText: "Capacity",
+                type: "number",
+            },
+            {
+                id: "building_id",
+                nameText: "Building ID",
+                type: "text",
+            },
+            {
+                id: "building_name",
+                nameText: "Building Name",
+                type: "text",
+            },
+            {
+                id: "created_at",
+                nameText: "Created At",
+                type: "date",
+            },
+            {
+                id: "description",
+                nameText: "Description",
+                type: "text",
+            },
+            {
+                id: "area",
+                nameText: "Area",
+                type: "text",
+            },
+            {
+                id: "status",
+                nameText: "Status",
+                type: "singleSelect",
+                valueOptions: [
+                    { value: "Active", label: "Active" },
+                    { value: "Inactive", label: "Inactive" },
+                ],
+                fieldStyle: {
+                    Active: { background: "green", color: "#fff" },
+                    Inactive: { background: "red", color: "#fff" },
+                },
+            },
+            {
+                id: "image",
+                nameText: "Image",
+                type: "text", // Can be changed to "file" if used for file uploads.
+            },
+            {
+                id: "features",
+                nameText: "Features",
+                type: "multiSelect",
+                valueOptions: [
+                    { value: "Speaker", label: "Speaker" },
+                ],
+            },
+        ],
+        defaultViewConfig: {},
+        groupByOptions: [
+            {
+                value: "building_id",
+                label: "Building ID",
+                key: "building_id",
+            },
+        ],
+        allowUserSettings: true,
+        onClick: (cardData) => {
+            alert(cardData)
+
         },
-      ],
-      defaultRecordType: {
-        value: "customrecord_rioo_amenity_booking_calend",
-        label: "Amenity Booking Calendar",
-      },
-      recordTypeOptions: [
-        {
-          value: "customrecord_rioo_amenity_booking_calend",
-          label: "Amenity Booking Calendar",
-        },
-      ],
-      defaultGroupByKey: "booking_status",
-      enableFilters: true,
-      enableGlobalSearch: true,
-      defaultSettingOptions: {
-        cardSettings: true,
-        groupSettings: true,
-        settings: true,
-      },
-  
-      dataFields: [
-        {
-          id: "id",
-          nameText: "ID",
-          type: "text",
-        },
-        {
-          id: "name",
-          nameText: "Name",
-          type: "text",
-        },
-        {
-          id: "nameNumber",
-          nameText: "Name Number",
-          type: "text",
-          allowFiltering: true,
-          stickyFilter: true,
-        },
-        {
-          id: "customer",
-          nameText: "Customer ID",
-          type: "text",
-          allowFiltering: true,
-          stickyFilter: true,
-          field_id: "adjasd",
-        },
-        {
-          id: "customerText",
-          nameText: "Customer Name",
-          type: "text",
-          allowFiltering: true,
-          stickyFilter: true,
-          field_id: "custrecord_rioo_amnty_bkng_customer",
-        },
-        {
-          id: "phone_num",
-          nameText: "Phone Number",
-          type: "text",
-          allowFiltering: true,
-          stickyFilter: true,
-          field_id: "test_tst",
-        },
-        {
-          id: "email",
-          nameText: "Email",
-          type: "text",
-          field_id: "test",
-        },
-        {
-          id: "unit_type",
-          nameText: "Unit Type ID",
-          type: "text",
-          allowFiltering: false,
-        },
-        {
-          id: "unit_typeText",
-          nameText: "Unit Type",
-          type: "text",
-          allowFiltering: false,
-        },
-        {
-          id: "unit_id",
-          nameText: "Unit ID",
-          type: "text",
-          allowFiltering: false,
-        },
-        {
-          id: "unit_idText",
-          nameText: "Unit Name",
-          type: "text",
-          allowFiltering: false,
-        },
-        {
-          id: "amenity_type",
-          nameText: "Amenity Type ID",
-          type: "text",
-          allowFiltering: false,
-        },
-        {
-          id: "amenity_typeText",
-          nameText: "Amenity Type",
-          type: "text",
-          allowFiltering: false,
-        },
-        {
-          id: "booking_date",
-          nameText: "Booking Date",
-          type: "date",
-          allowFiltering: false,
-        },
-        {
-          id: "start_time",
-          nameText: "Start Time",
-          type: "text",
-          allowFiltering: false,
-        },
-        {
-          id: "end_time",
-          nameText: "End Time",
-          type: "text",
-          allowFiltering: false,
-        },
-        {
-          id: "booking_status",
-          nameText: "Booking Status ID",
-          type: "singleSelect",
-          listId: "customrecord_rioo_amenity_booking_status",
-          allowFiltering: true,
-          stickyFilter: true,
-        },
-        {
-          id: "booking_statusText",
-          nameText: "Booking Status",
-          type: "text",
-          allowFiltering: false,
-        },
-        {
-          id: "property",
-          nameText: "Property ID",
-          type: "text",
-        },
-        {
-          id: "propertyText",
-          nameText: "Property Name",
-          type: "text",
-        },
-      ],
-      onGroupByChange: (value) => {
-        console.log("group by", value);
-      },
-      allowUserSettings: true,
-      filtersListArr: filtersListArr,
-      // defaultViewConfig:{
-      //   json:{
-      //     cardSettings:{
-      //       tooltipBackgroundColor:"green",
-      //       tooltipFontColor:"red",
-      //       showMouseOverFields:true
-      //     },
-      //     groupSettings:{
-      //       headerColor:"dodgerblue",
-      //     }
-      //   }
-      // }
     };
+
+    const handleDragEnd = () => { };
+    const getRoomList = async () => {
+        try {
+            $ajax_post("/rooms", {}, function (response) {
+                console.log(response, 'rooms');
+                setRooms(response || []);
+                setRooms(response);
+                console.log(response?.map((item) => ({ ...item, features: item.features && Array.isArray(item.features) ? item.features : [] })), 'datassssss');
+                setData(response?.map((item) => ({ ...item, features: item.features && Array.isArray(item.features) ? item.features : [] })));
+            })
+        } catch (error) {
+            console.log(error)
+        }
+    };
+
+    const getBuildingList = async () => {
+        try {
+            $ajax_post("/buildings", {}, function (response) {
+                console.log(response, 'buildings');
+                setBuildings(response || []);
+                setColumns(response?.map((item) => ({ id: item.id, title: item.name })));
+
+            })
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
     useEffect(() => {
-      fetchData();
+        getRoomList();
+        getBuildingList()
     }, []);
+
     return (
-      <div>
-        {filterSearchBtn}
-        <FormRow cols={4}>
-          {stickyFilterContent?.map((item) => item?.element)}
-        </FormRow>
-        <Kanban
-          configurationId={"simpleKanbanDemo"}
-          moduleName={"KanbanDemoForGc"}
-          columns={columns}
-          data={data}
-          handleDragEnd={handleDragEnd}
-          userSettings={userSettings}
-          onClick={(cardData) => {
-            console.log("Click", { cardData });
-          }}
-          // onHover={(cardData) => {
-          //   console.log("Hover", cardData);
-          // }}
-          HeaderSourceTo={(content) => {
-            console.log({ content });
-          }}
-          StickyFilterSourceTo={(content, btn) => {
-            setStickyFilterContent(content);
-            setFilterSearchBtn(btn);
-          }}
-          // groupSpacing={20}
-          // groupBackgroundColor={"lightgrey"}
-          loading={loading}
-        />
-      </div>
+        <div style={{ width: "1625px" }}>
+            <Kanban
+                columns={columns}
+                data={data}
+                handleDragEnd={handleDragEnd}
+                userSettings={userSettings}
+                onClick={(cardData) => {
+                    setSelectedRoomData(cardData);
+                    setFormData(cardData);
+                    setSelectedRoomDrawer(true);
+                    console.log(cardData, 'ssssssss');
+                }}
+            />
+            <Drawer
+                title="Room Details"
+                isOpen={selectedRoomDrawer}
+                onClose={() => setSelectedRoomDrawer(false)}
+                defaultWidth="50%"
+                maxWidthSize="99.99%"
+                minWidthSize="30%"
+                resizable={true}
+                placement="right"
+                closeIcon={true}
+                id="recordsummary"
+            >
+                <form className="">
+                    <div className="mb-4">
+                        <Label className="mb-2" htmlFor="email">
+                            Room Name
+                        </Label>
+                        <Input
+                            className="h-[40px]"
+                            id="firstName"
+                            name="name"
+                            type="text"
+                            value={formData?.name}
+                            onChange={handleChange}
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <Label className="mb-2" htmlFor="email">
+                            Room Type
+                        </Label>
+                        <Input
+                            className="h-[40px]"
+                            id="type"
+                            name="type"
+                            type="text"
+
+                            value={formData?.type}
+                            onChange={handleChange}
+                        />
+
+                    </div>
+                    <div className="mb-4">
+                        <Label className="mb-2" htmlFor="email">
+                            Capacity
+                        </Label>
+                        <Input
+                            className="h-[40px]"
+                            id="capacity"
+                            name="capacity"
+                            type="text"
+
+                            value={formData?.capacity}
+                            onChange={handleChange}
+                        />
+
+                    </div>
+
+                    <div className="mb-4">
+                        <Label className="mb-2" htmlFor="password">
+                            Building Name
+                        </Label>
+                        <Input
+                            className="h-[40px]"
+                            id="building"
+                            name="building"
+                            type="text"
+                            value={formData?.building?.name}
+                            onChange={handleChange}
+                        />
+
+                    </div>
+                    <div className="mb-4">
+                        <Label className="mb-2" htmlFor="password">
+                            Area
+                        </Label>
+                        <Input
+                            className="h-[40px]"
+                            id="area"
+                            name="area"
+                            type="text"
+                            value={formData?.area}
+                            onChange={handleChange}
+                        />
+
+                    </div>
+                    <div className="mb-4">
+                        <Label className="mb-2" htmlFor="password">
+                            Discription
+                        </Label>
+                        <Input
+                            className="h-[40px]"
+                            id="description"
+                            name="description"
+                            type="text"
+                            value={formData?.description}
+                            onChange={handleChange}
+                        />
+
+                    </div>
+                </form>
+            </Drawer >
+        </div>
     );
 };
-
 export default RoomsAndBuildings;
+
