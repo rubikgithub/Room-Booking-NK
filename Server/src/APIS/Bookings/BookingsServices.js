@@ -5,7 +5,6 @@ const router = express.Router();
 router.post("/createBooking", async (req, res) => {
   const booking = req.body.body || req.body;
   const { user_id } = booking;
-  console.log(user_id, "user id <----------------");
   try {
     const { data: existingUser, error: checkError } = await supabase
       .from("users")
@@ -13,7 +12,6 @@ router.post("/createBooking", async (req, res) => {
       .eq("id", user_id)
       .single();
 
-    console.log(existingUser, "existingUser <----------------", checkError);
     if (checkError) throw checkError;
 
     if (!existingUser && existingUser?.clerk_id) {
@@ -24,14 +22,12 @@ router.post("/createBooking", async (req, res) => {
     }
     const { data, error } = await supabase.from("bookings").insert(booking);
     if (error) throw error;
-    console.log(data, "data <----------------");
     res.status(201).json({
       status: "success",
       message: "Booking created successfully.",
       data,
     });
   } catch (error) {
-    console.log(error, "error <----------------");
     res.status(500).json({
       status: "fail",
       message: "Failed to create booking.",
@@ -43,14 +39,12 @@ router.post("/deleteBooking", async (req, res) => {
   try {
     const { bookingId, userId } = req.body.body || req.body;
 
-    console.log(userId, "userId <----------------", bookingId);
     const { data: userData, error: userError } = await supabase
       .from("users")
       .select("role")
       .eq("id", userId)
       .single();
 
-    console.log(userError, "userError <----------------");
 
     if (userError) {
       return res.status(500).json({
