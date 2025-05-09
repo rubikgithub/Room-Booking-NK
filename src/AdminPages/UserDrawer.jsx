@@ -61,17 +61,13 @@ const UserDrawer = ({
     dob: "",
     address: "",
     role: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [status, setStatus] = useState(data?.status || "active");
-  const [accessDialogOpen, setAccessDialogOpen] = useState(false);
 
-  const [accessForm, setAccessForm] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
   const handleStatusUpdate = () => {
     $ajax_post("update-user-status", { id: data.id, status }, () => {
       setDialogOpen(false);
@@ -83,28 +79,12 @@ const UserDrawer = ({
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleAccessInput = (key, value) => {
-    setAccessForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleAccessSubmit = () => {
-    if (accessForm.password !== accessForm.confirmPassword) {
+  const handleSubmit = () => {
+    if (isCreateMode && formData.password !== formData.confirmPassword) {
       alert("Passwords do not match");
       return;
     }
 
-    const payload = {
-      id: data.id,
-      email: accessForm.email,
-      password: accessForm.password,
-    };
-
-    $ajax_post(`grant-access/${data?.id}`, payload, () => {
-      setAccessDialogOpen(false);
-      onRefresh();
-    });
-  };
-  const handleSubmit = () => {
     const formattedDOB = date ? format(date, "yyyy-MM-dd") : "";
     const endpoint = isCreateMode ? "createUser" : `updateUser/${data?.id}`;
     const payload = isEditMode
@@ -137,6 +117,8 @@ const UserDrawer = ({
         dob: "",
         address: "",
         role: "",
+        password: "",
+        confirmPassword: "",
       });
       setDate(null);
     }
@@ -240,6 +222,38 @@ const UserDrawer = ({
                 placeholder="Enter Address"
               />
             </div>
+
+            {/* Password */}
+            {mode === "create" && (
+              <>
+                <div>
+                  <label className="block font-medium text-sm mb-1">
+                    Password
+                  </label>
+                  <Input
+                    type="password"
+                    value={formData.password || ""}
+                    onChange={(e) => handleChange("password", e.target.value)}
+                    disabled={isViewMode}
+                    placeholder="Enter Password"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium text-sm mb-1">
+                    Confirm Password
+                  </label>
+                  <Input
+                    type="password"
+                    value={formData.confirmPassword || ""}
+                    onChange={(e) =>
+                      handleChange("confirmPassword", e.target.value)
+                    }
+                    disabled={isViewMode}
+                    placeholder="Confirm Password"
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           {/* Footer */}
@@ -277,13 +291,6 @@ const UserDrawer = ({
                         <DropdownMenuItem onSelect={() => setDialogOpen(true)}>
                           <span>Update Status</span>
                         </DropdownMenuItem>
-                        {!data?.authenticate && (
-                          <DropdownMenuItem
-                            onSelect={() => setAccessDialogOpen(true)}
-                          >
-                            <span>Give Access</span>
-                          </DropdownMenuItem>
-                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
 
@@ -358,62 +365,6 @@ const UserDrawer = ({
             <Button
               className="border bg-black text-white border-gray-200 hover:bg-gray-900 cursor-pointer"
               onClick={handleStatusUpdate}
-            >
-              Save
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={accessDialogOpen} onOpenChange={setAccessDialogOpen}>
-        <DialogContent className="w-[400px] bg-white">
-          <DialogHeader>
-            <DialogTitle>Give User Access</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 pt-2">
-            <div>
-              <label className="text-sm font-medium mb-1 block">Email</label>
-              <Input
-                type="email"
-                placeholder="Enter Email"
-                value={accessForm.email}
-                onChange={(e) => handleAccessInput("email", e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">Password</label>
-              <Input
-                type="password"
-                placeholder="Enter Password"
-                value={accessForm.password}
-                onChange={(e) => handleAccessInput("password", e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">
-                Confirm Password
-              </label>
-              <Input
-                type="password"
-                placeholder="Confirm Password"
-                value={accessForm.confirmPassword}
-                onChange={(e) =>
-                  handleAccessInput("confirmPassword", e.target.value)
-                }
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => setAccessDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              className="border bg-black text-white border-gray-200 hover:bg-gray-900 cursor-pointer"
-              onClick={handleAccessSubmit}
             >
               Save
             </Button>

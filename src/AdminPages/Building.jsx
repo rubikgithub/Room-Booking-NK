@@ -80,7 +80,7 @@ const Buildings = () => {
   return (
     <div className="p-4">
       <div className="flex justify-end mb-4">
-        <Button onClick={() => handleOpenDrawer(null, "create")}>
+        <Button className="ml-auto hover:bg-gray-100 border-1 border-gray-200" onClick={() => handleOpenDrawer(null, "create")}>
           Add Building
         </Button>
       </div>
@@ -157,7 +157,6 @@ const BuildingDrawer = ({
     location: "",
     area: "",
     status: "",
-    description: "",
   });
 
   const handleChange = (key, value) =>
@@ -187,7 +186,7 @@ const BuildingDrawer = ({
         location: data.location || "",
         area: data.area || "",
         status: data.status || "",
-        description: data.description || "",
+        // description: data.description || "",
       });
     } else if (isCreate) {
       setFormData({
@@ -195,7 +194,7 @@ const BuildingDrawer = ({
         location: "",
         area: "",
         status: "",
-        description: "",
+        // description: "",
       });
     }
   }, [data, mode]);
@@ -256,21 +255,11 @@ const BuildingDrawer = ({
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Status" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectContent className="w-full bg-white">
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="Inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
-          </FormField>
-
-          <FormField label="Description">
-            <Textarea
-              rows={3}
-              value={formData.description}
-              onChange={(e) => handleChange("description", e.target.value)}
-              disabled={isView}
-              placeholder="Enter Description"
-            />
           </FormField>
         </div>
 
