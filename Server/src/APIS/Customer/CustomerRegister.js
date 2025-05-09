@@ -11,8 +11,9 @@ const createUserSupabase = async (userData) => {
             first_name: userData?.first_name,
             last_name: userData?.last_name,
             email: userData?.email,
-            address: '141, new test',
-            phone_number: '9893600766',
+            address: userData?.address,
+            phone_number: userData?.phone_number,
+            dob: userData?.dob,
             clerk_id: userData?.clerk_id,
             role:"user"
         }
