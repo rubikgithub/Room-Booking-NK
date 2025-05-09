@@ -1,7 +1,6 @@
 import { Clerk } from '@clerk/clerk-js';
 
-const clerkFrontendApi = 'pk_test_c2VjdXJlLWNoaWNrZW4tNTAuY2xlcmsuYWNjb3VudHMuZGV2JA';
-
+const clerkFrontendApi = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 'pk_test_c2VjdXJlLWNoaWNrZW4tNTAuY2xlcmsuYWNjb3VudHMuZGV2JA';
 const clerk = new Clerk(clerkFrontendApi);
 
 const loadClerk = async () => {

@@ -97,9 +97,9 @@ const User = () => {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-lg shadow border border-gray-200">
+      <div className="overflow-x-auto max-h-[80vh] rounded-lg shadow border border-gray-200">
         <Table className="min-w-full divide-y divide-gray-200 bg-white">
-          <TableHeader className="bg-gray-100">
+          <TableHeader className="bg-gray-100 ">
             <TableRow>
               {columns.map((col) => (
                 <TableHead
