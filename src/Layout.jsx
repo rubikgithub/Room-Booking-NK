@@ -10,6 +10,7 @@ import {
   User,
 } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+
 import {
   Sidebar,
   SidebarContent,
@@ -33,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { clerk } from "./LoginRegister/clerk";
+import Profile from "./components/Profile";
 
 const Layout = ({ children }) => {
   const [open, setOpen] = useState(true);
@@ -55,6 +57,10 @@ const Layout = ({ children }) => {
       console.error("Error loading Clerk:", error);
     }
   };
+
+  const profileItems = [
+
+  ];
 
   return (
     <div>
@@ -94,6 +100,7 @@ const Layout = ({ children }) => {
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter className="border-t border-gray-200 ">
+            <ul className="sidebar-footer-menu">
             {localStorage.getItem("role") === "admin" && (
               <SidebarMenuItem className="hover:bg-gray-100 rounded-md">
                 <SidebarMenuButton>
@@ -107,6 +114,7 @@ const Layout = ({ children }) => {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )}
+            </ul>
           </SidebarFooter>
         </Sidebar>
 
@@ -152,9 +160,15 @@ const Layout = ({ children }) => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu> */}
-              <Button className="bg-red-600" onClick={userLogOut}>
+
+                <Profile
+                  profileItems={profileItems}
+                  accountText={"Room Booking Portal"}
+                  roleText={" "}
+                />
+              {/* <Button className="bg-red-600" onClick={userLogOut}>
                 Logout
-              </Button>
+              </Button> */}
             </div>
           </header>
 
