@@ -21,7 +21,7 @@ export default defineConfig({
     // open: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5056',
         // target: 'https://project-booking-calendar-nk-r1.vercel.app',
         changeOrigin: true,
         secure: false,

@@ -12,7 +12,7 @@ const statusColorsListRoutes = require("./APIS/TimeStatus/statusColorsList");
 const bookingServicesRoutes = require("./APIS/Bookings/BookingsServices");
 const timeConfigRoutes = require("./APIS/TimeStatus/timeConfigList");
 const app = express();
-const PORT = 5000;
+const PORT = 5056;
 
 // Middlewares
 app.use(express.static(path.join(__dirname, "public")));

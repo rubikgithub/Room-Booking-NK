@@ -128,47 +128,14 @@ const Layout = ({ children }) => {
             )}
 
             <div className="ml-auto">
-              {/* <DropdownMenu className="bg-white shadow-lg rounded-md z-50">
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">Test User</Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem>
-                      <User />
-                      <span>Profile</span>
-                      <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Settings />
-                      <span>Settings</span>
-                      <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Keyboard />
-                      <span>Keyboard shortcuts</span>
-                      <DropdownMenuShortcut>⌘K</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-
-                  <DropdownMenuItem onClick={userLogOut}>
-                    <LogOut />
-                    <span>Log out</span>
-                    <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu> */}
+              
 
                 <Profile
                   profileItems={profileItems}
                   accountText={"Room Booking Portal"}
                   roleText={" "}
                 />
-              {/* <Button className="bg-red-600" onClick={userLogOut}>
-                Logout
-              </Button> */}
+         
             </div>
           </header>
 

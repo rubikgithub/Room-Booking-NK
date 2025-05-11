@@ -8,7 +8,7 @@ import '../public/Theme.css';
 import './index.css';
 import SecurityCheck from './LoginRegister/index.jsx';
 import { ClerkProvider } from '@clerk/clerk-react';
-const PUBLISHABLE_KEY = "pk_test_c2VjdXJlLWNoaWNrZW4tNTAuY2xlcmsuYWNjb3VudHMuZGV2JA";//"pk_test_bGlnaHQtaWd1YW5hLTgzLmNsZXJrLmFjY291bnRzLmRldiQ";
+const PUBLISHABLE_KEY = "pk_test_Z3Jvd2luZy1tb2xseS04MC5jbGVyay5hY2NvdW50cy5kZXYk";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
