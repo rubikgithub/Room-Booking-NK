@@ -68,15 +68,15 @@ export const $ajax_post = (ref, data, successcallback, errorcallback, options) =
 
                 successcallback(response.data.data);
             } else {
-                console.error("Ajax Error", response.data)
+                console.error("Ajax Erroreee", response.message)
                 if (errorcallback) {
-                    errorcallback(response.data);
+                    errorcallback(response.message);
                 }
             }
         } catch (err) {
-            console.error("Ajax Error", err)
             if (errorcallback) {
-                errorcallback({ "status": "error", "message": "Unexpected Error in local", "error": err });
+                console.log('err',err?.response?.data?.message)
+                errorcallback({ "status": "error", "message": err?.response?.data?.message, "error": err });
             }
         } finally {
             $ajaxService.unsetAxiosRun({ "id": conId });

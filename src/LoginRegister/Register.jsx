@@ -10,8 +10,8 @@ import { $ajax_post } from "../Library/Library";
 
 const Register = () => {
     const [formData, setFormData] = useState({
-        firstName: "",
-        lastName: "",
+        first_name: "",
+        last_name: "",
         email: "",
         password: ""
     });
@@ -43,11 +43,11 @@ const Register = () => {
             newErrors.password = "Password must be at least 6 characters";
         }
 
-        if (!formData.firstName) {
+        if (!formData.first_name) {
             newErrors.firstName = "First Name is required";
         }
 
-        if (!formData.lastName) {
+        if (!formData.last_name) {
             newErrors.lastName = "Last Name is required";
         }
 
@@ -62,9 +62,15 @@ const Register = () => {
             try {
                 $ajax_post("createUser", { ...formData }, function (response) {
                     navigate('/');
+                }, function (error) {
+                    console.log(error,'adfasdfdsf');
+                    setIsSubmitting(false);
+                    alert(error?.message);
                 });
             } catch (error) {
                 console.error("There was an error!", error);
+                setIsSubmitting(false);
+                alert(error?.message);
             }
         }
     };
@@ -92,9 +98,9 @@ const Register = () => {
                                 <Input
                                     className="h-[40px]"
                                     id="firstName"
-                                    name="firstName"
+                                    name="first_name"
                                     type="text"
-                                    value={formData.firstName}
+                                    value={formData.first_name}
                                     onChange={handleChange}
                                 />
                                 {errors.email && (
@@ -108,10 +114,10 @@ const Register = () => {
                                 <Input
                                     className="h-[40px]"
                                     id="lastName"
-                                    name="lastName"
+                                    name="last_name"
                                     type="text"
 
-                                    value={formData.lastName}
+                                    value={formData.last_name}
                                     onChange={handleChange}
                                 />
                                 {errors.email && (
