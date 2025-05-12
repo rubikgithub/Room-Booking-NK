@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Drawer, FormControl, Select, Input, FormRow } from "unygc";
 import {
   Table,
   TableBody,
@@ -7,24 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerFooter,
-  DrawerTitle,
-  DrawerClose,
-} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { X } from "lucide-react";
 import { $ajax_post } from "../Library/Library";
 
 // ======================= Main Component =======================
@@ -80,7 +64,10 @@ const Buildings = () => {
   return (
     <div className="p-4">
       <div className="flex justify-end mb-4">
-        <Button className="ml-auto hover:bg-gray-100 border-1 border-gray-200" onClick={() => handleOpenDrawer(null, "create")}>
+        <Button
+          className="ml-auto hover:bg-gray-100 border-1 border-gray-200"
+          onClick={() => handleOpenDrawer(null, "create")}
+        >
           Add Building
         </Button>
       </div>
@@ -200,75 +187,22 @@ const BuildingDrawer = ({
   }, [data, mode]);
 
   return (
-    <Drawer open={open} onClose={onClose}>
-      <DrawerContent className="w-full max-w-md ml-auto h-full flex flex-col border-l bg-white z-50">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <DrawerTitle className="text-lg font-semibold">
-            {isCreate
-              ? "Create Building"
-              : isEdit
-              ? "Edit Building"
-              : "View Building"}
-          </DrawerTitle>
-          <button onClick={onClose} className="text-gray-500 hover:text-black">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
-          <FormField label="Building Name" required>
-            <Input
-              value={formData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
-              disabled={isView}
-              placeholder="Enter Building Name"
-            />
-          </FormField>
-
-          <FormField label="Location">
-            <Input
-              value={formData.location}
-              onChange={(e) => handleChange("location", e.target.value)}
-              disabled={isView}
-              placeholder="Enter Location"
-            />
-          </FormField>
-
-          <FormField label="Area (sq ft)">
-            <Input
-              type="number"
-              value={formData.area}
-              onChange={(e) => handleChange("area", e.target.value)}
-              disabled={isView}
-              placeholder="Enter Area"
-            />
-          </FormField>
-
-          <FormField label="Status">
-            <Select
-              disabled={isView}
-              value={formData.status}
-              onValueChange={(val) => handleChange("status", val)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Status" />
-              </SelectTrigger>
-              <SelectContent className="w-full bg-white">
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </FormField>
-        </div>
-
-        {/* Footer */}
-        <DrawerFooter className="p-4 border-t">
-          {isView ? (
+    <>
+      <Drawer
+        title={
+          isCreate
+            ? "Create Building"
+            : isEdit
+            ? "Edit Building"
+            : "View Building"
+        }
+        isOpen={open}
+        onClose={onClose}
+        footer={
+          isView ? (
             <div className="flex gap-2 justify-between">
               <div className="flex gap-2">
-                <Button onClick={() => setDrawerMode("edit")}>Edit</Button>
+                <Button className="hover:bg-gray-100 border-1 border-gray-200" onClick={() => setDrawerMode("edit")}>Edit</Button>
                 <Button variant="destructive" onClick={handleDelete}>
                   Delete
                 </Button>
@@ -279,25 +213,60 @@ const BuildingDrawer = ({
             </div>
           ) : (
             <div className="flex gap-2 justify-between">
-              <Button onClick={handleSubmit}>Save</Button>
-              <DrawerClose>
-                <Button variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-              </DrawerClose>
+              <Button className="hover:bg-gray-100 border-1 border-gray-200" onClick={handleSubmit}>Save</Button>
+
+              <Button variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
             </div>
-          )}
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+          )
+        }
+        defaultWidth="25%"
+        maxWidthSize="99.99%"
+        minWidthSize="30%"
+        resizable={true}
+        placement="right"
+        closeIcon={true}
+        id="2"
+      >
+        <div className="flex-1 overflow-y-auto p-2 space-y-5">
+          <FormRow cols={1} fieldAlign={"side"}>
+            <FormControl viewMode={isView} label="Building Name" required>
+              <Input
+                value={formData.name}
+                onChange={(e) => handleChange("name", e)}
+                placeholder="Enter Building Name"
+              />
+            </FormControl>
+            <FormControl viewMode={isView} label="Location">
+              <Input
+                value={formData.location}
+                onChange={(e) => handleChange("location", e)}
+                placeholder="Enter Location"
+              />
+            </FormControl>
+            <FormControl viewMode={isView} label="Area (sq ft)">
+              <Input
+                type="number"
+                value={formData.area}
+                onChange={(e) => handleChange("area", e)}
+                placeholder="Enter Area"
+              />
+            </FormControl>
+            <FormControl viewMode={isView} label="Status">
+              <Select
+                defaultValue={formData.status}
+                name="Status"
+                selectOptions={["Active", "Inactive"].map((item) => ({
+                  value: item,
+                  label: item,
+                }))}
+                onChange={(val) => handleChange("status", val)}
+              />
+            </FormControl>
+          </FormRow>
+        </div>
+      </Drawer>
+    </>
   );
 };
-
-const FormField = ({ label, required, children }) => (
-  <div>
-    <label className="block font-medium text-sm mb-1">
-      {label} {required && <span className="text-red-500">*</span>}
-    </label>
-    {children}
-  </div>
-);

@@ -118,4 +118,28 @@ router.post("/deleteBuilding/:buildingId", async (req, res) => {
   }
 });
 
+router.post("/createRoom", async (req, res) => {
+  const room = req.body.body || req.body;
+
+  try {
+    const { data, error } = await supabase
+      .from("rooms")
+      .insert([room])
+      .select();
+    if (error) throw error;
+
+    res.status(201).json({
+      status: "success",
+      message: "Room created successfully.",
+      data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "fail",
+      message: "Failed to create room.",
+      error: error.message || error,
+    });
+  }
+});
+
 module.exports = router;

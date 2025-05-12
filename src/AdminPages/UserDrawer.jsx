@@ -1,25 +1,13 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Drawer,
-  DrawerContent,
-  DrawerTitle,
-  DrawerFooter,
-  DrawerClose,
-} from "@/components/ui/drawer";
-import {
+  FormControl,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Calendar as CalendarIcon, X } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Input,
+  FormRow,
+  DatePicker,
+  TextArea,
+} from "unygc";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,8 +24,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { $ajax_post } from "../Library/Library";
 
 const UserDrawer = ({
@@ -90,7 +76,10 @@ const UserDrawer = ({
     const payload = isEditMode
       ? { id: data.id, ...formData, dob: formattedDOB }
       : { ...formData, dob: formattedDOB };
-
+    if (!isCreateMode) {
+      delete payload.confirmPassword;
+      delete payload.password;
+    }
     $ajax_post(endpoint, payload, () => {
       onClose();
       onRefresh();
@@ -125,198 +114,152 @@ const UserDrawer = ({
   }, [data, mode]);
   return (
     <>
-      <Drawer open={open} onClose={onClose}>
-        <DrawerContent className="w-full max-w-md ml-auto h-full shadow-xl border-l border-gray-200 bg-white z-50 flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b">
-            <DrawerTitle className="text-lg font-semibold">
-              {drawerTitle}
-            </DrawerTitle>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-black"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+      <Drawer
+        title={drawerTitle}
+        isOpen={open}
+        onClose={onClose}
+        footer={
+          <div className=" flex flex-wrap justify-between gap-2">
+            {isViewMode ? (
+              <>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setDrawerMode("edit")}
+                    className="border border-gray-200 hover:bg-gray-100"
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    className="border border-red-500 text-red-500 hover:bg-red-100"
+                    onClick={() => {
+                      $ajax_post(`deleteUser/${data?.id}`, {}, () => {
+                        onClose();
+                        onRefresh();
+                      });
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button className="border border-gray-200 hover:bg-gray-100">
+                        More
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-32 bg-white border border-gray-200 shadow-lg rounded-md">
+                      <DropdownMenuItem onSelect={() => setDialogOpen(true)}>
+                        <span>Update Status</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                  <Button variant="outline" onClick={onClose}>
+                    Close
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Button
+                  className="hover:bg-gray-100 border border-gray-200"
+                  onClick={handleSubmit}
+                >
+                  Save
+                </Button>
+
+                <Button variant="outline" onClick={onClose}>
+                  Cancel
+                </Button>
+              </>
+            )}
+          </div>
+        }
+        defaultWidth="25%"
+        maxWidthSize="99.99%"
+        minWidthSize="30%"
+        resizable={true}
+        placement="right"
+        closeIcon={true}
+        id="1"
+      >
+        <div className="flex-1 overflow-y-auto p-2 space-y-5">
+          <FormRow cols={1} fieldAlign={"side"}>
             {[
               { key: "first_name", label: "First Name", required: true },
               { key: "last_name", label: "Last Name" },
               { key: "email", label: "Email", required: true, type: "email" },
-              { key: "phone_number", label: "Phone Number" },
+              { key: "phone_number", label: "Phone Number", type:"number" },
             ].map((field, idx) => (
               <div key={idx}>
-                <label className="block font-medium text-sm mb-1">
-                  {field.label}
-                  {field.required && (
-                    <span className="text-red-500 ml-1">*</span>
-                  )}
-                </label>
-                <Input
-                  type={field.type || "text"}
-                  value={formData[field.key] || ""}
-                  onChange={(e) => handleChange(field.key, e.target.value)}
-                  disabled={isViewMode}
-                  placeholder={`Enter ${field.label}`}
-                />
+                <FormControl
+                  label={field.label}
+                  required={field.required}
+                  viewMode={isViewMode}
+                >
+                  <Input
+                    type={field.type || "text"}
+                    value={formData[field.key] || ""}
+                    onChange={(e) => handleChange(field.key, e)}
+                    disabled={isViewMode}
+                    placeholder={`Enter ${field.label}`}
+                  />
+                </FormControl>
               </div>
             ))}
 
-            {/* Role */}
-            <div>
-              <label className="block font-medium text-sm mb-1">Role</label>
+            <FormControl label="User Role" viewMode={isViewMode}>
               <Select
-                disabled={isViewMode}
-                value={formData.role || ""}
-                onValueChange={(value) => handleChange("role", value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="User Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="user">User</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* DOB */}
-            <div>
-              <label className="block font-medium text-sm mb-1">DOB</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={`w-full justify-start text-left font-normal ${
-                      !date && "text-muted-foreground"
-                    }`}
-                    disabled={isViewMode}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-white">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={(selectedDate) => {
-                      setDate(selectedDate);
-                      handleChange("dob", format(selectedDate, "yyyy-MM-dd"));
-                    }}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {/* Address */}
-            <div>
-              <label className="block font-medium text-sm mb-1">Address</label>
-              <Textarea
-                rows={3}
-                value={formData.address || ""}
-                onChange={(e) => handleChange("address", e.target.value)}
-                disabled={isViewMode}
-                placeholder="Enter Address"
+                defaultValue={formData?.role}
+                name="User Role"
+                selectOptions={[
+                  { label: "Admin", value: "admin" },
+                  { label: "User", value: "user" },
+                ]}
+                onChange={(val) => handleChange("role", val)}
               />
-            </div>
+            </FormControl>
 
-            {/* Password */}
+            <FormControl label="Date of Birth" viewMode={isViewMode}>
+              <DatePicker
+                value={date || ""}
+                onChange={(selectedDate) => {
+                  setDate(selectedDate);
+                  handleChange("dob", format(selectedDate, "yyyy-MM-dd"));
+                }}
+              />
+            </FormControl>
+            <FormControl label="Address" viewMode={isViewMode}>
+              <TextArea
+                type="text"
+                value={formData.address || ""}
+                placeholder="Enter Address"
+                onChange={(e) => handleChange("address", e)}
+              />
+            </FormControl>
             {mode === "create" && (
               <>
-                <div>
-                  <label className="block font-medium text-sm mb-1">
-                    Password
-                  </label>
+                <FormControl label="Password">
                   <Input
                     type="password"
                     value={formData.password || ""}
-                    onChange={(e) => handleChange("password", e.target.value)}
-                    disabled={isViewMode}
+                    onChange={(e) => handleChange("password", e)}
                     placeholder="Enter Password"
                   />
-                </div>
-                <div>
-                  <label className="block font-medium text-sm mb-1">
-                    Confirm Password
-                  </label>
+                </FormControl>
+                <FormControl label="Confirm Password">
                   <Input
                     type="password"
                     value={formData.confirmPassword || ""}
-                    onChange={(e) =>
-                      handleChange("confirmPassword", e.target.value)
-                    }
-                    disabled={isViewMode}
+                    onChange={(e) => handleChange("confirmPassword", e)}
                     placeholder="Confirm Password"
                   />
-                </div>
+                </FormControl>
               </>
             )}
-          </div>
-
-          {/* Footer */}
-          <DrawerFooter>
-            <div className="p-2 border-t flex flex-wrap justify-between gap-2">
-              {isViewMode ? (
-                <>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => setDrawerMode("edit")}
-                      className="border border-gray-200 hover:bg-gray-100"
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      className="border border-red-500 text-red-500 hover:bg-red-100"
-                      onClick={() => {
-                        $ajax_post(`deleteUser/${data?.id}`, {}, () => {
-                          onClose();
-                          onRefresh();
-                        });
-                      }}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                  <div className="flex gap-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button className="border border-gray-200 hover:bg-gray-100">
-                          More
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-32 bg-white border border-gray-200 shadow-lg rounded-md">
-                        <DropdownMenuItem onSelect={() => setDialogOpen(true)}>
-                          <span>Update Status</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <Button variant="outline" onClick={onClose}>
-                      Close
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Button
-                    className="hover:bg-gray-100 border border-gray-200"
-                    onClick={handleSubmit}
-                  >
-                    Save
-                  </Button>
-                  <DrawerClose>
-                    <Button variant="outline" onClick={onClose}>
-                      Cancel
-                    </Button>
-                  </DrawerClose>
-                </>
-              )}
-            </div>
-          </DrawerFooter>
-        </DrawerContent>
+          </FormRow>
+        </div>
       </Drawer>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
