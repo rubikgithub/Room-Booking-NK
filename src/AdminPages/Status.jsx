@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -7,53 +7,39 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-// import { ColorPicker } from "@/components/ui/color-picker"; // Adjust import path
-// import { Notification } from "@/components/ui/notification"; // Adjust import path
-// import { StatusServices } from "../../../services";
+import { $ajax_post } from "../Library";
+import { ColorPicker, Notification } from "unygc";
 
-const Status = ({ statusList, getStatusList }) => {
-  const [data, setData] = useState(statusList || []);
+const Status = () => {
+  const [data, setData] = useState([]);
 
-  const statusMapping = {
-    Pending: "Pending Confirmation",
-    Booked: "Booking Confirmed",
-    Completed: "Completed",
-    
-    Cancelled: "Cancelled",
+  const getStatusList = async () => {
+    try {
+      $ajax_post(`statusColors`, {}, function (response) {
+        setData(response);
+      });
+    } catch (error) {
+      console.error("Error fetching status", error);
+    }
   };
 
   useEffect(() => {
-    if (statusList?.length > 0) {
-      const updatedData = statusList.map((item) => ({
-        ...item,
-        status: statusMapping[item.status] || item.status,
-      }));
-      setData(updatedData);
-    }
-  }, [statusList]);
+    getStatusList();
+  }, []);
 
   const handleColorChange = async (id, newColor) => {
     try {
-    //   const bodyData = { id, color: newColor };
-    //   const response = await StatusServices.updateStatusColor(bodyData);
-    //   if (response?.success) {
-    //     Notification.open(
-    //       "success",
-    //       "Success",
-    //       "Status updated successfully",
-    //       3000,
-    //       "bottom-right"
-    //     );
-    //     getStatusList();
-    //   } else {
-    //     Notification.open(
-    //       "error",
-    //       "Error",
-    //       "Failed to update status, please try again",
-    //       3000,
-    //       "top-right"
-    //     );
-    //   }
+      const bodyData = { id, color: newColor };
+      $ajax_post(`update-status-color`, { ...bodyData }, function () {
+        Notification.open(
+          "success",
+          "Success",
+          "Status updated successfully",
+          3000,
+          "bottom-right"
+        );
+        getStatusList();
+      });
     } catch (error) {
       console.error("Error updating status:", error);
     }
@@ -69,12 +55,12 @@ const Status = ({ statusList, getStatusList }) => {
       field: "indicator",
       headerName: "Indicator",
       type: "text",
-    //   renderCell: (params) => (
-    //     <ColorPicker
-    //       value={params.row.color}
-    //       onChange={(color) => handleColorChange(params.row.id, color)}
-    //     />
-    //   ),
+      renderCell: (params) => (
+        <ColorPicker
+          value={params.row.color}
+          onChange={(color) => handleColorChange(params.row.id, color)}
+        />
+      ),
     },
   ];
 
@@ -84,7 +70,7 @@ const Status = ({ statusList, getStatusList }) => {
         <Table className="min-w-full divide-y divide-gray-200 bg-white">
           <TableHeader className="bg-gray-100">
             <TableRow>
-              {columns.map((col) => (
+              {columns?.map((col) => (
                 <TableHead
                   key={col.field}
                   className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"

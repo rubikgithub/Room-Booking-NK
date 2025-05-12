@@ -68,7 +68,7 @@ export const $ajax_post = (ref, data, successcallback, errorcallback, options) =
 
                 successcallback(response.data.data);
             } else {
-                console.error("Ajax Erroreee", response.message)
+                console.error("Ajax Erroreee", response)
                 if (errorcallback) {
                     errorcallback(response.message);
                 }
