@@ -78,7 +78,12 @@ router.post("/createUser", async (req, res) => {
                 "create_organizations_limit": 0
             }
 
-            await clerk.users.createUser(userData)
+            const userResp = await clerk.users.createUser(userData)
+             await supabase
+                .from("users")
+                .update({ 'clerk_id': userResp.id })
+                .eq("id", data[0].id)
+                .select();
             res.send({
                 status: 'success',
                 message: 'User created successfully',
