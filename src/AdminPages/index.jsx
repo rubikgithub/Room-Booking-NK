@@ -4,6 +4,7 @@ import User from "./User";
 import Rooms from "./Rooms";
 import Buildings from "./Building";
 import Status from "./Status";
+import Rules from "./Rules";
 
 const Settings = () => {
   return (
@@ -14,7 +15,7 @@ const Settings = () => {
           <TabsTrigger value="rooms">Rooms</TabsTrigger>
           <TabsTrigger value="building">Building</TabsTrigger>
           <TabsTrigger value="status">Status</TabsTrigger>
-          <TabsTrigger value="authentication">Authentication</TabsTrigger>
+          <TabsTrigger value="rules">Rules</TabsTrigger>
         </TabsList>
         <TabsContent className="w-full px-2" value="users">
           <User />
@@ -28,8 +29,8 @@ const Settings = () => {
         <TabsContent value="status">
           <Status />
         </TabsContent>
-        <TabsContent value="authentication">
-          Change your password here.
+        <TabsContent value="rules">
+          <Rules />
         </TabsContent>
       </Tabs>
     </div>

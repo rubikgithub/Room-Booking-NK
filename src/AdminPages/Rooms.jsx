@@ -1,5 +1,16 @@
 import { useEffect, useState } from "react";
-import { Drawer, FormControl, Select, Input, FormRow, Button } from "unygc";
+import axios from "axios";
+import {
+  Drawer,
+  FormControl,
+  Select,
+  Input,
+  FormRow,
+  Button,
+  ImageUploader,
+  Notification,
+  ModalBox,
+} from "unygc";
 import {
   Table,
   TableBody,
@@ -17,6 +28,8 @@ const Rooms = () => {
   const [drawerMode, setDrawerMode] = useState("view");
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedImages, setSelectedImages] = useState([]);
 
   const handleOpenDrawer = (row, mode = "view") => {
     setSelectedRow(row);
@@ -24,8 +37,10 @@ const Rooms = () => {
     setDrawerMode(mode);
   };
 
-  const openModalWithImages = (images) => {
-    console.log("Open modal with images:", images);
+  const openModalWithImages = (images, index) => {
+    setSelectedImages(images);
+    setCurrentImageIndex(index);
+    setImageModalOpen(true);
   };
 
   const [columns] = useState([
@@ -88,16 +103,13 @@ const Rooms = () => {
 
         return (
           <div style={{ display: "flex", gap: "5px", cursor: "pointer" }}>
-            {images.map((img, index) => (
+            {images?.map((img, index) => (
               <img
                 key={index}
-                src={img.path}
-                alt={img.originalName || "room image"}
+                src={img?.path}
+                alt={img?.originalName || "room image"}
                 style={{ width: "30px", height: "30px", borderRadius: "4px" }}
-                onClick={() => {
-                  setCurrentImageIndex(index);
-                  openModalWithImages(images);
-                }}
+                onClick={() => openModalWithImages(images, index)}
               />
             ))}
           </div>
@@ -173,6 +185,7 @@ const Rooms = () => {
             )}
           </TableBody>
         </Table>
+
         <RoomsDrawer
           data={selectedRow}
           open={openDrawer}
@@ -181,6 +194,36 @@ const Rooms = () => {
           onRefresh={getRooms}
           setDrawerMode={setDrawerMode}
         />
+
+        <ModalBox
+          title={selectedImages[currentImageIndex]?.originalName}
+          isOpen={imageModalOpen}
+          onClose={() => setImageModalOpen(false)}
+          width={800}
+        >
+          <div className="flex flex-col items-center">
+            <img
+              src={selectedImages[currentImageIndex]?.path}
+              alt="Selected Room"
+              className="max-w-[700px] max-h-[70vh] rounded"
+            />
+            <div className="mt-4 flex gap-2">
+              {selectedImages?.map((img, index) => (
+                <img
+                  key={index}
+                  src={img?.path}
+                  alt="thumb"
+                  className={`max-w-12 max-h-12  rounded cursor-pointer border ${
+                    index === currentImageIndex
+                      ? "border-blue-500"
+                      : "border-gray-300"
+                  }`}
+                  onClick={() => setCurrentImageIndex(index)}
+                />
+              ))}
+            </div>
+          </div>
+        </ModalBox>
       </div>
     </div>
   );
@@ -215,12 +258,76 @@ const RoomsDrawer = ({
     description: "",
     area: "",
     features: "",
+    image: [],
   });
 
+  console.log(formData, "formData");
   const [buildings, setBuildings] = useState([]);
 
   const handleChange = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleFileUpload = async (files) => {
+    try {
+      const formDataToSend = new FormData();
+      files.forEach((file) => formDataToSend.append("files", file));
+
+      const response = await axios.post(
+        "/api/upload-multiple",
+        formDataToSend,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+
+      const uploadedImages = response?.data?.files || [];
+
+      const existingImages = JSON.parse(formData?.image) || [];
+      const filteredNewImages = uploadedImages.filter(
+        (newImage) =>
+          !existingImages.some(
+            (existing) => existing.fileName === newImage.fileName
+          )
+      );
+
+      const combinedImages = [...existingImages, ...filteredNewImages];
+
+      setFormData((prev) => ({
+        ...prev,
+        image: JSON.stringify(combinedImages),
+      }));
+
+      if (response.status === 200) {
+        Notification.open(
+          "success",
+          "Success",
+          "Images uploaded successfully",
+          3000,
+          "bottom-right"
+        );
+      } else {
+        throw new Error("Upload response not OK");
+      }
+    } catch (error) {
+      console.error("Image upload error:", error);
+      Notification.open(
+        "error",
+        "Upload Failed",
+        "Image upload failed. Please try again.",
+        3000,
+        "top-right"
+      );
+    }
+  };
+
+  const handleImageDelete = (fileName) => {
+    setFormData((prev) => ({
+      ...prev,
+      image: JSON.stringify(
+        JSON.parse(formData?.image).filter((img) => img.fileName !== fileName)
+      ),
+    }));
   };
 
   const handleSubmit = () => {
@@ -228,6 +335,12 @@ const RoomsDrawer = ({
     const payload = isEdit ? { id: data.id, ...formData } : formData;
 
     $ajax_post(endpoint, payload, () => {
+      Notification.open(
+        "success",
+        "Success",
+        `Room ${isCreate ? "created" : "updated"} successfully`,
+        3000
+      );
       onClose();
       onRefresh();
     });
@@ -235,6 +348,12 @@ const RoomsDrawer = ({
 
   const handleDelete = () => {
     $ajax_post(`deleteRoom/${data?.id}`, {}, () => {
+      Notification.open(
+        "success",
+        "Deleted",
+        "Room deleted successfully",
+        3000
+      );
       onClose();
       onRefresh();
     });
@@ -242,9 +361,7 @@ const RoomsDrawer = ({
 
   useEffect(() => {
     $ajax_post("buildings", {}, (res) => {
-      if (res) {
-        setBuildings(res);
-      }
+      if (res) setBuildings(res);
     });
   }, []);
 
@@ -258,6 +375,7 @@ const RoomsDrawer = ({
         description: data.description || "",
         area: data.area || "",
         features: data.features || "",
+        image: data.image || [],
       });
     } else if (isCreate) {
       setFormData({
@@ -268,6 +386,7 @@ const RoomsDrawer = ({
         description: "",
         area: "",
         features: "",
+        image: [],
       });
     }
   }, [data, mode]);
@@ -279,14 +398,9 @@ const RoomsDrawer = ({
       onClose={onClose}
       footer={
         isView ? (
-          <div className="flex gap-2 justify-between">
+          <div className="flex justify-between gap-2">
             <div className="flex gap-2">
-              <Button
-                className="hover:bg-gray-100 border-1 border-gray-200"
-                onClick={() => setDrawerMode("edit")}
-              >
-                Edit
-              </Button>
+              <Button onClick={() => setDrawerMode("edit")}>Edit</Button>
               <Button variant="destructive" onClick={handleDelete}>
                 Delete
               </Button>
@@ -296,13 +410,8 @@ const RoomsDrawer = ({
             </Button>
           </div>
         ) : (
-          <div className="flex gap-2 justify-between">
-            <Button
-              className="hover:bg-gray-100 border-1 border-gray-200"
-              onClick={handleSubmit}
-            >
-              Save
-            </Button>
+          <div className="flex justify-between gap-2">
+            <Button onClick={handleSubmit}>Save</Button>
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
@@ -312,13 +421,14 @@ const RoomsDrawer = ({
       defaultWidth="25%"
       maxWidthSize="99.99%"
       minWidthSize="30%"
-      resizable={true}
+      resizable
       placement="right"
-      closeIcon={true}
+      closeIcon
       id="2"
     >
-      <div className="flex-1 overflow-y-auto p-2 space-y-5">
-        <FormRow cols={1} fieldAlign={"side"}>
+      <div className="p-4 space-y-4 overflow-y-auto">
+        {/* Fields */}
+        <FormRow cols={1} fieldAlign="side">
           <FormControl viewMode={isView} label="Name" required>
             <Input
               value={formData.name}
@@ -332,13 +442,13 @@ const RoomsDrawer = ({
               <Input
                 disabled
                 value={
-                  buildings?.find((b) => b?.id === formData?.building_id)
-                    ?.name || ""
+                  buildings.find((b) => b.id === formData.building_id)?.name ||
+                  ""
                 }
               />
             ) : (
               <Select
-                selectOptions={buildings?.map((b) => ({
+                selectOptions={buildings.map((b) => ({
                   label: b.name,
                   value: b.id,
                 }))}
@@ -350,22 +460,13 @@ const RoomsDrawer = ({
           </FormControl>
 
           <FormControl viewMode={isView} label="Type" required>
-            {isView ? (
-              <Input
-                disabled
-                value={
-                  roomTypes.find((type) => type.value === formData.type)
-                    ?.label || ""
-                }
-              />
-            ) : (
-              <Select
-                selectOptions={roomTypes}
-                value={formData.type}
-                onChange={(val) => handleChange("type", val)}
-                placeholder="Select Room Type"
-              />
-            )}
+            <Select
+              disabled={isView}
+              selectOptions={roomTypes}
+              value={formData.type}
+              onChange={(val) => handleChange("type", val)}
+              placeholder="Select Room Type"
+            />
           </FormControl>
 
           <FormControl viewMode={isView} label="Capacity">
@@ -401,8 +502,62 @@ const RoomsDrawer = ({
               placeholder="Enter Additional Features"
             />
           </FormControl>
+
+          {/* <FormControl label="Images" viewMode={isView}>
+            
+          </FormControl> */}
+          <span className="text-[#2b2065] font-semibold">Images</span>
+          <div className="space-y-2 mt-2">
+            {formData.image.length > 0 ? (
+              <div className="grid grid-cols-3 gap-2">
+                {JSON.parse(formData?.image)?.map((img) => (
+                  <div key={img.fileName} className="relative ">
+                    <img
+                      src={img.path}
+                      alt={img.originalName}
+                      className="rounded w-full h-full object-cover"
+                    />
+                    {!isView && (
+                      <button
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-b-full p-1 text-xs"
+                        onClick={() => handleImageDelete(img.fileName)}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">No images uploaded</p>
+            )}
+            {!isView && (
+              <ImageUploader
+                multiple
+                maxFileSizeMB={5}
+                handleFileUpload={handleFileUpload}
+                theme="theme2"
+              />
+            )}
+          </div>
         </FormRow>
       </div>
     </Drawer>
+  );
+};
+
+const Modal = ({ children, onClose }) => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-lg p-4 max-w-3xl w-full relative">
+        <button
+          className="absolute top-2 right-2 text-gray-500 hover:text-black"
+          onClick={onClose}
+        >
+          ✖
+        </button>
+        {children}
+      </div>
+    </div>
   );
 };
