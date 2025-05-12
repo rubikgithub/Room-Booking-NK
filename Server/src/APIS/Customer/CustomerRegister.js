@@ -6,6 +6,7 @@ const supabase = require("../../../config/supabaseClient");
 
 const createUserSupabase = async (userData) => {
     try {
+        console.log("userData", userData);
         const user = {
             id: uuidv4(),
             first_name: userData?.first_name,
@@ -14,8 +15,7 @@ const createUserSupabase = async (userData) => {
             address: userData?.address,
             phone_number: userData?.phone_number,
             dob: userData?.dob,
-            clerk_id: userData?.clerk_id,
-            role:"user"
+            role: userData?.role || "user"
         }
         const { data: existingUser, error: checkError } = await supabase
             .from("users")
@@ -55,52 +55,58 @@ const createUserSupabase = async (userData) => {
 }
 
 router.post("/createUser", async (req, res) => {
-    const user = req.body.body;
-    // const { success, message, data, error } = await createUserSupabase(user);
-    // if (success) {
-        try {
+    let supabaseData;
+    try {
+        const user = req.body.body;
+        const { success, message, data, error } = await createUserSupabase(user);
+        if (success) {
             const { email, password, first_name, last_name } = req.body.body;
+            supabaseData = data[0]
             const clerk = clearkClientInstance();
             const uuid = uuidv4();
             const userData = {
-                "external_id": uuid,
+                "external_id": data[0].id,
                 "first_name": first_name,
                 "last_name": last_name,
                 "email_address": [email],
                 "username": `${first_name}${uuid}`,
                 "password": password,
-                "skip_password_checks": true,
-                "skip_password_requirement": true,
+                // "skip_password_checks": true,
+                // "skip_password_requirement": true,
                 "delete_self_enabled": true,
                 "create_organization_enabled": true,
                 "create_organizations_limit": 0
             }
 
-            const userResp = await clerk.users.createUser(userData)
-            console.log(userResp.id, 'userResp');
-            await createUserSupabase({...user, clerk_id: userResp.id});
+            await clerk.users.createUser(userData)
             res.send({
                 status: 'success',
                 message: 'User created successfully',
                 data: user
             })
-
-        } catch (err) {
-            console.log(err)
+        }
+        else {
+            console.log('password duplicatioe')
             res.status(500).send({
-                status: 'error',
-                message: 'User creation failed',
-                error: err
+                status: "error",
+                message: message,
+                error: error,
             })
         }
-    // } else {
-    //     res.status(500).send({
-    //         status: "error",
-    //         message: message,
-    //         error: error,
-    //     })
-    // }
 
+    } catch (err) {
+        if (err.errors[0].code === 'form_password_pwned') {
+            await supabase
+                .from("users")
+                .delete()
+                .eq("id", supabaseData?.id);
+        }
+        res.status(err.status || 500).send({
+            status: 'error',
+            message: 'User creation failed',
+            error: err
+        })
+    }
 });
 
 router.post('/revokeSession/:sessionId', async (req, res) => {
@@ -110,7 +116,7 @@ router.post('/revokeSession/:sessionId', async (req, res) => {
         const clerk = clearkClientInstance();
         const session = await clerk.sessions.revokeSession(sessionId)
         res.send({
-             status: 'success',
+            status: 'success',
             data: session,
             message: 'User logged out successfully'
         })

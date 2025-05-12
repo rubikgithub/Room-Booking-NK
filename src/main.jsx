@@ -8,7 +8,8 @@ import '../public/Theme.css';
 import './index.css';
 import SecurityCheck from './LoginRegister/index.jsx';
 import { ClerkProvider } from '@clerk/clerk-react';
-const PUBLISHABLE_KEY = "pk_test_Z3Jvd2luZy1tb2xseS04MC5jbGVyay5hY2NvdW50cy5kZXYk";
+
+const PUBLISHABLE_KEY = import.meta.env.VITE_API_URL;
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
