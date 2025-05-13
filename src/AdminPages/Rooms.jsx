@@ -400,7 +400,7 @@ const RoomsDrawer = ({
         isView ? (
           <div className="flex justify-between gap-2">
             <div className="flex gap-2">
-              <Button onClick={() => setDrawerMode("edit")}>Edit</Button>
+              <Button type="primary" onClick={() => setDrawerMode("edit")}>Edit</Button>
               <Button variant="destructive" onClick={handleDelete}>
                 Delete
               </Button>
@@ -411,7 +411,7 @@ const RoomsDrawer = ({
           </div>
         ) : (
           <div className="flex justify-between gap-2">
-            <Button onClick={handleSubmit}>Save</Button>
+            <Button type="primary" onClick={handleSubmit}>Save</Button>
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>

@@ -77,28 +77,28 @@ const statusOptions = [
   { value: "Cancelled", label: "Cancelled" },
 ];
 const xAxisHeaderLabelStyle = {
-  color: "blue",
+  color: "#000000",
   fontSize: "14px",
   fontWeight: "bold",
-  backgroundColor: "pink",
+  backgroundColor: "#FF851B",
 };
 const xAxisTitleStyle = {
-  color: "green",
+  color: "white",
   fontSize: "16px",
   fontWeight: "bold",
-  backgroundColor: "yellow",
+  backgroundColor: "crimson",
 };
 const xAxisTimelineStyle = {
-  color: "red",
+  color: "white",
   fontSize: "15px",
   fontWeight: "bold",
   backgroundColor: "teal",
 };
 const yAxisValueStyle = {
-  color: "purple",
+  backgroundColor: "#990011",
   fontSize: "13px",
   fontWeight: "bold",
-  backgroundColor: "thistle",
+  color: "#FCF6F5",
 };
 
 function BookingCalender() {

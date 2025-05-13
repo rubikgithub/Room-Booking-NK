@@ -7,6 +7,7 @@ import {
   FormRow,
   DatePicker,
   TextArea,
+  Button,
 } from "unygc";
 import {
   DropdownMenu,
@@ -23,7 +24,6 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
 import { $ajax_post } from "../Library/Library";
 
 const UserDrawer = ({
@@ -125,7 +125,7 @@ const UserDrawer = ({
                 <div className="flex gap-2">
                   <Button
                     onClick={() => setDrawerMode("edit")}
-                    className="border border-gray-200 hover:bg-gray-100"
+                    type="primary"
                   >
                     Edit
                   </Button>
@@ -144,7 +144,7 @@ const UserDrawer = ({
                 <div className="flex gap-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button className="border border-gray-200 hover:bg-gray-100">
+                      <Button type="secondary" className="border border-gray-200 hover:bg-gray-100">
                         More
                       </Button>
                     </DropdownMenuTrigger>
@@ -163,7 +163,8 @@ const UserDrawer = ({
             ) : (
               <>
                 <Button
-                  className="hover:bg-gray-100 border border-gray-200"
+                  // className="hover:bg-gray-100 border border-gray-200"
+                  type="primary"
                   onClick={handleSubmit}
                 >
                   Save
@@ -190,7 +191,7 @@ const UserDrawer = ({
               { key: "first_name", label: "First Name", required: true },
               { key: "last_name", label: "Last Name" },
               { key: "email", label: "Email", required: true, type: "email" },
-              { key: "phone_number", label: "Phone Number", type:"number" },
+              { key: "phone_number", label: "Phone Number", type: "number" },
             ].map((field, idx) => (
               <div key={idx}>
                 <FormControl

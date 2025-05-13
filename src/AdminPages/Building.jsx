@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Drawer, FormControl, Select, Input, FormRow } from "unygc";
+import { Drawer, FormControl, Select, Input, FormRow, Button } from "unygc";
 import {
   Table,
   TableBody,
@@ -8,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { $ajax_post } from "../Library/Library";
 
 // ======================= Main Component =======================
@@ -202,7 +201,7 @@ const BuildingDrawer = ({
           isView ? (
             <div className="flex gap-2 justify-between">
               <div className="flex gap-2">
-                <Button className="hover:bg-gray-100 border-1 border-gray-200" onClick={() => setDrawerMode("edit")}>Edit</Button>
+                <Button type="primary" onClick={() => setDrawerMode("edit")}>Edit</Button>
                 <Button variant="destructive" onClick={handleDelete}>
                   Delete
                 </Button>
@@ -213,7 +212,7 @@ const BuildingDrawer = ({
             </div>
           ) : (
             <div className="flex gap-2 justify-between">
-              <Button className="hover:bg-gray-100 border-1 border-gray-200" onClick={handleSubmit}>Save</Button>
+              <Button type="primary" onClick={handleSubmit}>Save</Button>
 
               <Button variant="outline" onClick={onClose}>
                 Cancel

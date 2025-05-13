@@ -1,14 +1,5 @@
 import React, { useState } from "react";
-import {
-  Calendar,
-  Home,
-  Inbox,
-  Search,
-  Settings,
-  Keyboard,
-  LogOut,
-  User,
-} from "lucide-react";
+import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 import {
@@ -22,17 +13,6 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { SidebarFooter } from "./components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { clerk } from "./LoginRegister/clerk";
 import Profile from "./components/Profile";
 
@@ -46,21 +26,7 @@ const Layout = ({ children }) => {
     { title: "Rooms & Buildings", url: "/#/rooms-buildings", icon: Search },
   ];
 
-  const userLogOut = () => {
-    try {
-      clerk.load().then(() => {
-        localStorage.clear();
-        clerk.session.end();
-      });
-      window.location.reload();
-    } catch (error) {
-      console.error("Error loading Clerk:", error);
-    }
-  };
-
-  const profileItems = [
-
-  ];
+  const profileItems = [];
 
   return (
     <div>
@@ -101,25 +67,25 @@ const Layout = ({ children }) => {
           </SidebarContent>
           <SidebarFooter className="border-t border-gray-200 ">
             <ul className="sidebar-footer-menu">
-            {localStorage.getItem("role") === "admin" && (
-              <SidebarMenuItem className="hover:bg-gray-100 rounded-md">
-                <SidebarMenuButton>
-                  <a
-                    href={"/#/settings"}
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <Settings />
-                    <span>Settings</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )}
+              {localStorage.getItem("role") === "admin" && (
+                <SidebarMenuItem className="hover:bg-gray-100 rounded-md">
+                  <SidebarMenuButton>
+                    <a
+                      href={"/#/settings"}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <Settings />
+                      <span>Settings</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </ul>
           </SidebarFooter>
         </Sidebar>
 
         <div className="flex flex-col w-full">
-          <header className="w-full h-[54px] bg-white border-b border-gray-200 flex items-center px-4 justify-between">
+          <header className="w-full h-[54px] bg-white border-b border-gray-200 flex items-center px-4 justify-between sticky top-0 z-50">
             {!open && (
               <SidebarTrigger
                 className="cursor-pointer"
@@ -128,14 +94,11 @@ const Layout = ({ children }) => {
             )}
 
             <div className="ml-auto">
-              
-
-                <Profile
-                  profileItems={profileItems}
-                  accountText={"Room Booking Portal"}
-                  roleText={" "}
-                />
-         
+              <Profile
+                profileItems={profileItems}
+                accountText={"Room Booking Portal"}
+                roleText={" "}
+              />
             </div>
           </header>
 
