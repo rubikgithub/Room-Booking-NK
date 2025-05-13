@@ -34,21 +34,21 @@ const User = () => {
   };
 
   const handleCreateUser = (newUser) => {
-    $ajax_post("users/create", newUser, (response) => {
+    $ajax_post("users/create", newUser, () => {
       setDrawerOpen(false);
       getUsers();
     });
   };
 
   const handleEditUser = (updatedUser) => {
-    $ajax_post("users/update", updatedUser, (response) => {
+    $ajax_post("users/update", updatedUser, () => {
       setDrawerOpen(false);
       getUsers();
     });
   };
 
   const handleDeleteUser = (userId) => {
-    $ajax_post("users/delete", { id: userId }, (response) => {
+    $ajax_post("users/delete", { id: userId }, () => {
       setDrawerOpen(false);
       getUsers();
     });
