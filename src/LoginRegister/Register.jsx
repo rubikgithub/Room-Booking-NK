@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label"
 import { clerk, loadClerk } from '../LoginRegister/clerk';
 import { Card, CardContent } from "@/components/ui/card"
 import { useNavigate } from "react-router-dom";
-import { $ajax_post } from "../Library/Library";
+import { $ajax_post } from "../Library/library";
 
 
 const Register = () => {
