@@ -22,8 +22,6 @@ const SecurityCheck = () => {
         //     console.log(clerk.user);
         // setIsLoggedIn(isAuthenticated);
         if(clerk.user){
-         
-            console.log(clerk.user,'clerk.user');
             //user_2wogJroXsrv2qL3Yufp2POUpLlS
             $ajax_post(`getUser/${clerk.user.id}`, {}, function (response) {
                 console.log(response?.role, 'userssss');

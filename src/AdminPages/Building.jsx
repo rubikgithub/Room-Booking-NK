@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { $ajax_post } from "../Library/Library";
+import { $ajax_post } from "../Library";
 
 // ======================= Main Component =======================
 

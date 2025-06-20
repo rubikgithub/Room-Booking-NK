@@ -24,7 +24,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 import { format } from "date-fns";
-import { $ajax_post } from "../Library/Library";
+import { $ajax_post } from "../Library";
 
 const UserDrawer = ({
   open,

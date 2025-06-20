@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { $ajax_post } from "../Library/Library";
+import { $ajax_post } from "../Library";
 import UserDrawer from "./UserDrawer";
 
 const User = () => {
