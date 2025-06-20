@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { $ajax_post } from "../Library/Library";
+import { $ajax_post } from "../Library";
 
 const Rooms = () => {
   const [data, setData] = useState([]);
