@@ -30,6 +30,7 @@ router.post("/allBookings", async (req, res) => {
             status: 'error',
             message: "Failed to fetch bookings.",
             error: error.message || error,
+            err:error
         });
     }
 });
