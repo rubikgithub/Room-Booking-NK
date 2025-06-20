@@ -42,7 +42,7 @@ export function PieChartComponent({
     fill: colorPalette[index % colorPalette.length],
   }));
 
-  console.log(processedData, 'processedData')
+  console.log(processedData, "processedData");
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
@@ -50,7 +50,10 @@ export function PieChartComponent({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
-        <ChartContainer className="mx-auto aspect-square max-h-[250px]" config={{}}>
+        <ChartContainer
+          className="mx-auto aspect-square max-h-[250px]"
+          config={{}}
+        >
           <PieChart>
             <ChartTooltip
               cursor={false}
@@ -68,6 +71,33 @@ export function PieChartComponent({
               nameKey={nameKey}
               innerRadius={60}
               strokeWidth={5}
+              labelLine={false}
+              label={({
+                cx,
+                cy,
+                midAngle,
+                innerRadius,
+                outerRadius,
+                value,
+              }) => {
+                const RADIAN = Math.PI / 180;
+                const radius = innerRadius + (outerRadius - innerRadius) / 2;
+                const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                return (
+                  <text
+                    x={x}
+                    y={y}
+                    fill="white"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    className="text-[14px] font-semibold"
+                  >
+                    {value}
+                  </text>
+                );
+              }}
             >
               <Label
                 content={({ viewBox }) => {
@@ -102,14 +132,14 @@ export function PieChartComponent({
           </PieChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
+      {/* <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 font-medium leading-none">
           Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
           Summary of key metrics
         </div>
-      </CardFooter>
+      </CardFooter> */}
     </Card>
   );
 }

@@ -19,8 +19,7 @@ router.post("/allBookings", async (req, res) => {
 
         const { data, error } = await query;
 
-
-
+        if (error) throw error;
         res.status(200).json({
             status: "success",
             message: "Bookings fetched successfully.",
@@ -31,6 +30,7 @@ router.post("/allBookings", async (req, res) => {
             status: 'error',
             message: "Failed to fetch bookings.",
             error: error.message || error,
+            err:error
         });
     }
 });
