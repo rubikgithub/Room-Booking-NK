@@ -19,8 +19,7 @@ router.post("/allBookings", async (req, res) => {
 
         const { data, error } = await query;
 
-
-
+        if (error) throw error;
         res.status(200).json({
             status: "success",
             message: "Bookings fetched successfully.",
