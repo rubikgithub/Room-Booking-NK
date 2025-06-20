@@ -1,7 +1,6 @@
 import { Clerk } from '@clerk/clerk-js';
 console.log(import.meta.env.VITE_API_URL)
 const clerkFrontendApi =  import.meta.env.VITE_API_URL;
-// 'pk_test_bGlnaHQtaWd1YW5hLTgzLmNsZXJrLmFjY291bnRzLmRldiQ';
 const clerk = new Clerk(clerkFrontendApi);
 
 const loadClerk = async () => {
