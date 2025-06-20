@@ -69,7 +69,7 @@ const Login = () => {
         };
 
         $ajax_post(
-          `getUserByEmail/${formData.email?.identifier || formData.email}`,
+          `getUserByEmail/${formData.email || formData.email?.identifier}`,
           {},
           async function (response) {
             try {
