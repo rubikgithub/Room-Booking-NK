@@ -34,7 +34,7 @@ export function RadialChartComponent({ data = [] }) {
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
         <CardTitle>Overview Summary</CardTitle>
-        <CardDescription>Live Statistics</CardDescription>
+        <CardDescription>Summary of overall Booking's</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
