@@ -27,6 +27,7 @@ const Login = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleChange = (e) => {
+        console.log(e, 'Test Email')
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
