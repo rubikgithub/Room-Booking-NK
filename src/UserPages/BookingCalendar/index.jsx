@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -20,7 +20,8 @@ import { clerk } from "../../LoginRegister/clerk";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const timeOptions = [
+// Constants
+const TIME_OPTIONS = [
   "1:00 am",
   "1:30 am",
   "2:00 am",
@@ -70,95 +71,91 @@ const timeOptions = [
   "12:00 am",
   "12:30 am",
 ];
-const statusOptions = [
+
+const STATUS_OPTIONS = [
   { value: "Pending", label: "Pending Confirmation" },
   { value: "Booked", label: "Booking Confirmed" },
   { value: "Completed", label: "Completed" },
   { value: "Cancelled", label: "Cancelled" },
 ];
-const xAxisHeaderLabelStyle = {
-  color: "#000000",
-  fontSize: "14px",
-  fontWeight: "bold",
-  backgroundColor: "#FF851B",
+
+const CALENDAR_STYLES = {
+  xAxisHeaderLabel: {
+    color: "#000000",
+    fontSize: "14px",
+    fontWeight: "bold",
+    backgroundColor: "#FF851B",
+  },
+  xAxisTitle: {
+    color: "white",
+    fontSize: "16px",
+    fontWeight: "bold",
+    backgroundColor: "crimson",
+  },
+  xAxisTimeline: {
+    color: "white",
+    fontSize: "15px",
+    fontWeight: "bold",
+    backgroundColor: "teal",
+  },
+  yAxisValue: {
+    backgroundColor: "#990011",
+    fontSize: "13px",
+    fontWeight: "bold",
+    color: "#FCF6F5",
+  },
 };
-const xAxisTitleStyle = {
-  color: "white",
-  fontSize: "16px",
-  fontWeight: "bold",
-  backgroundColor: "crimson",
-};
-const xAxisTimelineStyle = {
-  color: "white",
-  fontSize: "15px",
-  fontWeight: "bold",
-  backgroundColor: "teal",
-};
-const yAxisValueStyle = {
-  backgroundColor: "#990011",
-  fontSize: "13px",
-  fontWeight: "bold",
-  color: "#FCF6F5",
+
+const INITIAL_FORM_VALUE = {
+  id: null,
+  eventTitle: "",
+  roomId: null,
+  description: "",
+  bookingDate: "",
+  bookingDateText: "",
+  startTime: "",
+  endTime: "",
+  status: "Pending",
+  createdBy: "",
+  updatedBy: "",
+  updatedDate: "",
+  updatedDateText: "",
 };
 
-function BookingCalender() {
-  const user = clerk?.user;
+// Custom hooks
+const useApi = () => {
+  const [loading, setLoading] = useState(false);
 
-  // Constants
-  const initialFormValue = {
-    id: null,
-    eventTitle: "",
-    roomId: null,
-    description: "",
-    bookingDate: "",
-    bookingDateText: "",
-    startTime: "",
-    endTime: "",
-    status: "Pending",
-    createdBy: "",
-    updatedBy: "",
-    updatedDate: "",
-    updatedDateText: "",
-  };
+  const fetchData = useCallback(async (endpoint, payload = {}) => {
+    setLoading(true);
+    return new Promise((resolve, reject) => {
+      $ajax_post(
+        endpoint,
+        payload,
+        (response) => {
+          setLoading(false);
+          resolve(response);
+        },
+        (error) => {
+          setLoading(false);
+          console.error(`Error fetching data from ${endpoint}:`, error);
+          reject(error);
+        }
+      );
+    });
+  }, []);
 
-  // State hooks - grouped by related functionality
-  // Room and building data
-  const [roomData, setRoomData] = useState([]);
-  const [buildingData, setBuildingData] = useState([]);
-  const [buildingOptions, setBuildingOptions] = useState([]);
-  const [ownerData, setOwnerData] = useState([]);
+  return { fetchData, loading };
+};
 
-  // Booking and event data
-  const [bookingList, setBookingList] = useState([]);
-  const [eventList, setEventList] = useState([]);
-  const [currentEvent, setCurrentEvent] = useState(null);
-  const [currentBooking, setCurrentBooking] = useState(null);
-  const [eventFormValues, setEventFormValues] = useState(initialFormValue);
-
-  // Time tracking
-  const [originalStartTime, setOriginalStartTime] = useState("");
-  const [originalEndTime, setOriginalEndTime] = useState("");
-  const [startTime, setStartTime] = useState("00:00");
-  const [endTime, setEndTime] = useState("23:59");
-  const [breakTimeData, setBreakTimeData] = useState({});
-  // const [lunchStartTime, setLunchStartTime] = useState("");
-  // const [lunchEndTime, setLunchEndTime] = useState("");
-
-  // UI state
-  const [statusColors, setStatusColors] = useState({});
-  const [addEditEventDrawerVisible, setAddEditEventDrawerVisible] =
-    useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-
-  // Utility functions
-  const handleTimeFormat = (timeString) => {
+// Utility functions
+const timeUtils = {
+  handleTimeFormat: (timeString) => {
     const [hours, minutes] = timeString.split(":");
     return `${hours}:${minutes}`;
-  };
+  },
 
-  const combineDateAndTime = (dateString, timeString) => {
+  combineDateAndTime: (dateString, timeString) => {
     const date = new Date(dateString);
     const timeParts = timeString.split(":");
     if (timeParts.length < 2) {
@@ -166,14 +163,11 @@ function BookingCalender() {
     }
     const hours = parseInt(timeParts[0], 10);
     const minutes = parseInt(timeParts[1], 10);
-    date.setHours(hours);
-    date.setMinutes(minutes);
-    date.setSeconds(0);
-    date.setMilliseconds(0);
+    date.setHours(hours, minutes, 0, 0);
     return date;
-  };
+  },
 
-  const convertTimeToMinutes = (timeString) => {
+  convertTimeToMinutes: (timeString) => {
     const [time, modifier] = timeString.split(" ");
     let [hours, minutes] = time.split(":");
     if (modifier === "pm" && hours !== "12") {
@@ -183,24 +177,24 @@ function BookingCalender() {
       hours = 0;
     }
     return parseInt(hours, 10) * 60 + parseInt(minutes, 10);
-  };
+  },
 
-  const subtractOneMinute = (timeStr) => {
+  adjustTime: (timeStr, minutesToAdd) => {
     if (!timeStr || typeof timeStr !== "string") {
-      console.error("Invalid time string in subtractOneMinute:", timeStr);
-      return timeStr; // Return original to prevent further issues
+      console.error("Invalid time string:", timeStr);
+      return timeStr;
     }
 
     const parts = timeStr.split(" ");
     if (parts.length !== 2) {
-      console.error("Invalid time format in subtractOneMinute:", timeStr);
+      console.error("Invalid time format:", timeStr);
       return timeStr;
     }
 
     const [time, meridian] = parts;
     const timeParts = time.split(":");
     if (timeParts.length !== 2) {
-      console.error("Invalid time parts in subtractOneMinute:", time);
+      console.error("Invalid time parts:", time);
       return timeStr;
     }
 
@@ -208,15 +202,11 @@ function BookingCalender() {
     let minutes = parseInt(timeParts[1], 10);
 
     if (isNaN(hours) || isNaN(minutes)) {
-      console.error(
-        "Invalid time numbers in subtractOneMinute:",
-        hours,
-        minutes
-      );
+      console.error("Invalid time numbers:", hours, minutes);
       return timeStr;
     }
 
-    minutes -= 1;
+    minutes += minutesToAdd;
 
     if (minutes < 0) {
       minutes = 59;
@@ -227,41 +217,7 @@ function BookingCalender() {
           meridian === "am" ? "pm" : "am"
         }`;
       }
-    }
-
-    return `${hours}:${minutes.toString().padStart(2, "0")} ${meridian}`;
-  };
-
-  const addOneMinute = (timeStr) => {
-    if (!timeStr || typeof timeStr !== "string") {
-      console.error("Invalid time string in addOneMinute:", timeStr);
-      return timeStr; // Return original to prevent further issues
-    }
-
-    const parts = timeStr.split(" ");
-    if (parts.length !== 2) {
-      console.error("Invalid time format in addOneMinute:", timeStr);
-      return timeStr;
-    }
-
-    const [time, meridian] = parts;
-    const timeParts = time.split(":");
-    if (timeParts.length !== 2) {
-      console.error("Invalid time parts in addOneMinute:", time);
-      return timeStr;
-    }
-
-    let hours = parseInt(timeParts[0], 10);
-    let minutes = parseInt(timeParts[1], 10);
-
-    if (isNaN(hours) || isNaN(minutes)) {
-      console.error("Invalid time numbers in addOneMinute:", hours, minutes);
-      return timeStr;
-    }
-
-    minutes += 1;
-
-    if (minutes === 60) {
+    } else if (minutes >= 60) {
       minutes = 0;
       hours += 1;
       if (hours === 12) {
@@ -274,374 +230,388 @@ function BookingCalender() {
     }
 
     return `${hours}:${minutes.toString().padStart(2, "0")} ${meridian}`;
-  };
+  },
 
-  const formatTime = (dateString) => {
+  formatTime: (dateString) => {
     const date = new Date(dateString);
     let hours = date.getHours();
     const minutes = date.getMinutes();
     const meridian = hours >= 12 ? "pm" : "am";
-    hours = hours % 12 || 12; // If 0, set it to 12 (12-hour clock)
+    hours = hours % 12 || 12;
     const formattedMinutes = minutes.toString().padStart(2, "0");
     return `${hours}:${formattedMinutes} ${meridian}`;
-  };
+  },
 
-  // API functions - consolidated with error handling
-  const fetchData = async (endpoint, payload = {}, callback) => {
-    try {
-      $ajax_post(endpoint, payload, callback);
-    } catch (error) {
-      console.error(`Error fetching data from ${endpoint}:`, error);
-      // Could add proper error handling/notification here
+  generateDateRange: (startDate, days) => {
+    const dates = [];
+    const current = new Date(startDate);
+
+    for (let i = 0; i < days; i++) {
+      dates.push(new Date(current).toISOString().split("T")[0]);
+      current.setDate(current.getDate() + 1);
     }
-  };
 
-  // API fetching functions
-  const getRoomList = () => {
-    fetchData("rooms", {}, (response) => {
-      setRoomData(response);
+    return dates;
+  },
+};
+
+const dateUtils = {
+  formatDateForDisplay: (date) => {
+    return new Date(date).toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
-  };
+  },
 
-  const getBuildingList = () => {
-    fetchData("buildings", {}, (response) => {
-      setBuildingData(response);
-      const transformedData = response.map((building) => ({
-        label: building.name,
-        value: building.id,
-      }));
-      setBuildingOptions(transformedData);
+  convertToISO: (date) => {
+    const localDate = dayjs(date)
+      .tz("Asia/Kolkata")
+      .format("YYYY-MM-DDTHH:mm:ss");
+    return dayjs.utc(localDate).toISOString();
+  },
+};
+
+// State reducer
+const initialState = {
+  roomData: [],
+  buildingData: [],
+  buildingOptions: [],
+  ownerData: [],
+  bookingList: [],
+  rawBookings: [], // Add this to store raw booking data
+  eventList: [],
+  currentEvent: null,
+  currentBooking: null,
+  eventFormValues: INITIAL_FORM_VALUE,
+  originalStartTime: "",
+  originalEndTime: "",
+  startTime: "00:00",
+  endTime: "23:59",
+  breakTimeData: {},
+  statusColors: {},
+  addEditEventDrawerVisible: false,
+  deleteModalOpen: false,
+  deleteLoading: false,
+  errors: {},
+};
+
+const bookingReducer = (state, action) => {
+  switch (action.type) {
+    case "SET_ROOM_DATA":
+      return { ...state, roomData: action.payload };
+    case "SET_BUILDING_DATA":
+      return {
+        ...state,
+        buildingData: action.payload,
+        buildingOptions: action.payload.map((building) => ({
+          label: building.name,
+          value: building.id,
+        })),
+      };
+    case "SET_BOOKING_LIST":
+      return { ...state, bookingList: action.payload };
+    case "SET_RAW_BOOKINGS":
+      return { ...state, rawBookings: action.payload };
+    case "SET_EVENT_LIST":
+      return { ...state, eventList: action.payload };
+    case "SET_CURRENT_EVENT":
+      return { ...state, currentEvent: action.payload };
+    case "SET_CURRENT_BOOKING":
+      return { ...state, currentBooking: action.payload };
+    case "SET_EVENT_FORM_VALUES":
+      return { ...state, eventFormValues: action.payload };
+    case "UPDATE_EVENT_FORM_VALUES":
+      return {
+        ...state,
+        eventFormValues: { ...state.eventFormValues, ...action.payload },
+      };
+    case "SET_ORIGINAL_TIMES":
+      return {
+        ...state,
+        originalStartTime: action.payload.startTime,
+        originalEndTime: action.payload.endTime,
+      };
+    case "SET_OPERATIONAL_TIME":
+      return {
+        ...state,
+        startTime: action.payload.startTime,
+        endTime: action.payload.endTime,
+      };
+    case "SET_BREAK_TIME_DATA":
+      return { ...state, breakTimeData: action.payload };
+    case "SET_STATUS_COLORS":
+      return { ...state, statusColors: action.payload };
+    case "SET_OWNER_DATA":
+      return { ...state, ownerData: action.payload };
+    case "SET_DRAWER_VISIBLE":
+      return { ...state, addEditEventDrawerVisible: action.payload };
+    case "SET_DELETE_MODAL":
+      return { ...state, deleteModalOpen: action.payload };
+    case "SET_DELETE_LOADING":
+      return { ...state, deleteLoading: action.payload };
+    case "SET_ERRORS":
+      return { ...state, errors: action.payload };
+    case "UPDATE_ERRORS":
+      return { ...state, errors: { ...state.errors, ...action.payload } };
+    case "RESET_FORM":
+      return {
+        ...state,
+        eventFormValues: INITIAL_FORM_VALUE,
+        currentEvent: null,
+        errors: {},
+      };
+    default:
+      return state;
+  }
+};
+
+function BookingCalendar() {
+  const user = clerk?.user;
+  const { fetchData, loading } = useApi();
+  const [state, dispatch] = useReducer(bookingReducer, initialState);
+
+  // Memoized values
+  const filteredEndTimeOptions = useMemo(() => {
+    if (!state.eventFormValues.startTime) return TIME_OPTIONS;
+
+    const startTimeInMinutes = timeUtils.convertTimeToMinutes(
+      state.eventFormValues.startTime
+    );
+    return TIME_OPTIONS.filter((time) => {
+      const timeInMinutes = timeUtils.convertTimeToMinutes(time);
+      return timeInMinutes > startTimeInMinutes;
     });
-  };
+  }, [state.eventFormValues.startTime]);
 
-  const getRoomsByBuildingIds = (buildingIds) => {
-    fetchData("rooms-by-building", { buildingIds }, (response) => {
-      setRoomData(response);
-    });
-  };
+  const headerDropdownTemplate = useMemo(
+    () => (
+      <Select
+        name="buildingOption"
+        defaultValue={state.buildingOptions?.map((option) => option?.value)}
+        multiple={true}
+        selectOptions={state.buildingOptions}
+        onChange={(value) => {
+          getRoomsByBuildingIds(value);
+          getBuildingsByIds(value);
+        }}
+      />
+    ),
+    [state.buildingOptions]
+  );
 
-  const getBuildingsByIds = (buildingIds) => {
-    fetchData("buildings-by-id", { buildingIds }, (response) => {
-      setBuildingData(response);
-    });
-  };
+  const roomSelectOptions = useMemo(
+    () =>
+      state.ownerData.map((item) => ({
+        value: item.id,
+        label: item.text,
+      })),
+    [state.ownerData]
+  );
 
-  const getAllBookings = () => {
-    fetchData("allBookings", {}, (response) => {
-      setBookingList(response);
+  // API functions
+  const getRoomList = useCallback(async () => {
+    try {
+      const response = await fetchData("rooms", {});
+      dispatch({ type: "SET_ROOM_DATA", payload: response });
+    } catch (error) {
+      console.error("Error fetching rooms:", error);
+    }
+  }, [fetchData]);
 
-      // Generate events list from bookings
-      const uniqueRooms = ownerData?.map((room) => ({
-        roomId: room?.id,
-      }));
+  const getBuildingList = useCallback(async () => {
+    try {
+      const response = await fetchData("buildings", {});
+      dispatch({ type: "SET_BUILDING_DATA", payload: response });
+    } catch (error) {
+      console.error("Error fetching buildings:", error);
+    }
+  }, [fetchData]);
 
-      const transformedData = response.map((booking) => ({
+  const getRoomsByBuildingIds = useCallback(
+    async (buildingIds) => {
+      try {
+        const response = await fetchData("rooms-by-building", { buildingIds });
+        dispatch({ type: "SET_ROOM_DATA", payload: response });
+      } catch (error) {
+        console.error("Error fetching rooms by building:", error);
+      }
+    },
+    [fetchData]
+  );
+
+  const getBuildingsByIds = useCallback(
+    async (buildingIds) => {
+      try {
+        const response = await fetchData("buildings-by-id", { buildingIds });
+        dispatch({ type: "SET_BUILDING_DATA", payload: response });
+      } catch (error) {
+        console.error("Error fetching buildings by ID:", error);
+      }
+    },
+    [fetchData]
+  );
+
+  const getStatusList = useCallback(async () => {
+    try {
+      const response = await fetchData("statusColors", {});
+      const colorsMap = response?.reduce((acc, item) => {
+        acc[item.status] = item.color;
+        return acc;
+      }, {});
+      dispatch({ type: "SET_STATUS_COLORS", payload: colorsMap });
+    } catch (error) {
+      console.error("Error fetching status colors:", error);
+    }
+  }, [fetchData]);
+
+  const getTimeList = useCallback(async () => {
+    try {
+      const response = await fetchData("timeConfig", {});
+
+      const operationalTime = response?.find(
+        (event) => event.title === "Operational Time"
+      );
+      if (operationalTime) {
+        dispatch({
+          type: "SET_OPERATIONAL_TIME",
+          payload: {
+            startTime: timeUtils.handleTimeFormat(operationalTime.start_time),
+            endTime: timeUtils.handleTimeFormat(operationalTime.end_time),
+          },
+        });
+      }
+
+      const lunchBreak = response?.find(
+        (event) => event.title === "Lunch Break"
+      );
+      if (lunchBreak) {
+        dispatch({ type: "SET_BREAK_TIME_DATA", payload: lunchBreak });
+      }
+    } catch (error) {
+      console.error("Error fetching time config:", error);
+    }
+  }, [fetchData]);
+
+  const getAllBookings = useCallback(async () => {
+    try {
+      const response = await fetchData("allBookings", {});
+      dispatch({ type: "SET_BOOKING_LIST", payload: response });
+
+      // Store the response to be processed when dependencies are ready
+      dispatch({ type: "SET_RAW_BOOKINGS", payload: response });
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+    }
+  }, [fetchData]);
+
+  // Separate function to process bookings into events
+  const processBookingsToEvents = useCallback(
+    (bookings, statusColors, breakTimeData, ownerData) => {
+      if (!bookings?.length || !statusColors || !ownerData?.length) return;
+
+      // Transform bookings to events
+      const transformedData = bookings.map((booking) => ({
         Id: booking?.id || null,
         Subject: booking?.title || "No Subject",
         Description: booking?.description || "No Description",
-        StartTime: combineDateAndTime(
-          booking?.date,
-          booking?.start_time
-        ).toISOString(),
-        EndTime: combineDateAndTime(
-          booking?.date,
-          booking?.end_time
-        ).toISOString(),
+        StartTime: timeUtils
+          .combineDateAndTime(booking?.date, booking?.start_time)
+          .toISOString(),
+        EndTime: timeUtils
+          .combineDateAndTime(booking?.date, booking?.end_time)
+          .toISOString(),
         RoomId: booking?.room_id || null,
         BackgroundColor: statusColors[booking?.status] || "#5F9EA0",
         rawData: booking,
       }));
 
-      // Add break times if available
-      const breakDataList = breakTimeData?.title
-        ? uniqueRooms
-            ?.map(({ roomId }) => {
-              const bookingForRoom = response?.find(
-                (booking) => booking?.room_id === roomId
-              );
+      // Generate break times for all rooms across multiple days
+      const breakDataList = [];
 
-              if (!bookingForRoom?.date) return null;
+      if (breakTimeData?.title) {
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
 
-              return {
-                Id: bookingForRoom?.id,
-                Subject: breakTimeData?.title || "No Subject",
-                StartTime: combineDateAndTime(
-                  bookingForRoom?.date,
-                  breakTimeData?.start_time
-                ).toISOString(),
-                EndTime: combineDateAndTime(
-                  bookingForRoom?.date,
-                  breakTimeData?.end_time
-                ).toISOString(),
-                RecurrenceRule: "FREQ=DAILY;INTERVAL=1;",
-                IsBlock: true,
-                RoomId: roomId,
-              };
-            })
-            .filter(Boolean)
-        : [];
+        const datesRange = timeUtils.generateDateRange(startOfWeek, 7);
+        const bookingDates = [
+          ...new Set(bookings.map((booking) => booking?.date)),
+        ];
+        const allDates = [...new Set([...datesRange, ...bookingDates])];
 
-      const finalData = [...transformedData, ...breakDataList];
-      setEventList(finalData);
-    });
-  };
-
-  const getStatusList = () => {
-    fetchData("statusColors", {}, (response) => {
-      const colorsMap = response?.reduce((acc, item) => {
-        acc[item.status] = item.color;
-        return acc;
-      }, {});
-      setStatusColors(colorsMap);
-    });
-  };
-
-  const getTimeList = () => {
-    fetchData("timeConfig", {}, (response) => {
-      // Handle operational time
-      const operationalTime = response?.find(
-        (event) => event.title === "Operational Time"
-      );
-
-      if (operationalTime) {
-        const formattedStartTime = handleTimeFormat(
-          operationalTime?.start_time
-        );
-        const formattedEndTime = handleTimeFormat(operationalTime?.end_time);
-        setStartTime(formattedStartTime);
-        setEndTime(formattedEndTime);
+        ownerData.forEach(({ id: roomId }) => {
+          allDates.forEach((date) => {
+            if (date) {
+              try {
+                breakDataList.push({
+                  Id: `break-${roomId}-${date}`,
+                  Subject: breakTimeData?.title || "Break Time",
+                  StartTime: timeUtils
+                    .combineDateAndTime(date, breakTimeData?.start_time)
+                    .toISOString(),
+                  EndTime: timeUtils
+                    .combineDateAndTime(date, breakTimeData?.end_time)
+                    .toISOString(),
+                  RecurrenceRule: "FREQ=DAILY;INTERVAL=1;",
+                  IsBlock: true,
+                  RoomId: roomId,
+                  BackgroundColor: "#808080",
+                });
+              } catch (error) {
+                console.error(
+                  `Error creating break time for room ${roomId} on ${date}:`,
+                  error
+                );
+              }
+            }
+          });
+        });
       }
 
-      // Handle lunch break
-      const lunchBreak = response?.find(
-        (event) => event.title === "Lunch Break"
-      );
-
-      if (lunchBreak) {
-        setBreakTimeData(lunchBreak);
-        // setLunchStartTime(lunchBreak?.start_time);
-        // setLunchEndTime(lunchBreak?.end_time);
-      }
-    });
-  };
+      dispatch({
+        type: "SET_EVENT_LIST",
+        payload: [...transformedData, ...breakDataList],
+      });
+    },
+    []
+  );
 
   // Form validation
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const newErrors = {};
 
-    if (!eventFormValues?.eventTitle?.trim()) {
+    if (!state.eventFormValues?.eventTitle?.trim()) {
       newErrors.eventTitle = "Event Title is required";
     }
 
-    if (!eventFormValues?.endTime?.trim()) {
+    if (!state.eventFormValues?.endTime?.trim()) {
       newErrors.endTime = "End Time is required";
     }
 
-    setErrors(newErrors);
+    dispatch({ type: "SET_ERRORS", payload: newErrors });
     return Object.keys(newErrors).length === 0;
-  };
-
-  // Event CRUD operations
-  const createEvent = async () => {
-    const formattedDate = new Date(eventFormValues.bookingDate)
-      .toISOString()
-      .split("T")[0];
-
-    const adjustedEndTime = subtractOneMinute(eventFormValues.endTime);
-
-    const data = {
-      user_id: user.externalId,
-      title: eventFormValues.eventTitle,
-      room_id: eventFormValues.roomId,
-      description: eventFormValues.description,
-      date: formattedDate,
-      start_time: eventFormValues.startTime,
-      end_time: eventFormValues.endTime,
-      status: eventFormValues.status,
-    };
-
-    const availabilityData = {
-      roomId: eventFormValues.roomId,
-      date: formattedDate,
-      startTime: data.start_time,
-      endTime: adjustedEndTime,
-    };
-
-    fetchData("check-room-availability", availabilityData, (response) => {
-      const { isAvailable } = response;
-
-      if (isAvailable) {
-        fetchData("createBooking", data, () => {
-          Notification.open(
-            "success",
-            "Booking Successful",
-            "Event created successfully",
-            3000,
-            "bottom-right"
-          );
-          getAllBookings();
-        });
-      } else {
-        Notification.open(
-          "warning",
-          "Room Unavailable",
-          "The selected room is unavailable for the specified time.",
-          3000,
-          "top-left"
-        );
-      }
-    });
-
-    // Optimistic update
-    setEventList((prevEventList) => [...prevEventList, { ...data }]);
-  };
-
-  const updateEvent = async () => {
-    const formattedDate = new Date(eventFormValues.bookingDate)
-      .toISOString()
-      .split("T")[0];
-
-    // Ensure we have valid time strings before comparing
-    const validOriginalStart =
-      originalStartTime && typeof originalStartTime === "string";
-    const validOriginalEnd =
-      originalEndTime && typeof originalEndTime === "string";
-
-    // Only detect changes if we have valid original values
-    const isStartTimeChanged =
-      validOriginalStart && eventFormValues.startTime !== originalStartTime;
-    const isEndTimeChanged =
-      validOriginalEnd && eventFormValues.endTime !== originalEndTime;
-
-    console.log("Time comparison:", {
-      isStartTimeChanged,
-      isEndTimeChanged,
-      originalStart: originalStartTime,
-      currentStart: eventFormValues.startTime,
-      originalEnd: originalEndTime,
-      currentEnd: eventFormValues.endTime,
-    });
-
-    const updates = {
-      title: eventFormValues.eventTitle,
-      room_id: eventFormValues.roomId,
-      description: eventFormValues.description,
-      date: formattedDate,
-      start_time: eventFormValues.startTime,
-      end_time: eventFormValues.endTime,
-      status: eventFormValues.status,
-    };
-
-    const userId = user.externalId;
-    const bookingId = eventFormValues.id;
-
-    const requestData = {
-      bookingId,
-      updates,
-      userId,
-    };
-
-    // Check if we need to verify room availability
-    if (isStartTimeChanged || isEndTimeChanged) {
-      // Only proceed if we have valid original times
-      if (!validOriginalStart || !validOriginalEnd) {
-        console.error(
-          "Missing original time values. Proceeding with update without availability check."
-        );
-        performUpdate();
-        return;
-      }
-
-      let newStartTime;
-      let newEndTime;
-
-      try {
-        newStartTime = addOneMinute(originalEndTime);
-        newEndTime = subtractOneMinute(eventFormValues.endTime);
-
-        // Validate that we have proper time strings
-        if (!newStartTime.includes(":") || !newEndTime.includes(":")) {
-          throw new Error("Invalid time format generated");
-        }
-      } catch (error) {
-        console.error("Error processing times:", error);
-        console.log(
-          "Proceeding with update without availability check due to time processing error"
-        );
-        performUpdate();
-        return;
-      }
-
-      const availabilityData = {
-        roomId: eventFormValues.roomId,
-        date: formattedDate,
-        startTime: newStartTime,
-        endTime: newEndTime,
-      };
-
-      console.log("Checking availability with:", availabilityData);
-
-      fetchData("check-room-availability", availabilityData, (response) => {
-        const { isAvailable } = response;
-
-        if (!isAvailable) {
-          Notification.open(
-            "warning",
-            "Room Unavailable",
-            "The selected room is unavailable for the specified time.",
-            3000,
-            "top-left"
-          );
-          return;
-        }
-
-        // If available, proceed with update
-        performUpdate();
-      });
-    } else {
-      // No time change, proceed with update
-      performUpdate();
-    }
-
-    function performUpdate() {
-      fetchData("update-booking", requestData, () => {
-        Notification.open(
-          "success",
-          "Update Successful",
-          "Event updated successfully",
-          3000,
-          "bottom-right"
-        );
-        getAllBookings();
-      });
-    }
-  };
-
-  const deleteBooking = async () => {
-    setDeleteLoading(true);
-
-    const requestData = {
-      bookingId: currentEvent?.Id,
-      userId: user?.externalId,
-    };
-
-    fetchData("deleteBooking", requestData, () => {
-      Notification.open(
-        "success",
-        "Deletion Successful",
-        "Event deleted successfully",
-        3000,
-        "bottom-right"
-      );
-      getAllBookings();
-      setDeleteModalOpen(false);
-      setAddEditEventDrawerVisible(false);
-      setDeleteLoading(false);
-    });
-  };
+  }, [state.eventFormValues]);
 
   // Event handlers
-  const handleSubmit = async () => {
+  const handleFormChange = useCallback(
+    (field, value) => {
+      dispatch({
+        type: "UPDATE_EVENT_FORM_VALUES",
+        payload: { [field]: value },
+      });
+
+      if (state.errors[field]) {
+        dispatch({
+          type: "UPDATE_ERRORS",
+          payload: { [field]: "" },
+        });
+      }
+    },
+    [state.errors]
+  );
+
+  const handleSubmit = useCallback(async () => {
     if (!validateForm()) {
       Notification.open(
         "error",
@@ -653,551 +623,605 @@ function BookingCalender() {
       return;
     }
 
-    if (eventFormValues.id) {
-      await updateEvent();
-    } else {
-      await createEvent();
-    }
+    const formattedDate = new Date(state.eventFormValues.bookingDate)
+      .toISOString()
+      .split("T")[0];
 
-    setAddEditEventDrawerVisible(false);
-    setCurrentEvent(null);
-  };
+    const data = {
+      user_id: user.externalId,
+      title: state.eventFormValues.eventTitle,
+      room_id: state.eventFormValues.roomId,
+      description: state.eventFormValues.description,
+      date: formattedDate,
+      start_time: state.eventFormValues.startTime,
+      end_time: state.eventFormValues.endTime,
+      status: state.eventFormValues.status,
+    };
 
-  const handleDelete = () => {
-    setDeleteModalOpen(true);
-  };
+    try {
+      if (state.eventFormValues.id) {
+        // Update existing booking
+        const updates = { ...data };
+        delete updates.user_id;
 
-  // Filter end time options based on start time selection
-  const filteredEndTimeOptions = useMemo(() => {
-    return timeOptions.filter((time) => {
-      const startTime = eventFormValues.startTime;
-      if (!startTime) {
-        return true; // If no start time selected, show all options
+        const requestData = {
+          bookingId: state.eventFormValues.id,
+          updates,
+          userId: user.externalId,
+        };
+
+        await fetchData("update-booking", requestData);
+        Notification.open(
+          "success",
+          "Update Successful",
+          "Event updated successfully",
+          3000,
+          "bottom-right"
+        );
+      } else {
+        // Create new booking
+        const adjustedEndTime = timeUtils.adjustTime(
+          state.eventFormValues.endTime,
+          -1
+        );
+
+        const availabilityData = {
+          roomId: state.eventFormValues.roomId,
+          date: formattedDate,
+          startTime: data.start_time,
+          endTime: adjustedEndTime,
+        };
+
+        const response = await fetchData(
+          "check-room-availability",
+          availabilityData
+        );
+
+        if (response.isAvailable) {
+          await fetchData("createBooking", data);
+          Notification.open(
+            "success",
+            "Booking Successful",
+            "Event created successfully",
+            3000,
+            "bottom-right"
+          );
+        } else {
+          Notification.open(
+            "warning",
+            "Room Unavailable",
+            "The selected room is unavailable for the specified time.",
+            3000,
+            "top-left"
+          );
+          return;
+        }
       }
-      const startTimeInMinutes = convertTimeToMinutes(startTime);
-      const timeInMinutes = convertTimeToMinutes(time);
-      return timeInMinutes > startTimeInMinutes; // Show only times after start time
-    });
-  }, [eventFormValues.startTime]);
 
-  // Memoized dropdown template to prevent unnecessary re-renders
-  const headerDropdownTemplate = useMemo(() => {
-    return (
-      <Select
-        name="buildingOption"
-        defaultValue={buildingOptions?.map((option) => option?.value)}
-        multiple={true}
-        selectOptions={buildingOptions}
-        onChange={(value) => {
-          getRoomsByBuildingIds(value);
-          getBuildingsByIds(value);
-        }}
-      />
-    );
-  }, [buildingOptions]);
+      // Refresh bookings data
+      getAllBookings();
+      dispatch({ type: "SET_DRAWER_VISIBLE", payload: false });
+      dispatch({ type: "RESET_FORM" });
+    } catch (error) {
+      console.error("Error saving booking:", error);
+    }
+  }, [state.eventFormValues, user, fetchData, validateForm, getAllBookings]);
 
+  const handleDelete = useCallback(async () => {
+    dispatch({ type: "SET_DELETE_LOADING", payload: true });
+
+    try {
+      const requestData = {
+        bookingId: state.currentEvent?.Id,
+        userId: user?.externalId,
+      };
+
+      await fetchData("deleteBooking", requestData);
+
+      Notification.open(
+        "success",
+        "Deletion Successful",
+        "Event deleted successfully",
+        3000,
+        "bottom-right"
+      );
+
+      getAllBookings();
+      dispatch({ type: "SET_DELETE_MODAL", payload: false });
+      dispatch({ type: "SET_DRAWER_VISIBLE", payload: false });
+    } catch (error) {
+      console.error("Error deleting booking:", error);
+    } finally {
+      dispatch({ type: "SET_DELETE_LOADING", payload: false });
+    }
+  }, [state.currentEvent, user, fetchData, getAllBookings]);
+
+  // Effects
   useEffect(() => {
-    getRoomList();
-    getBuildingList();
-    getStatusList();
-    getTimeList();
-  }, []);
+    Promise.all([
+      getRoomList(),
+      getBuildingList(),
+      getStatusList(),
+      getTimeList(),
+    ]);
+  }, [getRoomList, getBuildingList, getStatusList, getTimeList]);
 
-  // Refresh bookings when status colors change
+  // Load bookings only when status colors are available
   useEffect(() => {
-    if (Object.keys(statusColors).length > 0) {
+    if (Object.keys(state.statusColors).length > 0) {
       getAllBookings();
     }
-  }, [statusColors]);
+  }, [state.statusColors, getAllBookings]);
 
-  // Store original time values for comparison
-  // Track original time values for comparison during updates
+  // Process bookings when dependencies are ready
   useEffect(() => {
     if (
-      currentEvent?.Id &&
-      eventFormValues.startTime &&
-      eventFormValues.endTime
+      state.rawBookings?.length > 0 &&
+      Object.keys(state.statusColors).length > 0 &&
+      state.ownerData?.length > 0
     ) {
-      // Only when editing an existing event and times are available
-      setOriginalStartTime(eventFormValues.startTime);
-      setOriginalEndTime(eventFormValues.endTime);
-    }
-  }, [currentEvent?.Id, eventFormValues.id]);
-
-  // Log for debugging time issues
-  useEffect(() => {
-    if (eventFormValues.id) {
-      console.log("Time tracking values:", {
-        originalStart: originalStartTime,
-        originalEnd: originalEndTime,
-        currentStart: eventFormValues.startTime,
-        currentEnd: eventFormValues.endTime,
-      });
+      processBookingsToEvents(
+        state.rawBookings,
+        state.statusColors,
+        state.breakTimeData,
+        state.ownerData
+      );
     }
   }, [
-    eventFormValues.startTime,
-    eventFormValues.endTime,
-    originalStartTime,
-    originalEndTime,
-    eventFormValues.id,
+    state.rawBookings,
+    state.statusColors,
+    state.breakTimeData,
+    state.ownerData,
+    processBookingsToEvents,
   ]);
 
-  // Generate owner data when room or building data changes
   useEffect(() => {
-    if (roomData?.length > 0 && buildingData?.length > 0) {
-      const dynamicOwnerData = roomData.map((room) => {
-        const building = buildingData.find(
+    if (
+      state.roomData?.length > 0 &&
+      state.buildingData?.length > 0 &&
+      Object.keys(state.statusColors).length > 0
+    ) {
+      const dynamicOwnerData = state.roomData.map((room) => {
+        const building = state.buildingData.find(
           (building) => building?.id === room?.building_id
         );
 
         return {
           text: room?.name,
           id: room?.id,
-          color: statusColors[eventFormValues.status],
+          color: state.statusColors["Pending"], // Use default status color
           capacity: room?.capacity,
           type: room?.type,
           building: building?.name,
         };
       });
 
-      setOwnerData(dynamicOwnerData);
+      dispatch({ type: "SET_OWNER_DATA", payload: dynamicOwnerData });
     }
-  }, [roomData, buildingData, eventFormValues.status, statusColors]);
+  }, [state.roomData, state.buildingData, state.statusColors]);
 
-  // Handle current event changes and update form
   useEffect(() => {
-    if (currentEvent) {
-      const inputDate = new Date(currentEvent.StartTime);
-      const formattedDate = inputDate.toLocaleDateString("en-US", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
+    if (state.currentEvent) {
+      const inputDate = new Date(state.currentEvent.StartTime);
+      const formattedDate = dateUtils.formatDateForDisplay(inputDate);
+      const isoDate = dateUtils.convertToISO(state.currentEvent.StartTime);
+      const startTime = timeUtils.formatTime(state.currentEvent.StartTime);
 
-      const localDate = dayjs(currentEvent.StartTime)
-        .tz("Asia/Kolkata")
-        .format("YYYY-MM-DDTHH:mm:ss");
+      if (state.currentEvent.Id) {
+        const endTime = timeUtils.formatTime(state.currentEvent.EndTime);
+        const data = state.bookingList?.find(
+          (data) => data.id === state.currentEvent.Id
+        );
 
-      const isoDate = dayjs.utc(localDate).toISOString();
-      const startTime = formatTime(currentEvent.StartTime);
+        if (data) {
+          const userData = data?.user;
+          const updatedUserData = data?.updatedBy;
 
-      if (currentEvent.Id) {
-        // Editing existing event
-        const endTime = formatTime(currentEvent.EndTime);
-        const data = bookingList?.find((data) => data.id === currentEvent.Id);
+          const createdBy = [
+            userData?.first_name || "",
+            userData?.last_name || "",
+          ]
+            .filter(Boolean)
+            .join(" ");
 
-        const userData = data?.user;
-        const updatedUserData = data?.updatedBy;
+          const updatedBy = [
+            updatedUserData?.first_name || "",
+            updatedUserData?.last_name || "",
+          ]
+            .filter(Boolean)
+            .join(" ");
 
-        const createdBy = [
-          userData?.first_name || "",
-          userData?.last_name || "",
-        ]
-          .filter(Boolean)
-          .join(" ");
+          const updatedDateText = dateUtils.formatDateForDisplay(
+            new Date(data?.updated_at)
+          );
+          const isoUpdateDate = dateUtils.convertToISO(data?.updated_at);
 
-        const updatedBy = [
-          updatedUserData?.first_name || "",
-          updatedUserData?.last_name || "",
-        ]
-          .filter(Boolean)
-          .join(" ");
-
-        const updatedDate = new Date(data?.updated_at);
-        const updatedDateText = updatedDate.toLocaleDateString("en-US", {
-          month: "2-digit",
-          day: "2-digit",
-          year: "numeric",
-        });
-
-        const localUpdateDate = dayjs(data?.updated_at)
-          .tz("Asia/Kolkata")
-          .format("YYYY-MM-DDTHH:mm:ss");
-
-        const isoUpdateDate = dayjs.utc(localUpdateDate).toISOString();
-
-        setCurrentBooking(data);
-        setEventFormValues({
-          id: currentEvent.Id,
-          eventTitle: currentEvent.Subject,
-          description: currentEvent.Description,
-          roomId: currentEvent.RoomId,
-          bookingDate: isoDate,
-          bookingDateText: formattedDate,
-          startTime: startTime,
-          endTime: endTime,
-          status: currentEvent.rawData.status,
-          createdBy: createdBy,
-          updatedBy: updatedBy,
-          updatedDate: isoUpdateDate,
-          updatedDateText: updatedDateText,
-        });
+          dispatch({ type: "SET_CURRENT_BOOKING", payload: data });
+          dispatch({
+            type: "SET_EVENT_FORM_VALUES",
+            payload: {
+              id: state.currentEvent.Id,
+              eventTitle: state.currentEvent.Subject,
+              description: state.currentEvent.Description,
+              roomId: state.currentEvent.RoomId,
+              bookingDate: isoDate,
+              bookingDateText: formattedDate,
+              startTime: startTime,
+              endTime: endTime,
+              status: state.currentEvent.rawData.status,
+              createdBy: createdBy,
+              updatedBy: updatedBy,
+              updatedDate: isoUpdateDate,
+              updatedDateText: updatedDateText,
+            },
+          });
+        }
       } else {
-        // Creating new event
-        setEventFormValues(() => ({
-          ...initialFormValue,
-          bookingDate: isoDate,
-          bookingDateText: formattedDate,
-          startTime: startTime,
-          status: "Pending",
-          roomId: currentEvent.RoomId,
-        }));
+        dispatch({
+          type: "SET_EVENT_FORM_VALUES",
+          payload: {
+            ...INITIAL_FORM_VALUE,
+            bookingDate: isoDate,
+            bookingDateText: formattedDate,
+            startTime: startTime,
+            status: "Pending",
+            roomId: state.currentEvent.RoomId,
+          },
+        });
       }
     } else {
-      setEventFormValues(initialFormValue);
+      dispatch({ type: "SET_EVENT_FORM_VALUES", payload: INITIAL_FORM_VALUE });
     }
-  }, [currentEvent, bookingList]);
+  }, [state.currentEvent, state.bookingList]);
 
   // Templates
-  const resourceHeaderTemplate = (props) => (
-    <div className="template-wrap">
-      <div className="room-building">{props?.resourceData.building}</div>
-      <div className="room-name">
-        {props?.resourceData?.[props?.resource.textField]}
+  const resourceHeaderTemplate = useCallback(
+    (props) => (
+      <div className="template-wrap">
+        <div className="room-building">{props?.resourceData.building}</div>
+        <div className="room-name">
+          {props?.resourceData?.[props?.resource.textField]}
+        </div>
+        <div className="room-type">{props?.resourceData.type}</div>
+        <div className="room-capacity">{props?.resourceData.capacity}</div>
       </div>
-      <div className="room-type">{props?.resourceData.type}</div>
-      <div className="room-capacity">{props?.resourceData.capacity}</div>
-    </div>
+    ),
+    []
   );
 
-  // Form template components
-  const addEditEventTemplate = (
-    <>
-      <Row style={{ marginBottom: "10px" }}>
-        <Col sm={4}>
-          <label className="control-label">
-            Event Title <span style={{ color: "red" }}>*</span>
-          </label>
-        </Col>
-        <Col sm={8}>
-          <Input
-            name="eventTitle"
-            className="form-control"
-            placeholder="Enter event title"
-            onChange={(value) => {
-              setEventFormValues((prevValue) => ({
-                ...prevValue,
-                eventTitle: value,
-              }));
-              setErrors((prev) => ({ ...prev, eventTitle: "" }));
-            }}
-            value={eventFormValues.eventTitle || ""}
-          />
-          {errors?.eventTitle && (
-            <span style={{ color: "red", fontSize: "12px" }}>
-              {errors?.eventTitle}
-            </span>
-          )}
-        </Col>
-      </Row>
+  const addEditEventTemplate = useMemo(
+    () => (
+      <>
+        <Row style={{ marginBottom: "10px" }}>
+          <Col sm={4}>
+            <label className="control-label">
+              Event Title <span style={{ color: "red" }}>*</span>
+            </label>
+          </Col>
+          <Col sm={8}>
+            <Input
+              name="eventTitle"
+              className="form-control"
+              placeholder="Enter event title"
+              onChange={(value) => handleFormChange("eventTitle", value)}
+              value={state.eventFormValues.eventTitle || ""}
+            />
+            {state.errors?.eventTitle && (
+              <span style={{ color: "red", fontSize: "12px" }}>
+                {state.errors?.eventTitle}
+              </span>
+            )}
+          </Col>
+        </Row>
 
-      <Row style={{ marginBottom: "10px" }}>
-        <Col sm={4}>
-          <label className="control-label">Room</label>
-        </Col>
-        <Col sm={8}>
-          <Select
-            defaultValue={eventFormValues.roomId || null}
-            name="room"
-            selectOptions={ownerData.map((item) => ({
-              value: item.id,
-              label: item.text,
-            }))}
-            onChange={(_, obj) => {
-              setEventFormValues((prevForm) => ({
-                ...prevForm,
-                roomId: obj.value,
-              }));
-            }}
-          />
-        </Col>
-      </Row>
+        <Row style={{ marginBottom: "10px" }}>
+          <Col sm={4}>
+            <label className="control-label">Room</label>
+          </Col>
+          <Col sm={8}>
+            <Select
+              defaultValue={state.eventFormValues.roomId || null}
+              name="room"
+              selectOptions={roomSelectOptions}
+              onChange={(_, obj) => handleFormChange("roomId", obj.value)}
+            />
+          </Col>
+        </Row>
 
-      <Row style={{ marginBottom: "10px" }}>
-        <Col sm={4}>
-          <label className="control-label">Description</label>
-        </Col>
-        <Col sm={8}>
-          <Input
-            name="description"
-            className="form-control"
-            placeholder="Enter event description"
-            onChange={(value) => {
-              setEventFormValues((prevValue) => ({
-                ...prevValue,
-                description: value,
-              }));
-            }}
-            value={eventFormValues.description || ""}
-          />
-        </Col>
-      </Row>
+        <Row style={{ marginBottom: "10px" }}>
+          <Col sm={4}>
+            <label className="control-label">Description</label>
+          </Col>
+          <Col sm={8}>
+            <Input
+              name="description"
+              className="form-control"
+              placeholder="Enter event description"
+              onChange={(value) => handleFormChange("description", value)}
+              value={state.eventFormValues.description || ""}
+            />
+          </Col>
+        </Row>
 
-      <Row style={{ marginBottom: "10px" }}>
-        <Col sm={4}>
-          <label className="control-label">Booking Date</label>
-        </Col>
-        <Col sm={8}>
-          <DatePicker
-            open
-            style={{ width: 100 }}
-            dropdownClassName="calendar-only"
-            suffixIcon=""
-            defaultValue={
-              currentEvent?.StartTime
-                ? new Date(currentEvent.StartTime).toLocaleDateString("en-US", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  })
-                : ""
-            }
-            allowClear={false}
-            onChange={(value) => {
-              const inputDate = new Date(value);
-              const formattedDate = inputDate.toLocaleDateString("en-US", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              });
-              const localDate = dayjs(value)
-                .tz("Asia/Kolkata")
-                .format("YYYY-MM-DDTHH:mm:ss");
-              const isoDate = dayjs.utc(localDate).toISOString();
+        <Row style={{ marginBottom: "10px" }}>
+          <Col sm={4}>
+            <label className="control-label">Booking Date</label>
+          </Col>
+          <Col sm={8}>
+            <DatePicker
+              open
+              style={{ width: 100 }}
+              dropdownClassName="calendar-only"
+              suffixIcon=""
+              defaultValue={
+                state.currentEvent?.StartTime
+                  ? dateUtils.formatDateForDisplay(
+                      new Date(state.currentEvent.StartTime)
+                    )
+                  : ""
+              }
+              allowClear={false}
+              onChange={(value) => {
+                const formattedDate = dateUtils.formatDateForDisplay(
+                  new Date(value)
+                );
+                const isoDate = dateUtils.convertToISO(value);
 
-              setEventFormValues((prevForm) => ({
-                ...prevForm,
-                bookingDateText: formattedDate,
-                bookingDate: isoDate,
-              }));
-            }}
-          />
-        </Col>
-      </Row>
+                dispatch({
+                  type: "UPDATE_EVENT_FORM_VALUES",
+                  payload: {
+                    bookingDateText: formattedDate,
+                    bookingDate: isoDate,
+                  },
+                });
+              }}
+            />
+          </Col>
+        </Row>
 
-      <Row style={{ marginBottom: "10px" }}>
-        <Col sm={4}>
-          <label className="control-label">Start Time</label>
-        </Col>
-        <Col sm={8}>
-          <Select
-            defaultValue={eventFormValues.startTime || null}
-            name="startTime"
-            selectOptions={timeOptions.map((item) => ({
-              value: item,
-              label: item,
-            }))}
-            onChange={(_, obj) => {
-              setEventFormValues((prevForm) => ({
-                ...prevForm,
-                startTime: obj?.value,
-              }));
-            }}
-          />
-        </Col>
-      </Row>
+        <Row style={{ marginBottom: "10px" }}>
+          <Col sm={4}>
+            <label className="control-label">Start Time</label>
+          </Col>
+          <Col sm={8}>
+            <Select
+              defaultValue={state.eventFormValues.startTime || null}
+              name="startTime"
+              selectOptions={TIME_OPTIONS.map((item) => ({
+                value: item,
+                label: item,
+              }))}
+              onChange={(_, obj) => handleFormChange("startTime", obj?.value)}
+            />
+          </Col>
+        </Row>
 
-      <Row style={{ marginBottom: "10px" }}>
-        <Col sm={4}>
-          <label className="control-label">
-            End Time <span style={{ color: "red" }}>*</span>
-          </label>
-        </Col>
-        <Col sm={8}>
-          <Select
-            defaultValue={eventFormValues.endTime || null}
-            name="endTime"
-            selectOptions={filteredEndTimeOptions.map((item) => ({
-              value: item,
-              label: item,
-            }))}
-            onChange={(_, obj) => {
-              setEventFormValues((prevForm) => ({
-                ...prevForm,
-                endTime: obj?.value,
-              }));
-              setErrors((prev) => ({ ...prev, endTime: "" }));
-            }}
-          />
-          {errors?.endTime && (
-            <span style={{ color: "red", fontSize: "12px" }}>
-              {errors?.endTime}
-            </span>
-          )}
-        </Col>
-      </Row>
+        <Row style={{ marginBottom: "10px" }}>
+          <Col sm={4}>
+            <label className="control-label">
+              End Time <span style={{ color: "red" }}>*</span>
+            </label>
+          </Col>
+          <Col sm={8}>
+            <Select
+              defaultValue={state.eventFormValues.endTime || null}
+              name="endTime"
+              selectOptions={filteredEndTimeOptions.map((item) => ({
+                value: item,
+                label: item,
+              }))}
+              onChange={(_, obj) => handleFormChange("endTime", obj?.value)}
+            />
+            {state.errors?.endTime && (
+              <span style={{ color: "red", fontSize: "12px" }}>
+                {state.errors?.endTime}
+              </span>
+            )}
+          </Col>
+        </Row>
 
-      <Row style={{ marginBottom: "10px" }}>
-        <Col sm={4}>
-          <label className="control-label">Status</label>
-        </Col>
-        <Col sm={8}>
-          <Select
-            defaultValue={eventFormValues.status || null}
-            name="status"
-            selectOptions={statusOptions}
-            onChange={(_, obj) => {
-              setEventFormValues((prevForm) => ({
-                ...prevForm,
-                status: obj?.value,
-              }));
-            }}
-          />
-        </Col>
-      </Row>
+        <Row style={{ marginBottom: "10px" }}>
+          <Col sm={4}>
+            <label className="control-label">Status</label>
+          </Col>
+          <Col sm={8}>
+            <Select
+              defaultValue={state.eventFormValues.status || null}
+              name="status"
+              selectOptions={STATUS_OPTIONS}
+              onChange={(_, obj) => handleFormChange("status", obj?.value)}
+            />
+          </Col>
+        </Row>
 
-      {currentEvent?.Id && (
-        <>
-          <Row style={{ marginBottom: "10px" }}>
-            <Col sm={4}>
-              <label className="control-label">Booking By</label>
-            </Col>
-            <Col sm={8}>
-              <Input
-                disabled
-                name="bookedBy"
-                className="form-control"
-                placeholder="Enter Booking By"
-                value={eventFormValues.createdBy || ""}
-              />
-            </Col>
-          </Row>
+        {state.currentEvent?.Id && (
+          <>
+            <Row style={{ marginBottom: "10px" }}>
+              <Col sm={4}>
+                <label className="control-label">Booking By</label>
+              </Col>
+              <Col sm={8}>
+                <Input
+                  disabled
+                  name="bookedBy"
+                  className="form-control"
+                  placeholder="Enter Booking By"
+                  value={state.eventFormValues.createdBy || ""}
+                />
+              </Col>
+            </Row>
 
-          <Row style={{ marginBottom: "10px" }}>
-            <Col sm={4}>
-              <label className="control-label">Booking On</label>
-            </Col>
-            <Col sm={8}>
-              <Input
-                disabled
-                name="bookedOn"
-                className="form-control"
-                placeholder="Enter Booking On"
-                value={eventFormValues.bookingDateText || ""}
-              />
-            </Col>
-          </Row>
+            <Row style={{ marginBottom: "10px" }}>
+              <Col sm={4}>
+                <label className="control-label">Booking On</label>
+              </Col>
+              <Col sm={8}>
+                <Input
+                  disabled
+                  name="bookedOn"
+                  className="form-control"
+                  placeholder="Enter Booking On"
+                  value={state.eventFormValues.bookingDateText || ""}
+                />
+              </Col>
+            </Row>
 
-          <Row style={{ marginBottom: "10px" }}>
-            <Col sm={4}>
-              <label className="control-label">Updated By</label>
-            </Col>
-            <Col sm={8}>
-              <Input
-                disabled
-                name="updatedBy"
-                className="form-control"
-                placeholder="Enter Updated By"
-                value={eventFormValues.updatedBy || ""}
-              />
-            </Col>
-          </Row>
+            <Row style={{ marginBottom: "10px" }}>
+              <Col sm={4}>
+                <label className="control-label">Updated By</label>
+              </Col>
+              <Col sm={8}>
+                <Input
+                  disabled
+                  name="updatedBy"
+                  className="form-control"
+                  placeholder="Enter Updated By"
+                  value={state.eventFormValues.updatedBy || ""}
+                />
+              </Col>
+            </Row>
 
-          <Row style={{ marginBottom: "10px" }}>
-            <Col sm={4}>
-              <label className="control-label">Updated On</label>
-            </Col>
-            <Col sm={8}>
-              <Input
-                disabled
-                name="updatedOn"
-                className="form-control"
-                placeholder="Enter Updated On"
-                value={eventFormValues.updatedDateText || ""}
-              />
-            </Col>
-          </Row>
-        </>
-      )}
-    </>
+            <Row style={{ marginBottom: "10px" }}>
+              <Col sm={4}>
+                <label className="control-label">Updated On</label>
+              </Col>
+              <Col sm={8}>
+                <Input
+                  disabled
+                  name="updatedOn"
+                  className="form-control"
+                  placeholder="Enter Updated On"
+                  value={state.eventFormValues.updatedDateText || ""}
+                />
+              </Col>
+            </Row>
+          </>
+        )}
+      </>
+    ),
+    [
+      state.eventFormValues,
+      state.errors,
+      state.currentEvent,
+      filteredEndTimeOptions,
+      roomSelectOptions,
+      handleFormChange,
+    ]
   );
 
-  const addEditEventDrawerFooterTemplate = (
-    <div className="ec_add_edit_event_footer">
-      <div>
-        {currentEvent?.Id && (
+  const addEditEventDrawerFooterTemplate = useMemo(
+    () => (
+      <div className="ec_add_edit_event_footer">
+        <div>
+          {state.currentEvent?.Id && (
+            <Button
+              type="danger"
+              htmlType="submit"
+              form="createScreenForm"
+              onClick={() =>
+                dispatch({ type: "SET_DELETE_MODAL", payload: true })
+              }
+            >
+              Delete
+            </Button>
+          )}
           <Button
-            type="danger"
+            type="primary"
             htmlType="submit"
             form="createScreenForm"
-            onClick={handleDelete}
+            onClick={handleSubmit}
           >
-            Delete
+            Save
           </Button>
-        )}
-        <Button
-          type="primary"
-          htmlType="submit"
-          form="createScreenForm"
-          onClick={handleSubmit}
-        >
-          Save
-        </Button>
-        <Button
-          onClick={() => {
-            setAddEditEventDrawerVisible(false);
-            setCurrentEvent(null);
-          }}
-          style={{ marginRight: 8 }}
-        >
-          Cancel
-        </Button>
+          <Button
+            onClick={() => {
+              dispatch({ type: "SET_DRAWER_VISIBLE", payload: false });
+              dispatch({ type: "RESET_FORM" });
+            }}
+            style={{ marginRight: 8 }}
+          >
+            Cancel
+          </Button>
+        </div>
       </div>
-    </div>
+    ),
+    [state.currentEvent, handleSubmit]
   );
 
   return (
     <>
       <div className="event_calendar_container">
-        {startTime && endTime && (
-          <EventCalendar
-            width="100%"
-            height="calc(100vh - 100px)"
-            eventList={eventList}
-            ownerData={ownerData}
-            resourceHeaderTemplate={resourceHeaderTemplate}
-            headerTitle={["Building", "Room", "Type", "Capacity"]}
-            currentEvent={currentEvent}
-            setCurrentEvent={setCurrentEvent}
-            addEditEventTemplate={addEditEventTemplate}
-            headerDropdownTemplate={headerDropdownTemplate}
-            ownerColumnWidth={400}
-            addEditEventDrawerVisible={addEditEventDrawerVisible}
-            setAddEditEventDrawerVisible={setAddEditEventDrawerVisible}
-            addEditEventDrawerFooterTemplate={addEditEventDrawerFooterTemplate}
-            startHour={startTime}
-            endHour={endTime}
-            xAxisHeaderLabelStyle={xAxisHeaderLabelStyle}
-            xAxisTitleStyle={xAxisTitleStyle}
-            xAxisTimelineStyle={xAxisTimelineStyle}
-            yAxisValueStyle={yAxisValueStyle}
-            xAxisTitleHeight={75}
-            xAxisTimelineHeight={75}
-            yAxisValueHeight={96}
-            allowDragDrop={false}
-          />
+        {loading ? (
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              zIndex: 999,
+            }}
+          >
+            <Spin loading={loading} size="medium" />
+          </div>
+        ) : (
+          state.startTime &&
+          state.endTime && (
+            <EventCalendar
+              width="100%"
+              height="calc(100vh - 100px)"
+              eventList={state.eventList}
+              ownerData={state.ownerData}
+              resourceHeaderTemplate={resourceHeaderTemplate}
+              headerTitle={["Building", "Room", "Type", "Capacity"]}
+              currentEvent={state.currentEvent}
+              setCurrentEvent={(event) =>
+                dispatch({ type: "SET_CURRENT_EVENT", payload: event })
+              }
+              addEditEventTemplate={addEditEventTemplate}
+              headerDropdownTemplate={headerDropdownTemplate}
+              ownerColumnWidth={400}
+              addEditEventDrawerVisible={state.addEditEventDrawerVisible}
+              setAddEditEventDrawerVisible={(visible) =>
+                dispatch({ type: "SET_DRAWER_VISIBLE", payload: visible })
+              }
+              addEditEventDrawerFooterTemplate={
+                addEditEventDrawerFooterTemplate
+              }
+              startHour={state.startTime}
+              endHour={state.endTime}
+              xAxisHeaderLabelStyle={CALENDAR_STYLES.xAxisHeaderLabel}
+              xAxisTitleStyle={CALENDAR_STYLES.xAxisTitle}
+              xAxisTimelineStyle={CALENDAR_STYLES.xAxisTimeline}
+              yAxisValueStyle={CALENDAR_STYLES.yAxisValue}
+              xAxisTitleHeight={75}
+              xAxisTimelineHeight={75}
+              yAxisValueHeight={96}
+              allowDragDrop={false}
+            />
+          )
         )}
       </div>
+
       <ModalBox
         title="Delete Booking"
-        isOpen={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
+        isOpen={state.deleteModalOpen}
+        onClose={() => dispatch({ type: "SET_DELETE_MODAL", payload: false })}
         width={500}
         footer={
           <>
-            <Button type="primary" onClick={deleteBooking}>
-              Ok {deleteLoading && <Spin size="small" />}
+            <Button type="primary" onClick={handleDelete}>
+              Ok {state.deleteLoading && <Spin size="small" />}
             </Button>
           </>
         }
       >
         <div>
           {`Are you sure you want to delete`}{" "}
-          <strong>{currentBooking?.title}</strong>
+          <strong>{state.currentBooking?.title}</strong>
         </div>
       </ModalBox>
     </>
   );
 }
 
-export default BookingCalender;
+export default BookingCalendar;
