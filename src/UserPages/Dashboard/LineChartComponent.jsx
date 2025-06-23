@@ -80,7 +80,7 @@ export function LineChartComponent() {
             Showing total visitors for the last month
           </CardDescription>
         </div>
-        <div className="flex">
+        {/* <div className="flex">
           {["desktop", "mobile"].map((key) => (
             <button
               key={key}
@@ -96,7 +96,7 @@ export function LineChartComponent() {
               </span>
             </button>
           ))}
-        </div>
+        </div> */}
       </CardHeader>
       <CardContent className="px-2 sm:p-6">
         <ChartContainer
