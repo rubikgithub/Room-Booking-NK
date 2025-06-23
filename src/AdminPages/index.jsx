@@ -16,7 +16,7 @@ const Settings = () => {
           <TabsTrigger value="building">Building</TabsTrigger>
           <TabsTrigger value="status">Status</TabsTrigger>
           <TabsTrigger value="rules">Rules</TabsTrigger>
-          <TabsTrigger value="apiDoc">Api Documentation</TabsTrigger>
+          {/* <TabsTrigger value="apiDoc">Api Documentation</TabsTrigger> */}
         </TabsList>
         <TabsContent className="w-full px-2" value="users">
           <User />

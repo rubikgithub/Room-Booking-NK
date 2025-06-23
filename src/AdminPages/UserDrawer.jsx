@@ -89,8 +89,8 @@ const UserDrawer = ({
   const drawerTitle = isCreateMode
     ? "Create User"
     : isEditMode
-    ? "Edit User"
-    : "View User";
+      ? "Edit User"
+      : "View User";
 
   useEffect(() => {
     if (data && (isEditMode || isViewMode)) {
@@ -210,7 +210,7 @@ const UserDrawer = ({
               </div>
             ))}
 
-            <FormControl label="User Role" viewMode={isViewMode}>
+            <FormControl label="User Role" viewMode={isViewMode} required={true}>
               <Select
                 defaultValue={formData?.role}
                 name="User Role"
@@ -221,8 +221,20 @@ const UserDrawer = ({
                 onChange={(val) => handleChange("role", val)}
               />
             </FormControl>
-
-            <FormControl label="Date of Birth" viewMode={isViewMode}>
+            <FormControl label="Department" viewMode={isViewMode} required={true}>
+              <Select
+                defaultValue={formData?.department}
+                name="Department "
+                selectOptions={[
+                  { label: "Math", value: "Math" },
+                  { label: "Science", value: "Science" },
+                  { label: "Music", value: "Music" },
+                  { label: "Cultural", value: "Cultural" },
+                ]}
+                onChange={(val) => handleChange("department", val)}
+              />
+            </FormControl>
+            <FormControl label="Date of Birth" viewMode={isViewMode} required={true}>
               <DatePicker
                 value={date || ""}
                 onChange={(selectedDate) => {
@@ -231,7 +243,7 @@ const UserDrawer = ({
                 }}
               />
             </FormControl>
-            <FormControl label="Address" viewMode={isViewMode}>
+            <FormControl label="Address" viewMode={isViewMode} required={true}>
               <TextArea
                 type="text"
                 value={formData.address || ""}
@@ -241,7 +253,7 @@ const UserDrawer = ({
             </FormControl>
             {mode === "create" && (
               <>
-                <FormControl label="Password">
+                <FormControl label="Password" required={true}>
                   <Input
                     type="password"
                     value={formData.password || ""}
@@ -249,7 +261,7 @@ const UserDrawer = ({
                     placeholder="Enter Password"
                   />
                 </FormControl>
-                <FormControl label="Confirm Password">
+                <FormControl label="Confirm Password" required={true}>
                   <Input
                     type="password"
                     value={formData.confirmPassword || ""}
