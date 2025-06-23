@@ -18,7 +18,7 @@ import {
 
 export function PieChartComponent({
   data = [],
-  title = "Pie Chart",
+  title = "Summary of Rooms Booked",
   description = "Summary of Today's Booking.",
   valueKey = "count",
   nameKey = "label",

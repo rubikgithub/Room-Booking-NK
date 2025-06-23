@@ -10,24 +10,27 @@ router.post("/createBooking", async (req, res) => {
       .from("users")
       .select("*")
       .eq("id", user_id)
-      .single();
+      .maybeSingle();
 
     if (checkError) throw checkError;
 
-    if (!existingUser && existingUser?.clerk_id) {
+    if (!existingUser || !existingUser.clerk_id) {
       return res.status(400).json({
         status: "fail",
         message: "User not found.",
       });
     }
+
     const { data, error } = await supabase.from("bookings").insert(booking);
     if (error) throw error;
+
     res.status(201).json({
       status: "success",
       message: "Booking created successfully.",
       data,
     });
   } catch (error) {
+    console.log(error, "Error creating booking");
     res.status(500).json({
       status: "fail",
       message: "Failed to create booking.",
@@ -44,7 +47,6 @@ router.post("/deleteBooking", async (req, res) => {
       .select("role")
       .eq("id", userId)
       .single();
-
 
     if (userError) {
       return res.status(500).json({
