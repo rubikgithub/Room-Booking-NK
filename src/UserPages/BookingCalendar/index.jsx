@@ -253,6 +253,42 @@ const timeUtils = {
 
     return dates;
   },
+
+  isTimeInBreakPeriod: (startTime, endTime, breakTimeData) => {
+    if (!breakTimeData?.start_time || !breakTimeData?.end_time) {
+      return false;
+    }
+
+    const convertTimeToMinutes = (timeString) => {
+      const [time, modifier] = timeString.split(" ");
+      let [hours, minutes] = time.split(":");
+      if (modifier === "pm" && hours !== "12") {
+        hours = parseInt(hours, 10) + 12;
+      }
+      if (modifier === "am" && hours === "12") {
+        hours = 0;
+      }
+      return parseInt(hours, 10) * 60 + parseInt(minutes, 10);
+    };
+
+    const eventStartMinutes = convertTimeToMinutes(startTime);
+    const eventEndMinutes = convertTimeToMinutes(endTime);
+    const breakStartMinutes = convertTimeToMinutes(breakTimeData.start_time);
+    const breakEndMinutes = convertTimeToMinutes(breakTimeData.end_time);
+
+    // Check if event time overlaps with break time
+    return (
+      eventStartMinutes < breakEndMinutes && eventEndMinutes > breakStartMinutes
+    );
+  },
+
+  // Helper to format break time for display
+  formatBreakTime: (breakTimeData) => {
+    if (!breakTimeData?.start_time || !breakTimeData?.end_time) {
+      return "break time";
+    }
+    return `${breakTimeData.start_time} - ${breakTimeData.end_time}`;
+  },
 };
 
 const dateUtils = {
@@ -368,7 +404,7 @@ const bookingReducer = (state, action) => {
 
 function BookingCalendar() {
   const user = clerk?.user;
-  const { fetchData, loading } = useApi();
+  const { fetchData } = useApi();
   const [state, dispatch] = useReducer(bookingReducer, initialState);
 
   // Memoized values
@@ -585,13 +621,35 @@ function BookingCalendar() {
       newErrors.eventTitle = "Event Title is required";
     }
 
+    if (!state.eventFormValues?.startTime?.trim()) {
+      newErrors.startTime = "Start Time is required";
+    }
+
     if (!state.eventFormValues?.endTime?.trim()) {
       newErrors.endTime = "End Time is required";
     }
 
+    // NEW: Break time validation
+    if (
+      state.eventFormValues?.startTime &&
+      state.eventFormValues?.endTime &&
+      state.breakTimeData?.title
+    ) {
+      const isBreakTimeConflict = timeUtils.isTimeInBreakPeriod(
+        state.eventFormValues.startTime,
+        state.eventFormValues.endTime,
+        state.breakTimeData
+      );
+
+      if (isBreakTimeConflict) {
+        const breakTimeDisplay = timeUtils.formatBreakTime(state.breakTimeData);
+        newErrors.timeConflict = `Event cannot be scheduled during ${state.breakTimeData.title} (${breakTimeDisplay})`;
+      }
+    }
+
     dispatch({ type: "SET_ERRORS", payload: newErrors });
     return Object.keys(newErrors).length === 0;
-  }, [state.eventFormValues]);
+  }, [state.eventFormValues, state.breakTimeData]);
 
   // Event handlers
   const handleFormChange = useCallback(
@@ -613,13 +671,24 @@ function BookingCalendar() {
 
   const handleSubmit = useCallback(async () => {
     if (!validateForm()) {
-      Notification.open(
-        "error",
-        "Validation Error",
-        "Please fill in all required fields",
-        3000,
-        "top-right"
-      );
+      // Check specifically for break time conflict to show appropriate message
+      if (state.errors.timeConflict) {
+        Notification.open(
+          "error",
+          "Break Time Conflict",
+          state.errors.timeConflict,
+          4000,
+          "top-right"
+        );
+      } else {
+        Notification.open(
+          "error",
+          "Validation Error",
+          "Please fill in all required fields",
+          3000,
+          "top-right"
+        );
+      }
       return;
     }
 
@@ -640,7 +709,27 @@ function BookingCalendar() {
 
     try {
       if (state.eventFormValues.id) {
-        // Update existing booking
+        // Update existing booking - also check break time for updates
+        const isBreakTimeConflict = timeUtils.isTimeInBreakPeriod(
+          state.eventFormValues.startTime,
+          state.eventFormValues.endTime,
+          state.breakTimeData
+        );
+
+        if (isBreakTimeConflict) {
+          const breakTimeDisplay = timeUtils.formatBreakTime(
+            state.breakTimeData
+          );
+          Notification.open(
+            "error",
+            "Break Time Conflict",
+            `Cannot update event to ${state.breakTimeData.title} period (${breakTimeDisplay})`,
+            4000,
+            "top-right"
+          );
+          return;
+        }
+
         const updates = { ...data };
         delete updates.user_id;
 
@@ -659,7 +748,27 @@ function BookingCalendar() {
           "bottom-right"
         );
       } else {
-        // Create new booking
+        // Create new booking - double-check break time before availability check
+        const isBreakTimeConflict = timeUtils.isTimeInBreakPeriod(
+          state.eventFormValues.startTime,
+          state.eventFormValues.endTime,
+          state.breakTimeData
+        );
+
+        if (isBreakTimeConflict) {
+          const breakTimeDisplay = timeUtils.formatBreakTime(
+            state.breakTimeData
+          );
+          Notification.open(
+            "error",
+            "Break Time Conflict",
+            `Cannot create event during ${state.breakTimeData.title} (${breakTimeDisplay})`,
+            4000,
+            "top-right"
+          );
+          return;
+        }
+
         const adjustedEndTime = timeUtils.adjustTime(
           state.eventFormValues.endTime,
           -1
@@ -705,7 +814,15 @@ function BookingCalendar() {
     } catch (error) {
       console.error("Error saving booking:", error);
     }
-  }, [state.eventFormValues, user, fetchData, validateForm, getAllBookings]);
+  }, [
+    state.eventFormValues,
+    state.errors,
+    state.breakTimeData,
+    user,
+    fetchData,
+    validateForm,
+    getAllBookings,
+  ]);
 
   const handleDelete = useCallback(async () => {
     dispatch({ type: "SET_DELETE_LOADING", payload: true });
@@ -892,6 +1009,27 @@ function BookingCalendar() {
   const addEditEventTemplate = useMemo(
     () => (
       <>
+        {state.errors?.timeConflict && (
+          <Row style={{ marginBottom: "10px" }}>
+            <Col sm={12}>
+              <div
+                style={{
+                  color: "red",
+                  fontSize: "14px",
+                  padding: "10px",
+                  backgroundColor: "#fff2f0",
+                  border: "1px solid #ffccc7",
+                  borderRadius: "4px",
+                  marginBottom: "10px",
+                  fontWeight: "400",
+                }}
+              >
+                <span>⚠️ {state.errors.timeConflict}</span>
+              </div>
+            </Col>
+          </Row>
+        )}
+
         <Row style={{ marginBottom: "10px" }}>
           <Col sm={4}>
             <label className="control-label">
@@ -981,7 +1119,9 @@ function BookingCalendar() {
 
         <Row style={{ marginBottom: "10px" }}>
           <Col sm={4}>
-            <label className="control-label">Start Time</label>
+            <label className="control-label">
+              Start Time <span style={{ color: "red" }}>*</span>
+            </label>
           </Col>
           <Col sm={8}>
             <Select
@@ -993,6 +1133,11 @@ function BookingCalendar() {
               }))}
               onChange={(_, obj) => handleFormChange("startTime", obj?.value)}
             />
+            {state.errors?.startTime && (
+              <span style={{ color: "red", fontSize: "12px" }}>
+                {state.errors?.startTime}
+              </span>
+            )}
           </Col>
         </Row>
 
@@ -1033,6 +1178,27 @@ function BookingCalendar() {
             />
           </Col>
         </Row>
+        {/* {state.breakTimeData?.title && (
+          <Row style={{ marginBottom: "10px" }}>
+            <Col sm={12}>
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: "#666",
+                  padding: "8px",
+                  backgroundColor: "#f0f9ff",
+                  border: "1px solid #bae6fd",
+                  borderRadius: "4px",
+                }}
+              >
+                <strong>ℹ️ Note:</strong> {state.breakTimeData.title} is from{" "}
+                {state.breakTimeData.start_time} -{" "}
+                {state.breakTimeData.end_time}. Events cannot be scheduled
+                during this time.
+              </div>
+            </Col>
+          </Row>
+        )} */}
 
         {state.currentEvent?.Id && (
           <>
@@ -1103,6 +1269,7 @@ function BookingCalendar() {
       state.eventFormValues,
       state.errors,
       state.currentEvent,
+      state.breakTimeData,
       filteredEndTimeOptions,
       roomSelectOptions,
       handleFormChange,
@@ -1137,6 +1304,7 @@ function BookingCalendar() {
             onClick={() => {
               dispatch({ type: "SET_DRAWER_VISIBLE", payload: false });
               dispatch({ type: "RESET_FORM" });
+              dispatch({ type: "RESET_ERRORS" });
             }}
             style={{ marginRight: 8 }}
           >
@@ -1151,54 +1319,37 @@ function BookingCalendar() {
   return (
     <>
       <div className="event_calendar_container">
-        {loading ? (
-          <div
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              zIndex: 999,
-            }}
-          >
-            <Spin loading={loading} size="medium" />
-          </div>
-        ) : (
-          state.startTime &&
-          state.endTime && (
-            <EventCalendar
-              width="100%"
-              height="calc(100vh - 100px)"
-              eventList={state.eventList}
-              ownerData={state.ownerData}
-              resourceHeaderTemplate={resourceHeaderTemplate}
-              headerTitle={["Building", "Room", "Type", "Capacity"]}
-              currentEvent={state.currentEvent}
-              setCurrentEvent={(event) =>
-                dispatch({ type: "SET_CURRENT_EVENT", payload: event })
-              }
-              addEditEventTemplate={addEditEventTemplate}
-              headerDropdownTemplate={headerDropdownTemplate}
-              ownerColumnWidth={400}
-              addEditEventDrawerVisible={state.addEditEventDrawerVisible}
-              setAddEditEventDrawerVisible={(visible) =>
-                dispatch({ type: "SET_DRAWER_VISIBLE", payload: visible })
-              }
-              addEditEventDrawerFooterTemplate={
-                addEditEventDrawerFooterTemplate
-              }
-              startHour={state.startTime}
-              endHour={state.endTime}
-              xAxisHeaderLabelStyle={CALENDAR_STYLES.xAxisHeaderLabel}
-              xAxisTitleStyle={CALENDAR_STYLES.xAxisTitle}
-              xAxisTimelineStyle={CALENDAR_STYLES.xAxisTimeline}
-              yAxisValueStyle={CALENDAR_STYLES.yAxisValue}
-              xAxisTitleHeight={75}
-              xAxisTimelineHeight={75}
-              yAxisValueHeight={96}
-              allowDragDrop={false}
-            />
-          )
+        {state.startTime && state.endTime && (
+          <EventCalendar
+            width="100%"
+            height="calc(100vh - 100px)"
+            eventList={state.eventList}
+            ownerData={state.ownerData}
+            resourceHeaderTemplate={resourceHeaderTemplate}
+            headerTitle={["Building", "Room", "Type", "Capacity"]}
+            currentEvent={state.currentEvent}
+            setCurrentEvent={(event) =>
+              dispatch({ type: "SET_CURRENT_EVENT", payload: event })
+            }
+            addEditEventTemplate={addEditEventTemplate}
+            headerDropdownTemplate={headerDropdownTemplate}
+            ownerColumnWidth={400}
+            addEditEventDrawerVisible={state.addEditEventDrawerVisible}
+            setAddEditEventDrawerVisible={(visible) =>
+              dispatch({ type: "SET_DRAWER_VISIBLE", payload: visible })
+            }
+            addEditEventDrawerFooterTemplate={addEditEventDrawerFooterTemplate}
+            startHour={state.startTime}
+            endHour={state.endTime}
+            xAxisHeaderLabelStyle={CALENDAR_STYLES.xAxisHeaderLabel}
+            xAxisTitleStyle={CALENDAR_STYLES.xAxisTitle}
+            xAxisTimelineStyle={CALENDAR_STYLES.xAxisTimeline}
+            yAxisValueStyle={CALENDAR_STYLES.yAxisValue}
+            xAxisTitleHeight={75}
+            xAxisTimelineHeight={75}
+            yAxisValueHeight={96}
+            allowDragDrop={true}
+          />
         )}
       </div>
 

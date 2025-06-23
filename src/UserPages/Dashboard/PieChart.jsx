@@ -19,7 +19,7 @@ import {
 export function PieChartComponent({
   data = [],
   title = "Summary of Rooms Booked",
-  description = "Summary of Today's Booking.",
+  description = "",
   valueKey = "count",
   nameKey = "label",
 }) {
@@ -49,7 +49,7 @@ export function PieChartComponent({
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 pb-0">
+      <CardContent className="flex-1 pb-0 px-0">
         <ChartContainer
           className="mx-auto aspect-square max-h-[250px]"
           config={{}}
@@ -132,14 +132,13 @@ export function PieChartComponent({
           </PieChart>
         </ChartContainer>
       </CardContent>
-      {/* <CardFooter className="flex-col gap-2 text-sm">
+      <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+          Summary of Today's Booking.
+          {/* <TrendingUp className="h-4 w-4" /> */}
         </div>
-        <div className="leading-none text-muted-foreground">
-          Summary of key metrics
-        </div>
-      </CardFooter> */}
+        {/* <div className="leading-none text-muted-foreground"></div> */}
+      </CardFooter>
     </Card>
   );
 }

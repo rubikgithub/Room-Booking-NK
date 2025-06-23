@@ -280,7 +280,7 @@ function BarChartComponent() {
             Showing total visitors for the last 3 months
           </CardDescription>
         </div>
-        <div className="flex">
+        {/* <div className="flex">
           {["desktop", "mobile"].map((key) => (
             <button
               key={key}
@@ -296,7 +296,7 @@ function BarChartComponent() {
               </span>
             </button>
           ))}
-        </div>
+        </div> */}
       </CardHeader>
       <CardContent className="px-2 sm:p-6">
         <ChartContainer
