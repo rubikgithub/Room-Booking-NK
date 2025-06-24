@@ -12,6 +12,7 @@ const statusColorsListRoutes = require("./APIS/TimeStatus/statusColorsList");
 const bookingServicesRoutes = require("./APIS/Bookings/BookingsServices");
 const timeConfigRoutes = require("./APIS/TimeStatus/timeConfigList");
 const uploadFile = require("./APIS/BuildingsRooms/RoomBuildingImages");
+const dashboard = require("./APIS/Dashboard/index");
 const app = express();
 const PORT = 5056;
 
@@ -30,6 +31,7 @@ app.use("/api", statusColorsListRoutes);
 app.use("/api", bookingServicesRoutes);
 app.use("/api", timeConfigRoutes);
 app.use("/api", uploadFile);
+app.use("/api", dashboard);
 
 // // Enable CORS
 // app.use(
