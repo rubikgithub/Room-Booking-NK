@@ -86,19 +86,34 @@ router.post("/dashboard/top-rooms", async (req, res) => {
 // 3. Monthly booking volume (Line Chart)
 router.post("/dashboard/monthly-volume", async (req, res) => {
     try {
-        const { year } = req.query;
+        const { year, month } = req.query;
         const currentYear = year || new Date().getFullYear();
         
-        const data = await getMonthlyBookingVolume(currentYear);
+        let data;
+        if (month) {
+            // If month is provided, return daily data for that month
+            data = await getDailyBookingVolume(currentYear, month);
+        } else {
+            // If only year is provided, return monthly data for the year
+            data = await getMonthlyBookingVolume(currentYear);
+        }
+        
         res.status(200).json({
             status: "success",
-            message: "Monthly booking volume fetched successfully.",
-            data
+            message: month 
+                ? `Daily booking volume for ${getMonthName(month)} ${currentYear} fetched successfully.`
+                : `Monthly booking volume for ${currentYear} fetched successfully.`,
+            data,
+            meta: {
+                year: currentYear,
+                month: month || null,
+                type: month ? 'daily' : 'monthly'
+            }
         });
     } catch (error) {
         res.status(500).json({
             status: 'error',
-            message: "Failed to fetch monthly booking volume.",
+            message: "Failed to fetch booking volume.",
             error: error.message || error
         });
     }
@@ -323,30 +338,88 @@ async function getTopRoomsLastWeek() {
         .slice(0, 5);
 }
 
+function getMonthName(monthNumber) {
+    const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return monthNames[parseInt(monthNumber) - 1];
+}
+
+async function getDailyBookingVolume(year, month) {
+    // Validate month input
+    const monthNum = parseInt(month);
+    if (monthNum < 1 || monthNum > 12) {
+        throw new Error("Month must be between 1 and 12");
+    }
+    
+    // Get start and end dates for the month
+    const startDate = `${year}-${monthNum.toString().padStart(2, '0')}-01`;
+    const endDate = new Date(year, monthNum, 0); // Last day of the month
+    const endDateString = `${year}-${monthNum.toString().padStart(2, '0')}-${endDate.getDate().toString().padStart(2, '0')}`;
+    
+    const { data, error } = await supabase
+        .from("bookings")
+        .select("date")
+        .gte("date", startDate)
+        .lte("date", endDateString);
+        // .in("status", ["Booked", "Completed"]);
+    
+    if (error) throw error;
+    
+    // Group by date
+    const dateCounts = {};
+    data.forEach(booking => {
+        const date = booking.date;
+        dateCounts[date] = (dateCounts[date] || 0) + 1;
+    });
+    
+    // Create array for all days in the month
+    const daysInMonth = new Date(year, monthNum, 0).getDate();
+    const dailyData = [];
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateString = `${year}-${monthNum.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        const dayName = new Date(year, monthNum - 1, day).toLocaleDateString('en-US', { weekday: 'long' });
+        
+        dailyData.push({
+            date: dateString,
+            day: day,
+            day_name: dayName,
+            month: monthNum,
+            month_name: getMonthName(monthNum),
+            year: parseInt(year),
+            booking_count: dateCounts[dateString] || 0
+        });
+    }
+    
+    return dailyData;
+}
+
 // Monthly booking volume helper
 async function getMonthlyBookingVolume(year = new Date().getFullYear()) {
     const { data, error } = await supabase
         .from("bookings")
         .select("date")
         .gte("date", `${year}-01-01`)
-        .lte("date", `${year}-12-31`)
+        .lte("date", `${year}-12-31`);
         // .in("status", ["Booked", "Completed"]);
-
+    
     if (error) throw error;
-
+    
     // Group by month
     const monthCounts = {};
     data.forEach(booking => {
         const month = new Date(booking.date).getMonth() + 1;
         monthCounts[month] = (monthCounts[month] || 0) + 1;
     });
-
+    
     // Create array for all 12 months
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
-
+    
     return monthNames.map((month_name, index) => ({
         month_number: index + 1,
         month_name,
@@ -484,10 +557,10 @@ async function getActiveBookingsDetails() {
             user:users!fk_user_id (first_name, last_name),
             rooms (name, buildings (name))
         `)
-        // .eq("date", today)
+        .eq("date", today)
         .eq("status", "Booked")
-        // .lte("start_time", currentTime)
-        // .gte("end_time", currentTime)
+        .lte("start_time", currentTime)
+        .gte("end_time", currentTime)
         .order("start_time");
 
     if (error) throw error;
