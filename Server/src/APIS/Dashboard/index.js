@@ -288,7 +288,7 @@ async function getDepartmentStats() {
         return Object.entries(departmentCount).map(([department, booking_count]) => ({
             department,
             booking_count,
-            percentage: ((booking_count / totalBookings) * 100).toFixed(2)
+            percentage: (booking_count / totalBookings) * 100
         }));
     }
     
