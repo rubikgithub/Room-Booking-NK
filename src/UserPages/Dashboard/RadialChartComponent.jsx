@@ -33,7 +33,7 @@ export function RadialChartComponent({ data = [] }) {
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Overview Summary</CardTitle>
+        <CardTitle style={{ fontSize: '1rem' }}>Overview Summary</CardTitle>
         {/* <CardDescription>Summary of overall Booking's</CardDescription> */}
       </CardHeader>
       <CardContent className="flex-1 pb-0">
@@ -69,8 +69,8 @@ export function RadialChartComponent({ data = [] }) {
           </RadialBarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
+      <CardFooter className="flex-col gap-2 text-sm" style={{ fontSize: '1rem' }}>
+        <div className="flex items-center gap-2 leading-none" style={{ fontSize: '1rem' }}>
           Summary of overall Booking's
         </div>
         {/* <div className="leading-none text-muted-foreground">

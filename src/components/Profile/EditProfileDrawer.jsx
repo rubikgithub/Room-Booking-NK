@@ -253,7 +253,7 @@ const EditProfileDrawer = ({
                             />
                         </FormControl>
                         {/* {mode === "create" && ( */}
-                        <>
+                        {/* <>
                             <FormControl label="Password" viewMode={isViewMode} required={true}>
                                 <Input
                                     type="password"
@@ -270,7 +270,7 @@ const EditProfileDrawer = ({
                                     placeholder="Confirm Password"
                                 />
                             </FormControl>
-                        </>
+                        </> */}
                         {/* )} */}
                     </FormRow>
                 </div>
