@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 import {
@@ -14,7 +14,14 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Col, Flex, FormControl, FormRow, Select } from "unygc";
+import { $ajax_post } from "../../Library";
 
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const day = date.getDate(); // Get day (1-31)
+  const month = date.toLocaleDateString('en-US', { month: 'short' }); // Get short month name (e.g., Feb)
+  return `${day} ${month}`;
+}
 
 const chartConfig = {
   booking_count: {
@@ -22,15 +29,69 @@ const chartConfig = {
     color: "hsl(var(--chart-1))",
   },
 };
-
-export function LineChartComponent({ chartData = [] }) {
+function getPreviousYears(startYear) {
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let year = currentYear; year >= startYear; year--) {
+    years.push({ value: year, label: year.toString() });
+  }
+  return years;
+}
+const months = [
+  { value: 1, label: "January" },
+  { value: 2, label: "February" },
+  { value: 3, label: "March" },
+  { value: 4, label: "April" },
+  { value: 5, label: "May" },
+  { value: 6, label: "June" },
+  { value: 7, label: "July" },
+  { value: 8, label: "August" },
+  { value: 9, label: "September" },
+  { value: 10, label: "October" },
+  { value: 11, label: "November" },
+  { value: 12, label: "December" },
+];
+export function LineChartComponent() {
   const [activeChart, setActiveChart] = useState("mobile");
+  const [selectedYear, setSelectedYear] = useState(null); // Track selected year
+  const [selectedMonth, setSelectedMonth] = useState(null); // Track selected month
+  const [chartData, setChartData] = useState([]);
+
+  // Function to call API based on selected year and/or month
+  const filterChartData = (year = null, month = null) => {
+    let url = "/dashboard/monthly-volume";
+    const params = [];
+
+    if (year) {
+      params.push(`year=${year}`);
+    }
+    if (month) {
+      params.push(`month=${month}`);
+    }
+    if (params.length > 0) {
+      url += `?${params.join("&")}`;
+    }
+
+    $ajax_post(url, {}, (response) => {
+
+      setChartData(response || []);
+    });
+  };
+
+  // Fetch data on component mount or when year/month changes
+  useEffect(() => {
+    // Call with current selectedYear and selectedMonth
+    filterChartData(selectedYear, selectedMonth);
+  }, [selectedYear, selectedMonth]);
+
   const total = useMemo(() => {
     return {
       desktop: chartData?.length && chartData?.reduce((acc, curr) => acc + curr.desktop, 0),
       mobile: chartData?.length && chartData?.reduce((acc, curr) => acc + curr.mobile, 0),
     };
   }, []);
+
+  const yearOptions = getPreviousYears(2000);
 
   return (
     <Card>
@@ -39,28 +100,43 @@ export function LineChartComponent({ chartData = [] }) {
         <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
           <Flex justify="space-between  ">
             <Col>
-              <CardTitle>Line Chart - Interactive</CardTitle>
+              {/* <CardTitle>Line Chart - Interactive</CardTitle> */}
               <CardDescription>
                 Showing total visitors for the last month
               </CardDescription>
             </Col>
             <Flex justify="end">
               <FormRow cols={1} fieldAlign="side">
-                <FormControl label="" required>
-                  <Select
-                    name="filterChart"
-                    defaultValue={"month"} // Use an array for multi-select
-                    multiple={false}
-                    value={"month"} // Use an array for multi-select
-                    selectOptions={[
-                      { value: "month", label: "Month" },
-                      { value: "year", label: "Year" }
-                    ]}
-                    onChange={(value) => {
-                      console.log(value); // Handle the selected values (array)
-                    }}
-                  />
-                </FormControl>
+                <Flex justify="space-between">
+                  <Col>
+                    <FormControl label="" required>
+                      <Select
+                        name="filterChartYears"
+                        multiple={false}
+                        selectOptions={yearOptions}
+                        onChange={(value) => {
+                          setSelectedYear(value); // Update selected year
+                        }}
+                        placeholder="Years"
+                        value={selectedYear}
+                      />
+                    </FormControl>
+                  </Col>
+                  <Flex justify="end">
+                    <FormControl label="" required>
+                      <Select
+                        name="filterChartMonth"
+                        multiple={false}
+                        selectOptions={months}
+                        onChange={(value) => {
+                          setSelectedMonth(value); // Update selected month
+                        }}
+                        placeholder="Months"
+                        value={selectedMonth}
+                      />
+                    </FormControl>
+                  </Flex>
+                </Flex>
               </FormRow>
             </Flex>
           </Flex>
@@ -81,12 +157,12 @@ export function LineChartComponent({ chartData = [] }) {
           >
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="month_name"
+              dataKey={selectedMonth ? "date" : "month_name"}
               tickLine={false}
               axisLine={false}
               tickMargin={8}
               minTickGap={32}
-              tickFormatter={(value) => value.substring(0, 3)}
+              tickFormatter={(value) => selectedMonth ? formatDate(value) : value.substring(0, 10)}
             />
             <YAxis
               tickLine={false}

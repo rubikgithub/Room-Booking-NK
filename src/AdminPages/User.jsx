@@ -90,12 +90,12 @@ const User = () => {
   return (
     <div>
       <div className="flex justify-end">
-        <Button
+        {/* <Button
           onClick={() => handleOpenDrawer({}, "create")}
           className="mb-4 border-1 border-gray-400 cursor-pointer hover:bg-gray-50"
         >
           Add User
-        </Button>
+        </Button> */}
       </div>
 
       <div className="overflow-x-auto max-h-[80vh] rounded-lg shadow border border-gray-200">

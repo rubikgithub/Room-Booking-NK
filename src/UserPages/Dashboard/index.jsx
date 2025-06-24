@@ -273,7 +273,7 @@ const Dashboard = () => {
         </span>
       </h3>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 mt-6">
         {cardData?.map((card, index) => (
           <Card key={index} className={card.bg}>
             <CardHeader>
