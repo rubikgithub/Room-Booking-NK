@@ -48,7 +48,7 @@ router.post("/dashboard", async (req, res) => {
 // ========================================
 
 // 1. Department-wise booking percentage (Pie Chart)
-router.get("/dashboard/department-stats", async (req, res) => {
+router.post("/dashboard/department-stats", async (req, res) => {
     try {
         const data = await getDepartmentStats();
         res.status(200).json({
@@ -66,7 +66,7 @@ router.get("/dashboard/department-stats", async (req, res) => {
 });
 
 // 2. Top 5 most booked rooms - last week (Bar Graph)
-router.get("/dashboard/top-rooms", async (req, res) => {
+router.post("/dashboard/top-rooms", async (req, res) => {
     try {
         const data = await getTopRoomsLastWeek();
         res.status(200).json({
@@ -84,7 +84,7 @@ router.get("/dashboard/top-rooms", async (req, res) => {
 });
 
 // 3. Monthly booking volume (Line Chart)
-router.get("/dashboard/monthly-volume", async (req, res) => {
+router.post("/dashboard/monthly-volume", async (req, res) => {
     try {
         const { year } = req.query;
         const currentYear = year || new Date().getFullYear();
@@ -105,7 +105,7 @@ router.get("/dashboard/monthly-volume", async (req, res) => {
 });
 
 // 4. Year on year comparison
-router.get("/dashboard/year-comparison", async (req, res) => {
+router.post("/dashboard/year-comparison", async (req, res) => {
     try {
         const data = await getYearOnYearComparison();
         res.status(200).json({
@@ -127,7 +127,7 @@ router.get("/dashboard/year-comparison", async (req, res) => {
 // ========================================
 
 // 5. All key metrics in one call
-router.get("/dashboard/metrics", async (req, res) => {
+router.post("/dashboard/metrics", async (req, res) => {
     try {
         const data = await getKeyMetrics();
         res.status(200).json({
@@ -145,7 +145,7 @@ router.get("/dashboard/metrics", async (req, res) => {
 });
 
 // 6. Active bookings with details
-router.get("/dashboard/active-bookings", async (req, res) => {
+router.post("/dashboard/active-bookings", async (req, res) => {
     try {
         const data = await getActiveBookingsDetails();
         res.status(200).json({
@@ -163,7 +163,7 @@ router.get("/dashboard/active-bookings", async (req, res) => {
 });
 
 // 7. Pending requests with details
-router.get("/dashboard/pending-requests", async (req, res) => {
+router.post("/dashboard/pending-requests", async (req, res) => {
     try {
         const data = await getPendingRequestsDetails();
         res.status(200).json({
@@ -181,7 +181,7 @@ router.get("/dashboard/pending-requests", async (req, res) => {
 });
 
 // 8. Available rooms with details
-router.get("/dashboard/available-rooms", async (req, res) => {
+router.post("/dashboard/available-rooms", async (req, res) => {
     try {
         const data = await getAvailableRoomsDetails();
         res.status(200).json({
@@ -197,10 +197,6 @@ router.get("/dashboard/available-rooms", async (req, res) => {
         });
     }
 });
-
-// ========================================
-// ADMIN ACTIONS
-// ========================================
 
 // 9. Update booking status
 router.patch("/dashboard/booking/:id/status", async (req, res) => {

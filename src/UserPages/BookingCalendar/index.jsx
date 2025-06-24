@@ -1331,6 +1331,7 @@ function BookingCalendar() {
     [state.currentEvent, handleSubmit]
   );
 
+  console.log(state.currentEvent, "current event");
   return (
     <>
       <div className="event_calendar_container">
