@@ -116,6 +116,30 @@ const Rooms = () => {
         );
       },
     },
+    {
+      field: "room_features",
+      headerName: "Room Features",
+      type: "text",
+      renderCell: (params) => {
+        const features = params?.value;
+        if (!features || typeof features !== "object") {
+          return <span>-</span>;
+        }
+
+        // Convert room_features object to a readable format
+        const featureList = Object.entries(features)
+          .filter(([key, value]) => value?.enabled)
+          .map(([key, value]) => {
+            if (key === "dusters" && value.count) {
+              return `${key} (${value.count})`;
+            }
+            return key;
+          })
+          .join(", ");
+
+        return <span>{featureList || "None"}</span>;
+      },
+    },
   ]);
 
   const getRooms = async () => {
@@ -127,6 +151,7 @@ const Rooms = () => {
   useEffect(() => {
     getRooms();
   }, []);
+
 
   return (
     <div>
@@ -213,11 +238,10 @@ const Rooms = () => {
                   key={index}
                   src={img?.path}
                   alt="thumb"
-                  className={`max-w-12 max-h-12  rounded cursor-pointer border ${
-                    index === currentImageIndex
-                      ? "border-blue-500"
-                      : "border-gray-300"
-                  }`}
+                  className={`max-w-12 max-h-12  rounded cursor-pointer border ${index === currentImageIndex
+                    ? "border-blue-500"
+                    : "border-gray-300"
+                    }`}
                   onClick={() => setCurrentImageIndex(index)}
                 />
               ))}
@@ -238,6 +262,41 @@ const roomTypes = [
   { value: "Cabin", label: "Cabin" },
 ];
 
+
+
+
+
+
+const room_features = [
+  {
+    value: "Chairs", label: "Chairs"
+  },
+  {
+    value: "Tables", label: "Tables"
+  },
+  {
+    value: "Markers", label: "Markers"
+  },
+  {
+    value: "Dusters", label: "Dusters"
+  },
+  {
+    value: "Projector_Availability", label: "Projector Availability"
+  },
+  { value: "Board", label: "Board" }
+]
+
+const chairOptions = [
+  { value: "10-15", label: "10-15" },
+  { value: "25-30", label: "25-30" },
+  { value: "30-35", label: "30-35" },
+];
+
+const boardOptions = [
+  { value: "Small", label: "Small" },
+  { value: "Medium", label: "Medium" },
+  { value: "Large", label: "Large" },
+];
 const RoomsDrawer = ({
   open,
   mode,
@@ -259,6 +318,7 @@ const RoomsDrawer = ({
     area: "",
     features: "",
     image: [],
+    room_features: [],
   });
 
   console.log(formData, "formData");
@@ -331,9 +391,44 @@ const RoomsDrawer = ({
   };
 
   const handleSubmit = () => {
-    const endpoint = isCreate ? "createRoom" : `updateRoom/${data?.id}`;
-    const payload = isEdit ? { id: data.id, ...formData } : formData;
 
+    const formattedData = {
+      name: formData.name,
+      building_id: formData.building_id,
+      type: formData.type,
+      capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
+      description: formData.description,
+      area: formData.area ? parseInt(formData.area) : undefined,
+      features: formData.features || undefined,
+      image: formData.image || [],
+      room_features: {
+        chairs: {
+          enabled: formData?.room_features.includes("Chairs"),
+          quantity: formData.chairsQuantity || undefined,
+        },
+        tables: {
+          enabled: formData?.room_features.includes("Tables"),
+          count: formData.tablesCount ? parseInt(formData.tablesCount) : undefined,
+        },
+        markers: {
+          enabled: formData?.room_features.includes("Markers"),
+          count: formData.markersCount ? parseInt(formData.markersCount) : undefined,
+        },
+        dusters: {
+          enabled: formData?.room_features.includes("Dusters"),
+          count: formData.dustersCount ? parseInt(formData.dustersCount) : undefined,
+        },
+        projector: {
+          enabled: formData?.room_features.includes("Projector_Availability"),
+        },
+        board: {
+          enabled: formData?.room_features.includes("Board"),
+          size: formData.boardSize || undefined,
+        },
+      },
+    };
+    const endpoint = isCreate ? "createRoom" : `updateRoom/${data?.id}`;
+    const payload = isEdit ? { id: data.id, ...formattedData } : formattedData;
     $ajax_post(endpoint, payload, () => {
       Notification.open(
         "success",
@@ -502,6 +597,82 @@ const RoomsDrawer = ({
               placeholder="Enter Additional Features"
             />
           </FormControl>
+
+          <FormControl viewMode={isView} label="Room Features" required>
+            <Select
+              disabled={isView}
+              selectOptions={room_features}
+              value={formData?.room_features?.filter((item) => item?.enabled)}
+              multiple={true}
+              onChange={(val) => handleChange("room_features", val)}
+              customClass="custom-select"
+              dataActions={true}
+            />
+          </FormControl>
+          {/* Conditional Chairs Quantity Dropdown */}
+          {formData?.room_features?.includes("Chairs") && (
+            <FormControl viewMode={isView} label="Chairs Quantity" required>
+              <Select
+                disabled={isView}
+                selectOptions={chairOptions}
+                value={formData.chairsQuantity}
+                onChange={(val) => handleChange("chairsQuantity", val)}
+                customClass="custom-select"
+              />
+            </FormControl>
+          )}
+
+          {/* Conditional Tables Count Input */}
+          {formData?.room_features?.includes("Tables") && (
+            <FormControl viewMode={isView} label="Tables Count" required>
+              <Input
+                type="number"
+                value={formData.tablesCount}
+                onChange={(e) => handleChange("tablesCount", e)}
+                placeholder="Enter number of tables"
+                disabled={isView}
+              />
+            </FormControl>
+          )}
+
+          {/* Conditional Markers Count Input */}
+          {formData?.room_features?.includes("Markers") && (
+            <FormControl viewMode={isView} label="Markers Count" required>
+              <Input
+                type="number"
+                value={formData.markersCount}
+                onChange={(e) => handleChange("markersCount", e)}
+                placeholder="Enter number of markers"
+                disabled={isView}
+              />
+            </FormControl>
+          )}
+
+          {/* Conditional Dusters Count Input */}
+          {formData?.room_features?.includes("Dusters") && (
+            <FormControl viewMode={isView} label="Dusters Count" required>
+              <Input
+                type="number"
+                value={formData.dustersCount}
+                onChange={(e) => handleChange("dustersCount", e)}
+                placeholder="Enter number of dusters"
+                disabled={isView}
+              />
+            </FormControl>
+          )}
+
+          {/* Conditional Board Size Dropdown */}
+          {formData?.room_features?.includes("Board") && (
+            <FormControl viewMode={isView} label="Board Size" required>
+              <Select
+                disabled={isView}
+                selectOptions={boardOptions}
+                value={formData.boardSize}
+                onChange={(val) => handleChange("boardSize", val)}
+                customClass="custom-select"
+              />
+            </FormControl>
+          )}
 
           {/* <FormControl label="Images" viewMode={isView}>
             

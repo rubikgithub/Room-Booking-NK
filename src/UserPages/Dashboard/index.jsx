@@ -193,33 +193,70 @@ const Dashboard = () => {
   ];
 
   const cardData = [
+    // {
+    //   title: "No. of Rooms",
+    //   description: "Total rooms in the system",
+    //   value: loading ? "..." : rooms.length,
+    //   bg: "bg-[hsl(var(--chart-1))]",
+    // },
+    // {
+    //   title: "No. of Buildings",
+    //   description: "Total buildings",
+    //   value: loading ? "..." : buildings.length,
+    //   bg: "bg-[hsl(var(--chart-2))]",
+    // },
+    // {
+    //   title: "No. of Students",
+    //   description: "Registered students",
+    //   value: loading ? "..." : studentCount,
+    //   bg: "bg-[hsl(var(--chart-3))] text-[hsl(var(--chart-4))]",
+    // },
+    // {
+    //   title: "Vacant Rooms Today",
+    //   description: "Rooms not booked today",
+    //   value: loading ? "..." : vacantRoomsToday.length,
+    //   bg: "bg-[hsl(var(--chart-4))]",
+    // },
+    // {
+    //   title: "Scheduled Rooms",
+    //   description: "Rooms booked today",
+    //   value: loading ? "..." : scheduledRoomsToday.length,
+    //   bg: "bg-[hsl(var(--chart-5))]",
+    // },
+
     {
-      title: "No. of Rooms",
-      description: "Total rooms in the system",
+      title: "Total Bookings Today",
+      // description: "Total rooms in the system",
       value: loading ? "..." : rooms.length,
       bg: "bg-[hsl(var(--chart-1))]",
     },
     {
-      title: "No. of Buildings",
-      description: "Total buildings",
+      title: "Active Bookings (Now)",
+      // description: "Total buildings",
       value: loading ? "..." : buildings.length,
       bg: "bg-[hsl(var(--chart-2))]",
     },
     {
-      title: "No. of Students",
-      description: "Registered students",
+      title: "Rooms Available Now ",
+      // description: "Registered students",
       value: loading ? "..." : studentCount,
       bg: "bg-[hsl(var(--chart-3))] text-[hsl(var(--chart-4))]",
     },
     {
-      title: "Vacant Rooms Today",
-      description: "Rooms not booked today",
+      title: "Pending Requests",
+      // description: "Rooms not booked today",
       value: loading ? "..." : vacantRoomsToday.length,
       bg: "bg-[hsl(var(--chart-4))]",
     },
     {
-      title: "Scheduled Rooms",
-      description: "Rooms booked today",
+      title: "Cancelled/Rejected Bookings (Today/Week)",
+      // description: "Rooms booked today",
+      value: loading ? "..." : scheduledRoomsToday.length,
+      bg: "bg-[hsl(var(--chart-5))]",
+    },
+    {
+      title: "No. of Rooms in Maintenance",
+      // description: "Rooms booked today",
       value: loading ? "..." : scheduledRoomsToday.length,
       bg: "bg-[hsl(var(--chart-5))]",
     },
