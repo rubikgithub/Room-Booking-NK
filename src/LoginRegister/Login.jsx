@@ -150,7 +150,7 @@ const Login = () => {
           {},
           async function (response) {
             try {
-              if (!response || response.error || response.status === "Inactive") {
+              if (!response || response.error || response.status === "Pending") {
                 throw new Error("User not found");
               }
 
