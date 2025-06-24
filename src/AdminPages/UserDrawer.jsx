@@ -222,7 +222,7 @@ const UserDrawer = ({
                 onChange={(val) => handleChange("role", val)}
               />
             </FormControl>
-            <FormControl label="Status" viewMode={isViewMode} required={true}>
+            {/* <FormControl label="Status" viewMode={isViewMode} required={true}>
               <Select
                 defaultValue={formData?.status}
                 name="Status"
@@ -232,7 +232,7 @@ const UserDrawer = ({
                 ]}
                 onChange={(val) => handleChange("status", val)}
               />
-            </FormControl>
+            </FormControl> */}
             <FormControl label="Department" viewMode={isViewMode} required={true}>
               <Select
                 defaultValue={formData?.department}

@@ -235,19 +235,19 @@ const User = () => {
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
             <div className="flex flex-wrap gap-2 w-full">
-              <Button
+              {userToToggle?.status != "Approved" && <Button
                 onClick={() => handleStatusUpdate("Approved")}
                 className="bg-green-600 hover:bg-green-700 text-white flex-1 min-w-[100px]"
                 disabled={userToToggle?.status === "approved"}
               >
-                Approved
-              </Button>
+                Approve
+              </Button>}
               <Button
                 onClick={() => handleStatusUpdate("Rejected")}
                 className="bg-red-600 hover:bg-red-700 text-white flex-1 min-w-[100px]"
                 disabled={userToToggle?.status === "rejected"}
               >
-                Rejected
+                {userToToggle?.status === "Approved" ? "Inactive" : "Rejected"}
               </Button>
               {/* <Button
                 onClick={() => handleStatusUpdate("pending")}

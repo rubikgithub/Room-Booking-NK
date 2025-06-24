@@ -653,7 +653,7 @@ router.post("/updateUser/:id", async (req, res) => {
         message: "Password updated successfully",
         data: {
           ...existingUser,
-          updated_at: new Date().toISOString(),
+          // updated_at: new Date().toISOString(),
         },
         updates: {
           passwordUpdated: true,
@@ -768,7 +768,7 @@ router.post("/updatePassword/:id", async (req, res) => {
       data: {
         id,
         email: existingUser.email,
-        updated_at: new Date().toISOString(),
+        // updated_at: new Date().toISOString(),
       },
     });
   } catch (error) {
@@ -1166,7 +1166,7 @@ router.post("/updateStatus/:id", async (req, res) => {
         status: status,
       })
       .eq("id", id)
-      .select("id, first_name, last_name, email, status, updated_at")
+      .select("id, first_name, last_name, email, status")
       .single();
 
     if (error) {
