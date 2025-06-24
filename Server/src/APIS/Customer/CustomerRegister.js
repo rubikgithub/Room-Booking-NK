@@ -1097,7 +1097,7 @@ const USER_STATUS = {
 /**
  * Update user status only
  */
-router.patch("/updateStatus/:id", async (req, res) => {
+router.post("/updateStatus/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body.body || req.body;
