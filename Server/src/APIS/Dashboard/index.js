@@ -247,7 +247,7 @@ router.patch("/dashboard/booking/:id/status", async (req, res) => {
 
 async function getDepartmentStats() {
     const { data, error } = await supabase.rpc('get_department_booking_stats');
-    
+    console.log(data, 'data')
     if (error) {
         // Fallback to regular query if RPC function doesn't exist
         const { data: bookingsData, error: fallbackError } = await supabase
@@ -255,7 +255,7 @@ async function getDepartmentStats() {
             .select(`
                 user:users!fk_user_id (department)
             `)
-            .in("status", ["Booked", "Completed"]);
+            // .in("status", ["Booked", "Completed"]);
 
         if (fallbackError) throw fallbackError;
 
@@ -330,7 +330,7 @@ async function getMonthlyBookingVolume(year = new Date().getFullYear()) {
         .select("date")
         .gte("date", `${year}-01-01`)
         .lte("date", `${year}-12-31`)
-        .in("status", ["Booked", "Completed"]);
+        // .in("status", ["Booked", "Completed"]);
 
     if (error) throw error;
 
@@ -392,7 +392,8 @@ async function getKeyMetrics() {
         availableRooms,
         pendingRequests,
         cancelledToday,
-        cancelledWeek
+        cancelledWeek,
+        maintenanceRooms
     ] = await Promise.all([
         // Total bookings today
         supabase
@@ -434,7 +435,13 @@ async function getKeyMetrics() {
             .from("bookings")
             .select("id", { count: 'exact' })
             .in("status", ["Cancelled", "Rejected"])
-            .gte("created_at", oneWeekAgo.toISOString())
+            .gte("created_at", oneWeekAgo.toISOString()),
+
+        // Rooms under maintenance
+        supabase
+            .from("rooms")
+            .select("id", { count: 'exact' })
+            .in("status", ["Maintenance"])
     ]);
 
     // Calculate available rooms (subtract currently booked rooms)
@@ -456,7 +463,8 @@ async function getKeyMetrics() {
         available_rooms_count: availableRoomsCount,
         pending_requests: pendingRequests.count || 0,
         cancelled_rejected_today: cancelledToday.count || 0,
-        cancelled_rejected_week: cancelledWeek.count || 0
+        cancelled_rejected_week: cancelledWeek.count || 0,
+        maintenance_rooms: maintenanceRooms.count || 0
     };
 }
 
@@ -476,10 +484,10 @@ async function getActiveBookingsDetails() {
             user:users!fk_user_id (first_name, last_name),
             rooms (name, buildings (name))
         `)
-        .eq("date", today)
+        // .eq("date", today)
         .eq("status", "Booked")
-        .lte("start_time", currentTime)
-        .gte("end_time", currentTime)
+        // .lte("start_time", currentTime)
+        // .gte("end_time", currentTime)
         .order("start_time");
 
     if (error) throw error;
