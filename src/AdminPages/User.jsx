@@ -117,18 +117,21 @@ const User = () => {
     {
       field: "status",
       headerName: "Status",
-      renderCell: (params) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors duration-200 ${params?.value?.toLowerCase() === "active"
-            ? "bg-green-100 text-green-800 hover:bg-green-200"
-            : "bg-red-100 text-red-800 hover:bg-red-200"
-            }`}
-          onClick={() => handleStatusClick(params?.row)}
-          title="Click to toggle status"
-        >
-          {params?.value?.charAt(0).toUpperCase() + params?.value?.slice(1)}
-        </span>
-      )
+      renderCell: (params) => {
+        console.log(params, "params")
+        return (
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors duration-200 ${params?.value?.toLowerCase() === "approved"
+              ? "bg-green-100 text-green-800 hover:bg-green-200" : params?.value?.toLowerCase() === "rejected" ?
+                "bg-red-100 text-red-800 hover:bg-red-200" : "bg-yellow-100 text-red-800 hover:bg-red-200"
+              }`}
+            onClick={() => handleStatusClick(params?.row)}
+            title="Click to toggle status"
+          >
+            {params?.value?.charAt(0).toUpperCase() + params?.value?.slice(1)}
+          </span>
+        )
+      }
     },
     {
       field: "authenticate",
