@@ -6,6 +6,8 @@ import { clerk, loadClerk } from '../LoginRegister/clerk';
 import { Card, CardContent } from "@/components/ui/card"
 import { useNavigate } from "react-router-dom";
 import { $ajax_post } from "../Library";
+import { DatePicker, FormControl, Select, TextArea } from "unygc";
+import { format } from "date-fns";
 
 
 const Register = () => {
@@ -18,6 +20,7 @@ const Register = () => {
     const navigate = useNavigate();
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [date, setDate] = useState(null);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -26,6 +29,10 @@ const Register = () => {
             ...prev,
             [name]: value
         }));
+    };
+
+    const handleChanges = (key, value) => {
+        setFormData((prev) => ({ ...prev, [key]: value }));
     };
 
     const validate = () => {
@@ -50,6 +57,19 @@ const Register = () => {
         if (!formData.last_name) {
             newErrors.lastName = "Last Name is required";
         }
+        if (!formData.phone_number) {
+            newErrors.phone_number = "Phone Number is required";
+        }
+        if (!formData.department) {
+            newErrors.department = "Department is required";
+        }
+        if (!formData.address) {
+            newErrors.address = "Address is required";
+        }
+        if (!formData.dob) {
+            newErrors.dob = "DOB is required";
+        }
+
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -63,7 +83,7 @@ const Register = () => {
                 $ajax_post("createUser", { ...formData }, function (response) {
                     navigate('/');
                 }, function (error) {
-                    console.log(error,'adfasdfdsf');
+                    console.log(error, 'adfasdfdsf');
                     setIsSubmitting(false);
                     alert(error?.message);
                 });
@@ -141,7 +161,53 @@ const Register = () => {
                                     <p className="text-sm text-red-500">{errors.email}</p>
                                 )}
                             </div>
+                            <div className="mb-4">
+                                <Label className="mb-2" htmlFor="email">
+                                    Phone Number
+                                </Label>
+                                <Input
+                                    className="h-[40px]"
+                                    id="phone_number"
+                                    name="phone_number"
+                                    type="phone_number"
 
+                                    value={formData.phone_number}
+                                    onChange={handleChange}
+                                />
+                                {errors.phone_number && (
+                                    <p className="text-sm text-red-500">{errors.phone_number}</p>
+                                )}
+                            </div>
+                            <FormControl label="Department" required={true}>
+                                <Select
+                                    defaultValue={formData?.department}
+                                    name="Department "
+                                    selectOptions={[
+                                        { label: "Math", value: "Math" },
+                                        { label: "Science", value: "Science" },
+                                        { label: "Music", value: "Music" },
+                                        { label: "Cultural", value: "Cultural" },
+                                    ]}
+                                    onChange={(val) => handleChanges("department", val)}
+                                />
+                            </FormControl>
+                            <FormControl label="Date of Birth" required={true}>
+                                <DatePicker
+                                    value={date || ""}
+                                    onChange={(selectedDate) => {
+                                        setDate(selectedDate);
+                                        handleChanges("dob", format(selectedDate, "yyyy-MM-dd"));
+                                    }}
+                                />
+                            </FormControl>
+                            <FormControl label="Address" required={true}>
+                                <TextArea
+                                    type="text"
+                                    value={formData.address || ""}
+                                    placeholder="Enter Address"
+                                    onChange={(e) => handleChanges("address", e)}
+                                />
+                            </FormControl>
                             <div className="mb-4">
                                 <Label className="mb-2" htmlFor="password">
                                     Password

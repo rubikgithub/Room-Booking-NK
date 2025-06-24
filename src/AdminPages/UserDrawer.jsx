@@ -222,13 +222,24 @@ const UserDrawer = ({
                 onChange={(val) => handleChange("role", val)}
               />
             </FormControl>
+            <FormControl label="Status" viewMode={isViewMode} required={true}>
+              <Select
+                defaultValue={formData?.status}
+                name="Status"
+                selectOptions={[
+                  { label: "Active", value: "Active" },
+                  { label: "Inactive", value: "Inactive" },
+                ]}
+                onChange={(val) => handleChange("status", val)}
+              />
+            </FormControl>
             <FormControl label="Department" viewMode={isViewMode} required={true}>
               <Select
                 defaultValue={formData?.department}
                 name="Department "
                 selectOptions={[
                   { label: "Math", value: "Math" },
-                  { label: "Science", value: "Science" }, 
+                  { label: "Science", value: "Science" },
                   { label: "Music", value: "Music" },
                   { label: "Cultural", value: "Cultural" },
                 ]}
