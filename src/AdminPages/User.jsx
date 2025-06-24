@@ -78,6 +78,7 @@ const User = () => {
       headerName: "Authenticate",
       renderCell: (params) => (params?.value ? "Yes" : "No"),
     },
+    { field: "department", headerName: "Department" },
     {
       field: "role",
       headerName: "Role",

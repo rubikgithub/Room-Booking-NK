@@ -16,6 +16,13 @@ import {
 } from "unygc";
 import { $ajax_post } from "../../Library";
 import { clerk } from "../../LoginRegister/clerk";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -213,17 +220,15 @@ const timeUtils = {
       hours -= 1;
       if (hours < 1) {
         hours = 12;
-        return `${hours}:${minutes.toString().padStart(2, "0")} ${
-          meridian === "am" ? "pm" : "am"
-        }`;
+        return `${hours}:${minutes.toString().padStart(2, "0")} ${meridian === "am" ? "pm" : "am"
+          }`;
       }
     } else if (minutes >= 60) {
       minutes = 0;
       hours += 1;
       if (hours === 12) {
-        return `${hours}:${minutes.toString().padStart(2, "0")} ${
-          meridian === "am" ? "pm" : "am"
-        }`;
+        return `${hours}:${minutes.toString().padStart(2, "0")} ${meridian === "am" ? "pm" : "am"
+          }`;
       } else if (hours > 12) {
         hours = 1;
       }
@@ -1085,6 +1090,7 @@ function BookingCalendar() {
           <Col sm={4}>
             <label className="control-label">Booking Date</label>
           </Col>
+
           <Col sm={8}>
             <DatePicker
               open
@@ -1094,8 +1100,8 @@ function BookingCalendar() {
               defaultValue={
                 state.currentEvent?.StartTime
                   ? dateUtils.formatDateForDisplay(
-                      new Date(state.currentEvent.StartTime)
-                    )
+                    new Date(state.currentEvent.StartTime)
+                  )
                   : ""
               }
               allowClear={false}
@@ -1178,6 +1184,17 @@ function BookingCalendar() {
             />
           </Col>
         </Row>
+        <Card key={"1"} className={"card.bg"}>
+          <CardHeader>
+            <CardTitle>{"card.title"}</CardTitle>
+            <CardDescription>{"card.description"}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div style={{ fontSize: "22px" }} className="text-3xl font-bold">
+              {"card.value"}
+            </div>
+          </CardContent>
+        </Card>
         {/* {state.breakTimeData?.title && (
           <Row style={{ marginBottom: "10px" }}>
             <Col sm={12}>
@@ -1261,6 +1278,7 @@ function BookingCalendar() {
                 />
               </Col>
             </Row>
+
           </>
         )}
       </>
