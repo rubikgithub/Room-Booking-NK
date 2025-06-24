@@ -320,6 +320,451 @@ router.post("/createUser", async (req, res) => {
   }
 });
 
+// Enhanced validation function
+const validateUserUpdateData = (userData, isPasswordUpdate = false) => {
+  const errors = [];
+
+  // Email validation
+  if (userData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userData.email)) {
+    errors.push("Invalid email format");
+  }
+
+  // Password validation (if provided)
+  if (userData.password || isPasswordUpdate) {
+    if (!userData.password) {
+      errors.push("Password is required for password update");
+    } else if (userData.password.length < 8) {
+      errors.push("Password must be at least 8 characters long");
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(userData.password)) {
+      errors.push("Password must contain at least one uppercase letter, one lowercase letter, and one number");
+    }
+
+    // Confirm password validation
+    if (userData.confirmPassword && userData.password !== userData.confirmPassword) {
+      errors.push("Password and confirm password do not match");
+    }
+  }
+  return errors;
+};
+
+// Enhanced sanitize function
+const sanitizeUserUpdateData = (userData) => {
+  const sanitized = {};
+  
+  // Only include fields that are explicitly provided and not empty
+  if (userData.first_name?.trim()) {
+    sanitized.first_name = userData.first_name.trim();
+  }
+  
+  if (userData.last_name?.trim()) {
+    sanitized.last_name = userData.last_name.trim();
+  }
+  
+  if (userData.email?.trim()) {
+    sanitized.email = userData.email.toLowerCase().trim();
+  }
+  
+  if (userData.address?.trim()) {
+    sanitized.address = userData.address.trim();
+  }
+  
+  if (userData.phone_number?.trim()) {
+    sanitized.phone_number = userData.phone_number.trim();
+  }
+  
+  if (userData.dob) {
+    sanitized.dob = userData.dob;
+  }
+  
+  if (userData.department?.trim()) {
+    sanitized.department = userData.department.trim();
+  }
+  
+  if (userData.role) {
+    sanitized.role = userData.role;
+  }
+
+  return sanitized;
+};
+
+// Check if email is already in use by another user
+const checkEmailAvailability = async (email, currentUserId) => {
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, email")
+    .eq("email", email.toLowerCase())
+    .neq("id", currentUserId);
+
+  if (error) throw error;
+  return data.length === 0;
+};
+
+// Update user password in Clerk
+const updatePasswordInClerk = async (clerkId, newPassword) => {
+  try {
+    const clerk = clearkClientInstance();
+    await clerk.users.updateUser(clerkId, {
+      password: newPassword
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Clerk password update error:", error);
+    
+    // Handle specific Clerk errors
+    if (error.errors?.[0]?.code === "form_password_pwned") {
+      return {
+        success: false,
+        code: "PWNED_PASSWORD",
+        message: "This password has been found in a data breach. Please choose a different password."
+      };
+    }
+    
+    return {
+      success: false,
+      code: "CLERK_ERROR",
+      message: error.message || "Failed to update password in authentication service"
+    };
+  }
+};
+
+router.post("/updateUser/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedUserData = req.body.body || req.body;
+
+    console.log("Update user request:", {
+      userId: id,
+      fields: Object.keys(updatedUserData),
+      hasPassword: !!updatedUserData.password,
+      hasProfileData: !!(updatedUserData.first_name || updatedUserData.last_name || updatedUserData.email || updatedUserData.department)
+    });
+
+    if (!id) {
+      return res.status(400).json({
+        status: "error",
+        code: "VALIDATION_ERROR",
+        message: "User ID is required",
+      });
+    }
+
+    const isPasswordUpdate = !!(updatedUserData.password);
+    
+    // Validate all update data
+    const validationErrors = validateUserUpdateData(updatedUserData, isPasswordUpdate);
+    
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        status: "error",
+        code: "VALIDATION_ERROR",
+        message: "Validation failed",
+        errors: validationErrors,
+      });
+    }
+
+    // Fetch current user data
+    const { data: existingUser, error: fetchError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !existingUser) {
+      return res.status(404).json({
+        status: "error",
+        code: "USER_NOT_FOUND",
+        message: "User not found",
+      });
+    }
+
+    const { clerk_id } = existingUser;
+
+    // Check email availability if email is being updated
+    if (updatedUserData.email && updatedUserData.email !== existingUser.email) {
+      const emailAvailable = await checkEmailAvailability(updatedUserData.email, id);
+      if (!emailAvailable) {
+        return res.status(409).json({
+          status: "error",
+          code: "EMAIL_EXISTS",
+          message: "Email is already in use by another user",
+        });
+      }
+    }
+
+    // Track what was updated
+    let passwordUpdated = false;
+    let profileUpdated = false;
+    let clerkUpdated = false;
+
+    // Step 1: Update password in Clerk (if provided)
+    if (isPasswordUpdate && clerk_id) {
+      console.log("Updating password in Clerk for user:", id);
+      
+      const passwordResult = await updatePasswordInClerk(clerk_id, updatedUserData.password);
+      console.log(" router.post ~ passwordResult:", passwordResult)
+      
+      if (!passwordResult.success) {
+        return res.status(passwordResult.code === "PWNED_PASSWORD" ? 422 : 500).json({
+          status: "error",
+          code: passwordResult.code,
+          message: passwordResult.message,
+        });
+      }
+      
+      passwordUpdated = true;
+      console.log("Password updated successfully in Clerk");
+    }
+
+    // Step 2: Update profile data in Clerk (if any Clerk-managed fields are provided)
+    if (clerk_id) {
+      try {
+        const clerk = clearkClientInstance();
+        const clerkUpdateData = {};
+
+        // Include password in Clerk update if provided
+        if (updatedUserData.password) {
+          clerkUpdateData.password = updatedUserData.password;
+        }
+
+        // Include profile fields that Clerk manages
+        if (updatedUserData.first_name && updatedUserData.first_name !== existingUser.first_name) {
+          clerkUpdateData.first_name = updatedUserData.first_name.trim();
+        }
+        
+        if (updatedUserData.last_name && updatedUserData.last_name !== existingUser.last_name) {
+          clerkUpdateData.last_name = updatedUserData.last_name.trim();
+        }
+        
+        if (updatedUserData.email && updatedUserData.email !== existingUser.email) {
+          clerkUpdateData.email_address = [updatedUserData.email.toLowerCase().trim()];
+        }
+
+        if (Object.keys(clerkUpdateData).length > 0) {
+          console.log("Updating Clerk with profile and/or password data");
+          const clerkResponse = await clerk.users.updateUser(clerk_id, clerkUpdateData);
+          clerkUpdated = true;
+          console.log("Clerk profile update successful");
+        }
+      } catch (clerkError) {
+        console.error("Clerk profile update error:", clerkError);
+        return res.status(500).json({
+          status: "error",
+          code: "CLERK_ERROR",
+          message: "Failed to update user in authentication service",
+          details: clerkError.message
+        });
+      }
+    }
+
+    // Step 3: Update profile data in Supabase
+    const sanitizedData = sanitizeUserUpdateData(updatedUserData);
+    
+    // Check if there are actual profile changes
+    const hasProfileChanges = Object.keys(sanitizedData).some(key => 
+      sanitizedData[key] !== existingUser[key]
+    );
+
+    if (hasProfileChanges) {
+      console.log("Updating Supabase with profile data:", sanitizedData);
+      
+      const { data, error } = await supabase
+        .from("users")
+        .update({
+          ...sanitizedData
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) {
+        // If Supabase update fails but Clerk was updated, we should log this inconsistency
+        console.error("Supabase update failed after Clerk update:", error);
+        throw new Error(`Failed to update user profile in database: ${error.message}`);
+      }
+
+      profileUpdated = true;
+      console.log("Supabase profile update successful");
+
+      // Prepare response message
+      const updateMessages = [];
+      if (passwordUpdated) updateMessages.push("password");
+      if (profileUpdated) updateMessages.push("profile");
+      
+      const message = updateMessages.length > 1 
+        ? `User ${updateMessages.join(" and ")} updated successfully`
+        : `User ${updateMessages[0]} updated successfully`;
+
+      return res.json({
+        status: "success",
+        message: message,
+        data: data,
+        updates: {
+          passwordUpdated,
+          profileUpdated,
+          clerkUpdated
+        }
+      });
+    }
+
+    // If no profile changes but password was updated
+    if (passwordUpdated && !hasProfileChanges) {
+      return res.json({
+        status: "success",
+        message: "Password updated successfully",
+        data: {
+          ...existingUser,
+          updated_at: new Date().toISOString()
+        },
+        updates: {
+          passwordUpdated: true,
+          profileUpdated: false,
+          clerkUpdated
+        }
+      });
+    }
+
+    // If no changes at all
+    return res.json({
+      status: "success",
+      message: "No changes detected",
+      data: existingUser,
+      updates: {
+        passwordUpdated: false,
+        profileUpdated: false,
+        clerkUpdated: false
+      }
+    });
+
+  } catch (error) {
+    console.error("User update error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to update user",
+      error: error.message,
+    });
+  }
+});
+
+// Separate endpoint for password updates only
+router.post("/updatePassword/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { currentPassword, newPassword, confirmPassword } = req.body.body || req.body;
+
+    console.log("Password update request for user:", id);
+
+    if (!id || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        status: "error",
+        code: "VALIDATION_ERROR",
+        message: "User ID, new password, and confirm password are required",
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        status: "error",
+        code: "VALIDATION_ERROR",
+        message: "New password and confirm password do not match",
+      });
+    }
+
+    // Validate password strength
+    const validationErrors = validateUserUpdateData({ password: newPassword }, true);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        status: "error",
+        code: "VALIDATION_ERROR",
+        message: "Password validation failed",
+        errors: validationErrors,
+      });
+    }
+
+    // Fetch user
+    const { data: existingUser, error: fetchError } = await supabase
+      .from("users")
+      .select("clerk_id, email")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !existingUser) {
+      return res.status(404).json({
+        status: "error",
+        code: "USER_NOT_FOUND",
+        message: "User not found",
+      });
+    }
+
+    if (!existingUser.clerk_id) {
+      return res.status(400).json({
+        status: "error",
+        code: "NO_CLERK_ID",
+        message: "User is not properly linked to authentication service",
+      });
+    }
+
+    // Update password in Clerk
+    const passwordResult = await updatePasswordInClerk(existingUser.clerk_id, newPassword);
+    
+    if (!passwordResult.success) {
+      return res.status(passwordResult.code === "PWNED_PASSWORD" ? 422 : 500).json({
+        status: "error",
+        code: passwordResult.code,
+        message: passwordResult.message,
+      });
+    }
+
+    res.json({
+      status: "success",
+      message: "Password updated successfully",
+      data: {
+        id,
+        email: existingUser.email,
+        updated_at: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error("Password update error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to update password",
+      error: error.message,
+    });
+  }
+});
+
+// Endpoint to check if email is available
+router.post("/checkEmailAvailability", async (req, res) => {
+  try {
+    const { email, currentUserId } = req.body.body || req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        status: "error",
+        message: "Email is required",
+      });
+    }
+
+    const isAvailable = await checkEmailAvailability(email, currentUserId);
+
+    res.json({
+      status: "success",
+      data: {
+        email,
+        isAvailable
+      }
+    });
+
+  } catch (error) {
+    console.error("Email availability check error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to check email availability",
+      error: error.message,
+    });
+  }
+});
+
 /**
  * Update user in both Supabase and Clerk
  */
