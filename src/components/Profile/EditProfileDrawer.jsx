@@ -68,20 +68,17 @@ const EditProfileDrawer = ({
     };
 
     const handleSubmit = () => {
-        if (isCreateMode && formData.password !== formData.confirmPassword) {
+        if (formData.password !== formData.confirmPassword) {
             alert("Passwords do not match");
             return;
         }
 
         const formattedDOB = date ? format(date, "yyyy-MM-dd") : "";
-        const endpoint = isCreateMode ? "createUser" : `updateUser/${formData?.id}`;
+        const endpoint = `updateUser/${formData?.id}`;
         const payload = isEditMode
             ? { id: data.id, ...formData, dob: formattedDOB }
             : { ...formData, dob: formattedDOB };
-        if (!isCreateMode) {
-            delete payload.confirmPassword;
-            delete payload.password;
-        }
+
         $ajax_post(endpoint, payload, () => {
             onClose();
             onRefresh();
@@ -256,24 +253,24 @@ const EditProfileDrawer = ({
                             />
                         </FormControl>
                         {/* {mode === "create" && ( */}
-                            <>
-                                <FormControl label="Password" required={true}>
-                                    <Input
-                                        type="password"
-                                        value={formData.password || ""}
-                                        onChange={(e) => handleChange("password", e)}
-                                        placeholder="Enter Password"
-                                    />
-                                </FormControl>
-                                <FormControl label="Confirm Password" required={true}>
-                                    <Input
-                                        type="password"
-                                        value={formData.confirmPassword || ""}
-                                        onChange={(e) => handleChange("confirmPassword", e)}
-                                        placeholder="Confirm Password"
-                                    />
-                                </FormControl>
-                            </>
+                        <>
+                            <FormControl label="Password" viewMode={isViewMode} required={true}>
+                                <Input
+                                    type="password"
+                                    value={formData.password || ""}
+                                    onChange={(e) => handleChange("password", e)}
+                                    placeholder="Enter Password"
+                                />
+                            </FormControl>
+                            <FormControl label="Confirm Password" viewMode={isViewMode} required={true}>
+                                <Input
+                                    type="password"
+                                    value={formData.confirmPassword || ""}
+                                    onChange={(e) => handleChange("confirmPassword", e)}
+                                    placeholder="Confirm Password"
+                                />
+                            </FormControl>
+                        </>
                         {/* )} */}
                     </FormRow>
                 </div>
