@@ -1087,10 +1087,17 @@ router.patch("/updateDepartment/:id", async (req, res) => {
   }
 });
 
+// Add status constants at the top with other constants
+const USER_STATUS = {
+  PENDING: "Pending",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+};
+
 /**
  * Update user status only
  */
-router.post("/updateStatus/:id", async (req, res) => {
+router.patch("/updateStatus/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body.body || req.body;
@@ -1116,6 +1123,16 @@ router.post("/updateStatus/:id", async (req, res) => {
       });
     }
 
+    // Validate status
+    const validStatuses = Object.values(USER_STATUS);
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        status: "error",
+        code: "VALIDATION_ERROR",
+        message: `Status must be one of: ${validStatuses.join(", ")}`,
+        validStatuses: validStatuses,
+      });
+    }
 
     // Check if user exists
     const { data: existingUser, error: fetchError } = await supabase
@@ -1188,7 +1205,6 @@ router.post("/updateStatus/:id", async (req, res) => {
     });
   }
 });
-
 /**
  * Revoke user session
  */
