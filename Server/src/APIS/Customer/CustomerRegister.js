@@ -101,7 +101,7 @@ const createSupabaseUser = async (userData) => {
     const user = {
       id: userId,
       ...sanitizedData,
-      status:"Inactive",
+      status: "Inactive",
     };
 
     // Check if user already exists
@@ -337,11 +337,16 @@ const validateUserUpdateData = (userData, isPasswordUpdate = false) => {
     } else if (userData.password.length < 8) {
       errors.push("Password must be at least 8 characters long");
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(userData.password)) {
-      errors.push("Password must contain at least one uppercase letter, one lowercase letter, and one number");
+      errors.push(
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+      );
     }
 
     // Confirm password validation
-    if (userData.confirmPassword && userData.password !== userData.confirmPassword) {
+    if (
+      userData.confirmPassword &&
+      userData.password !== userData.confirmPassword
+    ) {
       errors.push("Password and confirm password do not match");
     }
   }
@@ -351,36 +356,36 @@ const validateUserUpdateData = (userData, isPasswordUpdate = false) => {
 // Enhanced sanitize function
 const sanitizeUserUpdateData = (userData) => {
   const sanitized = {};
-  
+
   // Only include fields that are explicitly provided and not empty
   if (userData.first_name?.trim()) {
     sanitized.first_name = userData.first_name.trim();
   }
-  
+
   if (userData.last_name?.trim()) {
     sanitized.last_name = userData.last_name.trim();
   }
-  
+
   if (userData.email?.trim()) {
     sanitized.email = userData.email.toLowerCase().trim();
   }
-  
+
   if (userData.address?.trim()) {
     sanitized.address = userData.address.trim();
   }
-  
+
   if (userData.phone_number?.trim()) {
     sanitized.phone_number = userData.phone_number.trim();
   }
-  
+
   if (userData.dob) {
     sanitized.dob = userData.dob;
   }
-  
+
   if (userData.department?.trim()) {
     sanitized.department = userData.department.trim();
   }
-  
+
   if (userData.role) {
     sanitized.role = userData.role;
   }
@@ -405,25 +410,27 @@ const updatePasswordInClerk = async (clerkId, newPassword) => {
   try {
     const clerk = clearkClientInstance();
     await clerk.users.updateUser(clerkId, {
-      password: newPassword
+      password: newPassword,
     });
     return { success: true };
   } catch (error) {
     console.error("Clerk password update error:", error);
-    
+
     // Handle specific Clerk errors
     if (error.errors?.[0]?.code === "form_password_pwned") {
       return {
         success: false,
         code: "PWNED_PASSWORD",
-        message: "This password has been found in a data breach. Please choose a different password."
+        message:
+          "This password has been found in a data breach. Please choose a different password.",
       };
     }
-    
+
     return {
       success: false,
       code: "CLERK_ERROR",
-      message: error.message || "Failed to update password in authentication service"
+      message:
+        error.message || "Failed to update password in authentication service",
     };
   }
 };
@@ -437,7 +444,12 @@ router.post("/updateUser/:id", async (req, res) => {
       userId: id,
       fields: Object.keys(updatedUserData),
       hasPassword: !!updatedUserData.password,
-      hasProfileData: !!(updatedUserData.first_name || updatedUserData.last_name || updatedUserData.email || updatedUserData.department)
+      hasProfileData: !!(
+        updatedUserData.first_name ||
+        updatedUserData.last_name ||
+        updatedUserData.email ||
+        updatedUserData.department
+      ),
     });
 
     if (!id) {
@@ -448,11 +460,14 @@ router.post("/updateUser/:id", async (req, res) => {
       });
     }
 
-    const isPasswordUpdate = !!(updatedUserData.password);
-    
+    const isPasswordUpdate = !!updatedUserData.password;
+
     // Validate all update data
-    const validationErrors = validateUserUpdateData(updatedUserData, isPasswordUpdate);
-    
+    const validationErrors = validateUserUpdateData(
+      updatedUserData,
+      isPasswordUpdate
+    );
+
     if (validationErrors.length > 0) {
       return res.status(400).json({
         status: "error",
@@ -481,7 +496,10 @@ router.post("/updateUser/:id", async (req, res) => {
 
     // Check email availability if email is being updated
     if (updatedUserData.email && updatedUserData.email !== existingUser.email) {
-      const emailAvailable = await checkEmailAvailability(updatedUserData.email, id);
+      const emailAvailable = await checkEmailAvailability(
+        updatedUserData.email,
+        id
+      );
       if (!emailAvailable) {
         return res.status(409).json({
           status: "error",
@@ -499,18 +517,23 @@ router.post("/updateUser/:id", async (req, res) => {
     // Step 1: Update password in Clerk (if provided)
     if (isPasswordUpdate && clerk_id) {
       console.log("Updating password in Clerk for user:", id);
-      
-      const passwordResult = await updatePasswordInClerk(clerk_id, updatedUserData.password);
-      console.log(" router.post ~ passwordResult:", passwordResult)
-      
+
+      const passwordResult = await updatePasswordInClerk(
+        clerk_id,
+        updatedUserData.password
+      );
+      console.log(" router.post ~ passwordResult:", passwordResult);
+
       if (!passwordResult.success) {
-        return res.status(passwordResult.code === "PWNED_PASSWORD" ? 422 : 500).json({
-          status: "error",
-          code: passwordResult.code,
-          message: passwordResult.message,
-        });
+        return res
+          .status(passwordResult.code === "PWNED_PASSWORD" ? 422 : 500)
+          .json({
+            status: "error",
+            code: passwordResult.code,
+            message: passwordResult.message,
+          });
       }
-      
+
       passwordUpdated = true;
       console.log("Password updated successfully in Clerk");
     }
@@ -527,21 +550,35 @@ router.post("/updateUser/:id", async (req, res) => {
         }
 
         // Include profile fields that Clerk manages
-        if (updatedUserData.first_name && updatedUserData.first_name !== existingUser.first_name) {
+        if (
+          updatedUserData.first_name &&
+          updatedUserData.first_name !== existingUser.first_name
+        ) {
           clerkUpdateData.first_name = updatedUserData.first_name.trim();
         }
-        
-        if (updatedUserData.last_name && updatedUserData.last_name !== existingUser.last_name) {
+
+        if (
+          updatedUserData.last_name &&
+          updatedUserData.last_name !== existingUser.last_name
+        ) {
           clerkUpdateData.last_name = updatedUserData.last_name.trim();
         }
-        
-        if (updatedUserData.email && updatedUserData.email !== existingUser.email) {
-          clerkUpdateData.email_address = [updatedUserData.email.toLowerCase().trim()];
+
+        if (
+          updatedUserData.email &&
+          updatedUserData.email !== existingUser.email
+        ) {
+          clerkUpdateData.email_address = [
+            updatedUserData.email.toLowerCase().trim(),
+          ];
         }
 
         if (Object.keys(clerkUpdateData).length > 0) {
           console.log("Updating Clerk with profile and/or password data");
-          const clerkResponse = await clerk.users.updateUser(clerk_id, clerkUpdateData);
+          const clerkResponse = await clerk.users.updateUser(
+            clerk_id,
+            clerkUpdateData
+          );
           clerkUpdated = true;
           console.log("Clerk profile update successful");
         }
@@ -551,26 +588,26 @@ router.post("/updateUser/:id", async (req, res) => {
           status: "error",
           code: "CLERK_ERROR",
           message: "Failed to update user in authentication service",
-          details: clerkError.message
+          details: clerkError.message,
         });
       }
     }
 
     // Step 3: Update profile data in Supabase
     const sanitizedData = sanitizeUserUpdateData(updatedUserData);
-    
+
     // Check if there are actual profile changes
-    const hasProfileChanges = Object.keys(sanitizedData).some(key => 
-      sanitizedData[key] !== existingUser[key]
+    const hasProfileChanges = Object.keys(sanitizedData).some(
+      (key) => sanitizedData[key] !== existingUser[key]
     );
 
     if (hasProfileChanges) {
       console.log("Updating Supabase with profile data:", sanitizedData);
-      
+
       const { data, error } = await supabase
         .from("users")
         .update({
-          ...sanitizedData
+          ...sanitizedData,
         })
         .eq("id", id)
         .select()
@@ -579,7 +616,9 @@ router.post("/updateUser/:id", async (req, res) => {
       if (error) {
         // If Supabase update fails but Clerk was updated, we should log this inconsistency
         console.error("Supabase update failed after Clerk update:", error);
-        throw new Error(`Failed to update user profile in database: ${error.message}`);
+        throw new Error(
+          `Failed to update user profile in database: ${error.message}`
+        );
       }
 
       profileUpdated = true;
@@ -589,10 +628,11 @@ router.post("/updateUser/:id", async (req, res) => {
       const updateMessages = [];
       if (passwordUpdated) updateMessages.push("password");
       if (profileUpdated) updateMessages.push("profile");
-      
-      const message = updateMessages.length > 1 
-        ? `User ${updateMessages.join(" and ")} updated successfully`
-        : `User ${updateMessages[0]} updated successfully`;
+
+      const message =
+        updateMessages.length > 1
+          ? `User ${updateMessages.join(" and ")} updated successfully`
+          : `User ${updateMessages[0]} updated successfully`;
 
       return res.json({
         status: "success",
@@ -601,8 +641,8 @@ router.post("/updateUser/:id", async (req, res) => {
         updates: {
           passwordUpdated,
           profileUpdated,
-          clerkUpdated
-        }
+          clerkUpdated,
+        },
       });
     }
 
@@ -613,13 +653,13 @@ router.post("/updateUser/:id", async (req, res) => {
         message: "Password updated successfully",
         data: {
           ...existingUser,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         },
         updates: {
           passwordUpdated: true,
           profileUpdated: false,
-          clerkUpdated
-        }
+          clerkUpdated,
+        },
       });
     }
 
@@ -631,10 +671,9 @@ router.post("/updateUser/:id", async (req, res) => {
       updates: {
         passwordUpdated: false,
         profileUpdated: false,
-        clerkUpdated: false
-      }
+        clerkUpdated: false,
+      },
     });
-
   } catch (error) {
     console.error("User update error:", error);
     res.status(500).json({
@@ -649,7 +688,8 @@ router.post("/updateUser/:id", async (req, res) => {
 router.post("/updatePassword/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { currentPassword, newPassword, confirmPassword } = req.body.body || req.body;
+    const { currentPassword, newPassword, confirmPassword } =
+      req.body.body || req.body;
 
     console.log("Password update request for user:", id);
 
@@ -670,7 +710,10 @@ router.post("/updatePassword/:id", async (req, res) => {
     }
 
     // Validate password strength
-    const validationErrors = validateUserUpdateData({ password: newPassword }, true);
+    const validationErrors = validateUserUpdateData(
+      { password: newPassword },
+      true
+    );
     if (validationErrors.length > 0) {
       return res.status(400).json({
         status: "error",
@@ -704,14 +747,19 @@ router.post("/updatePassword/:id", async (req, res) => {
     }
 
     // Update password in Clerk
-    const passwordResult = await updatePasswordInClerk(existingUser.clerk_id, newPassword);
-    
+    const passwordResult = await updatePasswordInClerk(
+      existingUser.clerk_id,
+      newPassword
+    );
+
     if (!passwordResult.success) {
-      return res.status(passwordResult.code === "PWNED_PASSWORD" ? 422 : 500).json({
-        status: "error",
-        code: passwordResult.code,
-        message: passwordResult.message,
-      });
+      return res
+        .status(passwordResult.code === "PWNED_PASSWORD" ? 422 : 500)
+        .json({
+          status: "error",
+          code: passwordResult.code,
+          message: passwordResult.message,
+        });
     }
 
     res.json({
@@ -720,10 +768,9 @@ router.post("/updatePassword/:id", async (req, res) => {
       data: {
         id,
         email: existingUser.email,
-        updated_at: new Date().toISOString()
-      }
+        updated_at: new Date().toISOString(),
+      },
     });
-
   } catch (error) {
     console.error("Password update error:", error);
     res.status(500).json({
@@ -752,10 +799,9 @@ router.post("/checkEmailAvailability", async (req, res) => {
       status: "success",
       data: {
         email,
-        isAvailable
-      }
+        isAvailable,
+      },
     });
-
   } catch (error) {
     console.error("Email availability check error:", error);
     res.status(500).json({
@@ -1041,6 +1087,124 @@ router.patch("/updateDepartment/:id", async (req, res) => {
   }
 });
 
+// Add status constants at the top with other constants
+const USER_STATUS = {
+  PENDING: "Pending",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+};
+
+/**
+ * Update user status only
+ */
+router.patch("/updateStatus/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body.body || req.body;
+
+    console.log("Status update request:", {
+      userId: id,
+      newStatus: status,
+    });
+
+    if (!id) {
+      return res.status(400).json({
+        status: "error",
+        code: "VALIDATION_ERROR",
+        message: "User ID is required",
+      });
+    }
+
+    if (!status) {
+      return res.status(400).json({
+        status: "error",
+        code: "VALIDATION_ERROR",
+        message: "Status is required",
+      });
+    }
+
+    // Validate status
+    const validStatuses = Object.values(USER_STATUS);
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        status: "error",
+        code: "VALIDATION_ERROR",
+        message: `Status must be one of: ${validStatuses.join(", ")}`,
+        validStatuses: validStatuses,
+      });
+    }
+
+    // Check if user exists
+    const { data: existingUser, error: fetchError } = await supabase
+      .from("users")
+      .select("id, status, email, first_name, last_name")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !existingUser) {
+      return res.status(404).json({
+        status: "error",
+        code: "USER_NOT_FOUND",
+        message: "User not found",
+      });
+    }
+
+    // Check if status is actually changing
+    if (existingUser.status === status) {
+      return res.json({
+        status: "success",
+        message: "Status is already set to this value",
+        data: existingUser,
+        changed: false,
+      });
+    }
+
+    // Update status in Supabase
+    const { data, error } = await supabase
+      .from("users")
+      .update({
+        status: status,
+      })
+      .eq("id", id)
+      .select("id, first_name, last_name, email, status, updated_at")
+      .single();
+
+    if (error) {
+      console.error("Status update error:", error);
+      throw new Error(`Failed to update status: ${error.message}`);
+    }
+
+    if (!data) {
+      return res.status(404).json({
+        status: "error",
+        code: "USER_NOT_FOUND",
+        message: "User not found after update",
+      });
+    }
+
+    console.log("Status updated successfully:", {
+      userId: id,
+      oldStatus: existingUser.status,
+      newStatus: status,
+    });
+
+    res.json({
+      status: "success",
+      message: `User status updated from "${existingUser.status}" to "${status}" successfully`,
+      data: data,
+      changed: true,
+      previousStatus: existingUser.status,
+    });
+  } catch (error) {
+    console.error("Status update error:", error);
+    res.status(500).json({
+      status: "error",
+      code: "SERVER_ERROR",
+      message: "Failed to update user status",
+      error: error.message,
+    });
+  }
+});
 /**
  * Revoke user session
  */
