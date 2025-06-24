@@ -101,9 +101,9 @@ export function LineChartComponent() {
           <Flex justify="space-between  ">
             <Col>
               {/* <CardTitle>Line Chart - Interactive</CardTitle> */}
-              <CardDescription>
-                Showing total visitors for the last month
-              </CardDescription>
+              {/* <CardDescription> */}
+              <CardTitle style={{ fontSize: '1rem' }}>Showing total visitors for the last month</CardTitle>
+              {/* </CardDescription> */}
             </Col>
             <Flex justify="end">
               <FormRow cols={1} fieldAlign="side">

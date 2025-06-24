@@ -7,6 +7,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { $ajax_post } from "../Library";
 import UserDrawer from "./UserDrawer";
@@ -53,7 +63,38 @@ const User = () => {
       getUsers();
     });
   };
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [userToToggle, setUserToToggle] = useState(null);
+  const handleStatusClick = (user) => {
+    setUserToToggle(user);
+    setStatusDialogOpen(true);
+  };
 
+  // const handleStatusUpdate = () => {
+  //   if (!userToToggle) return;
+
+  //   const newStatus = userToToggle.status === "active" ? "inactive" : "active";
+
+  //   $ajax_post("users/update-status", {
+  //     id: userToToggle.id,
+  //     status: newStatus
+  //   }, () => {
+  //     setStatusDialogOpen(false);
+  //     setUserToToggle(null);
+  //     getUsers(); // Refresh the data
+  //   });
+  // };
+  const handleStatusUpdate = (newStatus) => {
+    if (!userToToggle) return;
+
+    $ajax_post(`updateStatus/${userToToggle.id}`, {
+      status: newStatus
+    }, () => {
+      setStatusDialogOpen(false);
+      setUserToToggle(null);
+      getUsers(); // Refresh the data
+    });
+  };
   const columns = [
     {
       field: "first_name",
@@ -72,7 +113,23 @@ const User = () => {
     { field: "address", headerName: "Address" },
     { field: "phone_number", headerName: "Phone Number" },
     { field: "dob", headerName: "Date of Birth" },
-    { field: "status", headerName: "Status" },
+    // { field: "status", headerName: "Status" },
+    {
+      field: "status",
+      headerName: "Status",
+      renderCell: (params) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors duration-200 ${params?.value?.toLowerCase() === "active"
+            ? "bg-green-100 text-green-800 hover:bg-green-200"
+            : "bg-red-100 text-red-800 hover:bg-red-200"
+            }`}
+          onClick={() => handleStatusClick(params?.row)}
+          title="Click to toggle status"
+        >
+          {params?.value?.charAt(0).toUpperCase() + params?.value?.slice(1)}
+        </span>
+      )
+    },
     {
       field: "authenticate",
       headerName: "Authenticate",
@@ -161,6 +218,51 @@ const User = () => {
           getUsers();
         }}
       />
+      {/* Status Update Confirmation Dialog */}
+      <AlertDialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+        <AlertDialogContent className="bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change User Status</AlertDialogTitle>
+            <AlertDialogDescription>
+              Select the new status for user{" "}
+              <strong>{userToToggle?.first_name} {userToToggle?.last_name}</strong>:
+              <br />
+              Current status: <span className="font-medium">{userToToggle?.status}</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-wrap gap-2 w-full">
+              <Button
+                onClick={() => handleStatusUpdate("Approved")}
+                className="bg-green-600 hover:bg-green-700 text-white flex-1 min-w-[100px]"
+                disabled={userToToggle?.status === "approved"}
+              >
+                Approved
+              </Button>
+              <Button
+                onClick={() => handleStatusUpdate("Rejected")}
+                className="bg-red-600 hover:bg-red-700 text-white flex-1 min-w-[100px]"
+                disabled={userToToggle?.status === "rejected"}
+              >
+                Rejected
+              </Button>
+              {/* <Button
+                onClick={() => handleStatusUpdate("pending")}
+                className="bg-yellow-600 hover:bg-yellow-700 text-white flex-1 min-w-[100px]"
+                disabled={userToToggle?.status === "pending"}
+              >
+                Pending
+              </Button> */}
+            </div>
+            <AlertDialogCancel
+              onClick={() => setStatusDialogOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
