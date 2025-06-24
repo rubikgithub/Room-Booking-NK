@@ -8,7 +8,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { $ajax_post } from "../../Library";
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
@@ -17,6 +17,15 @@ import {
 import { PieChartComponent } from "./PieChart";
 import { RadialChartComponent } from "./RadialChartComponent";
 import { LineChartComponent } from "./LineChartComponent";
+
+const ajaxPost = (url, data) => {
+  return new Promise((resolve, reject) => {
+    $ajax_post(url, data,
+      (response) => resolve(response),
+      (error) => reject(error)
+    );
+  });
+};
 
 const chartData = [
   { date: "2024-04-01", desktop: 222, mobile: 150 },
@@ -134,7 +143,7 @@ const Dashboard = () => {
   const [users, setUsers] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [dashboardData, setDashboardData] = useState({})
   useEffect(() => {
     setUserDetails(user);
   }, [user]);
@@ -191,76 +200,68 @@ const Dashboard = () => {
       count: loading ? 0 : scheduledRoomsToday.length,
     },
   ];
+  const [cardData, setCardData] = useState([])
+  const apiCall = async () => {
+    const [data, data1] = await Promise.all([
+      ajaxPost("/dashboard", {}),
+      // ajaxPost("/dashboard/metrics", {}),
+      // ajaxPost("/dashboard/department-stats", {}),
+      // ajaxPost("/dashboard/top-rooms", {}),
+      ajaxPost("/dashboard/monthly-volume?year=2024", {}),
+      // ajaxPost("/dashboard/year-comparison", {}),
+      // ajaxPost("/dashboard/active-bookings", {}),
+      // ajaxPost("/dashboard/pending-requests", {}),
+      // ajaxPost("/dashboard/available-rooms", {}),
+    ])
+    console.log(data, "data", data1)
+    setDashboardData(data)
+    setCardData(
+      [
+        {
+          title: "Total Bookings Today",
+          // description: "Total rooms in the system",
+          value: data?.metrics?.total_bookings_today || 0,
+          bg: "bg-[hsl(var(--chart-1))]",
+        },
+        {
+          title: "Active Bookings (Now)",
+          // description: "Total buildings",
+          value: data?.metrics?.active_bookings_now || 0,
+          bg: "bg-[hsl(var(--chart-2))]",
+        },
+        {
+          title: "Rooms Available Now ",
+          // description: "Registered students",
+          value: data?.metrics?.available_rooms_count || 0,
+          bg: "bg-[hsl(var(--chart-3))] text-[hsl(var(--chart-4))]",
+        },
+        {
+          title: "Pending Requests",
+          // description: "Rooms not booked today",
+          value: data?.metrics?.pending_requests || 0,
+          bg: "bg-[hsl(var(--chart-4))]",
+        },
+        {
+          title: "Cancelled/Rejected Bookings (Today/Week)",
+          // description: "Rooms booked today",
+          value: `${data?.metrics?.cancelled_rejected_today || 0}/${data?.metrics?.cancelled_rejected_week || 0}`,
+          bg: "bg-[hsl(var(--chart-5))]",
+        },
+        {
+          title: "No. of Rooms in Maintenance",
+          // description: "Rooms booked today",
+          value: data?.metrics?.maintenance_rooms || 0,
+          bg: "bg-[hsl(var(--chart-5))]",
+        },
+      ]
+    )
 
-  const cardData = [
-    // {
-    //   title: "No. of Rooms",
-    //   description: "Total rooms in the system",
-    //   value: loading ? "..." : rooms.length,
-    //   bg: "bg-[hsl(var(--chart-1))]",
-    // },
-    // {
-    //   title: "No. of Buildings",
-    //   description: "Total buildings",
-    //   value: loading ? "..." : buildings.length,
-    //   bg: "bg-[hsl(var(--chart-2))]",
-    // },
-    // {
-    //   title: "No. of Students",
-    //   description: "Registered students",
-    //   value: loading ? "..." : studentCount,
-    //   bg: "bg-[hsl(var(--chart-3))] text-[hsl(var(--chart-4))]",
-    // },
-    // {
-    //   title: "Vacant Rooms Today",
-    //   description: "Rooms not booked today",
-    //   value: loading ? "..." : vacantRoomsToday.length,
-    //   bg: "bg-[hsl(var(--chart-4))]",
-    // },
-    // {
-    //   title: "Scheduled Rooms",
-    //   description: "Rooms booked today",
-    //   value: loading ? "..." : scheduledRoomsToday.length,
-    //   bg: "bg-[hsl(var(--chart-5))]",
-    // },
+  }
+  useEffect(() => {
+    apiCall()
+  }, [])
 
-    {
-      title: "Total Bookings Today",
-      // description: "Total rooms in the system",
-      value: loading ? "..." : rooms.length,
-      bg: "bg-[hsl(var(--chart-1))]",
-    },
-    {
-      title: "Active Bookings (Now)",
-      // description: "Total buildings",
-      value: loading ? "..." : buildings.length,
-      bg: "bg-[hsl(var(--chart-2))]",
-    },
-    {
-      title: "Rooms Available Now ",
-      // description: "Registered students",
-      value: loading ? "..." : studentCount,
-      bg: "bg-[hsl(var(--chart-3))] text-[hsl(var(--chart-4))]",
-    },
-    {
-      title: "Pending Requests",
-      // description: "Rooms not booked today",
-      value: loading ? "..." : vacantRoomsToday.length,
-      bg: "bg-[hsl(var(--chart-4))]",
-    },
-    {
-      title: "Cancelled/Rejected Bookings (Today/Week)",
-      // description: "Rooms booked today",
-      value: loading ? "..." : scheduledRoomsToday.length,
-      bg: "bg-[hsl(var(--chart-5))]",
-    },
-    {
-      title: "No. of Rooms in Maintenance",
-      // description: "Rooms booked today",
-      value: loading ? "..." : scheduledRoomsToday.length,
-      bg: "bg-[hsl(var(--chart-5))]",
-    },
-  ];
+
 
   return (
     <>
@@ -289,12 +290,12 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-        <PieChartComponent data={summaryChartData} />
-        <BarChartComponent data={summaryChartData} />
+        <PieChartComponent data={dashboardData?.charts?.departmentStats} />
+        <BarChartComponent data={dashboardData?.charts?.topRooms} />
         <RadialChartComponent data={summaryChartData} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-4 mt-6">
-        <LineChartComponent data={summaryChartData} />
+        <LineChartComponent chartData={dashboardData?.charts?.monthlyBookings} />
       </div>
     </>
   );
@@ -302,16 +303,43 @@ const Dashboard = () => {
 
 export default Dashboard;
 
-function BarChartComponent() {
-  const [activeChart, setActiveChart] = useState("mobile");
+function BarChartComponent({ data = [] }) {
+  const chartConfigs = {
+    booking_count: {
+      label: "Bookings",
+      color: "hsl(var(--chart-1))",
+    },
+    capacity: {
+      label: "Capacity",
+      color: "hsl(var(--chart-2))",
+    },
+  };
 
-  const total = useMemo(
-    () => ({
-      desktop: chartData.reduce((acc, curr) => acc + curr.desktop, 0),
-      mobile: chartData.reduce((acc, curr) => acc + curr.mobile, 0),
-    }),
-    []
-  );
+  const [activeChart, setActiveChart] = useState("booking_count");
+
+  const total = useMemo(() => {
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return {
+        booking_count: 0,
+        capacity: 0,
+        rooms: 0
+      };
+    }
+
+    return {
+      booking_count: data.reduce((acc, curr) => acc + (curr?.booking_count || 0), 0),
+      capacity: data.reduce((acc, curr) => acc + (curr?.capacity || 0), 0),
+      rooms: data.length
+    };
+  }, [data]);
+
+  // Format capacity for display
+  const formatCapacity = (value) => {
+    if (value >= 1000) {
+      return `${(value / 1000).toFixed(0)}K`;
+    }
+    return value.toString();
+  };
 
   return (
     <Card className="min-h-[200px] w-full">
@@ -342,41 +370,59 @@ function BarChartComponent() {
       </CardHeader>
       <CardContent className="px-2 sm:p-6">
         <ChartContainer
-          config={chartConfig}
+          config={chartConfigs}
           className="aspect-auto h-[250px] w-full"
         >
-          <BarChart data={chartData} margin={{ left: 12, right: 12 }}>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) =>
-                new Date(value).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })
-              }
-            />
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  className="w-[150px]"
-                  nameKey="views"
-                  labelFormatter={(value) =>
-                    new Date(value).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })
+          {data && data.length > 0 ? (
+            <BarChart data={data} margin={{ left: 12, right: 12 }}>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="room_name"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+                tickFormatter={(value) => {
+                  // Truncate long room names
+                  return value.length > 10 ? `${value.substring(0, 10)}...` : value;
+                }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => {
+                  if (activeChart === "capacity") {
+                    return formatCapacity(value);
                   }
-                />
-              }
-            />
-            <Bar dataKey={activeChart} fill={`var(--color-${activeChart})`} />
-          </BarChart>
+                  return value.toString();
+                }}
+              />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    className="w-[200px]"
+                    nameKey={activeChart}
+                    labelFormatter={(label) => `Room: ${label}`}
+                    formatter={(value, name, props) => [
+                      activeChart === "capacity" ? `${value.toLocaleString()} capacity` : `${value} bookings`,
+                      chartConfigs[activeChart].label,
+                      props.payload.building_name ? `Building: ${props.payload.building_name}` : null
+                    ].filter(Boolean)}
+                  />
+                }
+              />
+              <Bar
+                dataKey={activeChart}
+                fill={`var(--color-${activeChart})`}
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
+          ) : (
+            <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+              No room data available
+            </div>
+          )}
         </ChartContainer>
       </CardContent>
     </Card>

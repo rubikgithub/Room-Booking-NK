@@ -2,6 +2,7 @@ import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AllBookings from "./AllBookings";
 import MyBookings from "./MyBookings";
+import RecentBookings from "./RecentBookings";
 
 const Bookings = () => {
   return (
@@ -27,12 +28,12 @@ const Bookings = () => {
           <TabsContent value="allbookings">
             <AllBookings />
           </TabsContent>
-        ) 
+        )
       }
       {
         localStorage.getItem("role") === "admin" && (
           <TabsContent value="recentBooking">
-            <>Coming Soon.....</>
+            <RecentBookings />
           </TabsContent>
         )
       }
