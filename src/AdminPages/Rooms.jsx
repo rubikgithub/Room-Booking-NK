@@ -130,7 +130,7 @@ const Rooms = () => {
         const featureList = Object.entries(features)
           .filter(([key, value]) => value?.enabled)
           .map(([key, value]) => {
-            if (key === "dusters" && value.count) {
+            if (key === "dusterss" && value.count) {
               return `${key} (${value.count})`;
             }
             return key;
@@ -266,25 +266,14 @@ const roomTypes = [
 
 
 
-
 const room_features = [
-  {
-    value: "Chairs", label: "Chairs"
-  },
-  {
-    value: "Tables", label: "Tables"
-  },
-  {
-    value: "Markers", label: "Markers"
-  },
-  {
-    value: "Dusters", label: "Dusters"
-  },
-  {
-    value: "Projector_Availability", label: "Projector Availability"
-  },
-  { value: "Board", label: "Board" }
-]
+  { value: "chairs", label: "Chairs" },
+  { value: "tables", label: "Tables" },
+  { value: "markers", label: "Markers" },
+  { value: "dusters", label: "Dusters" },
+  { value: "projector", label: "Projector" },
+  { value: "board", label: "Board" },
+];
 
 const chairOptions = [
   { value: "10-15", label: "10-15" },
@@ -321,7 +310,6 @@ const RoomsDrawer = ({
     room_features: [],
   });
 
-  console.log(formData, "formData");
   const [buildings, setBuildings] = useState([]);
 
   const handleChange = (key, value) => {
@@ -391,44 +379,8 @@ const RoomsDrawer = ({
   };
 
   const handleSubmit = () => {
-
-    const formattedData = {
-      name: formData.name,
-      building_id: formData.building_id,
-      type: formData.type,
-      capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
-      description: formData.description,
-      area: formData.area ? parseInt(formData.area) : undefined,
-      features: formData.features || undefined,
-      image: formData.image || [],
-      room_features: {
-        chairs: {
-          enabled: formData?.room_features.includes("Chairs"),
-          quantity: formData.chairsQuantity || undefined,
-        },
-        tables: {
-          enabled: formData?.room_features.includes("Tables"),
-          count: formData.tablesCount ? parseInt(formData.tablesCount) : undefined,
-        },
-        markers: {
-          enabled: formData?.room_features.includes("Markers"),
-          count: formData.markersCount ? parseInt(formData.markersCount) : undefined,
-        },
-        dusters: {
-          enabled: formData?.room_features.includes("Dusters"),
-          count: formData.dustersCount ? parseInt(formData.dustersCount) : undefined,
-        },
-        projector: {
-          enabled: formData?.room_features.includes("Projector_Availability"),
-        },
-        board: {
-          enabled: formData?.room_features.includes("Board"),
-          size: formData.boardSize || undefined,
-        },
-      },
-    };
     const endpoint = isCreate ? "createRoom" : `updateRoom/${data?.id}`;
-    const payload = isEdit ? { id: data.id, ...formattedData } : formattedData;
+    const payload = isEdit ? { id: data.id, ...formData } : formData;
     $ajax_post(endpoint, payload, () => {
       Notification.open(
         "success",
@@ -471,6 +423,7 @@ const RoomsDrawer = ({
         area: data.area || "",
         features: data.features || "",
         image: data.image || [],
+        room_features: data?.room_features || []
       });
     } else if (isCreate) {
       setFormData({
@@ -482,9 +435,76 @@ const RoomsDrawer = ({
         area: "",
         features: "",
         image: [],
+        room_features: []
       });
     }
   }, [data, mode]);
+
+  const handleChanges = (field, value) => {
+    setFormData((prevData) => {
+      let updatedRoomFeatures = { ...prevData.room_features };
+
+      if (field === "room_features") {
+        // Handle multi-select for room_features
+        const selectedValues = value.map((item) => item.value || item); // Extract values from { value, label } or plain array
+        const featureKeys = ["chairs", "tables", "markers", "dusters", "projector", "board"];
+
+        // Update enabled status for all features
+        featureKeys.forEach((key) => {
+          const isEnabled = selectedValues.includes(key);
+          updatedRoomFeatures[key] = {
+            ...updatedRoomFeatures[key],
+            enabled: isEnabled,
+          };
+
+          // Remove quantities/counts/sizes when feature is disabled
+          if (!isEnabled) {
+            if (key === "chairs") delete updatedRoomFeatures[key].quantity;
+            if (key === "tables") delete updatedRoomFeatures[key].count;
+            if (key === "markers") delete updatedRoomFeatures[key].count;
+            if (key === "dusters") delete updatedRoomFeatures[key].count;
+            if (key === "board") delete updatedRoomFeatures[key].size;
+          }
+        });
+      } else if (field === "chairsQuantity") {
+        updatedRoomFeatures.chairs = {
+          ...updatedRoomFeatures.chairs,
+          enabled: true,
+          quantity: value.value || value, // Handle Select value
+        };
+      } else if (field === "tablesCount") {
+        updatedRoomFeatures.tables = {
+          ...updatedRoomFeatures.tables,
+          enabled: true,
+          count: parseInt(value, 10) || 0, // Handle Input value
+        };
+      } else if (field === "markersCount") {
+        updatedRoomFeatures.markers = {
+          ...updatedRoomFeatures.markers,
+          enabled: true,
+          count: parseInt(value, 10) || 0,
+        };
+      } else if (field === "dustersCount") {
+        updatedRoomFeatures.dusters = {
+          ...updatedRoomFeatures.dusters,
+          enabled: true,
+          count: parseInt(value, 10) || 0,
+        };
+      } else if (field === "boardSize") {
+        updatedRoomFeatures.board = {
+          ...updatedRoomFeatures.board,
+          enabled: true,
+          size: value.value || value, // Handle Select value
+        };
+      }
+
+      return {
+        ...prevData,
+        room_features: updatedRoomFeatures,
+      };
+    });
+  };
+
 
   return (
     <Drawer
@@ -602,33 +622,40 @@ const RoomsDrawer = ({
             <Select
               disabled={isView}
               selectOptions={room_features}
-              value={formData?.room_features?.filter((item) => item?.enabled)}
+              value={Object.keys(formData?.room_features || {}).filter(
+                (key) => formData.room_features[key]?.enabled
+              )}
+              defaultValue={Object.keys(formData?.room_features || {}).filter(
+                (key) => formData.room_features[key]?.enabled
+              )}
               multiple={true}
-              onChange={(val) => handleChange("room_features", val)}
+              onChange={(val) => handleChanges("room_features", val)}
               customClass="custom-select"
               dataActions={true}
             />
           </FormControl>
+
           {/* Conditional Chairs Quantity Dropdown */}
-          {formData?.room_features?.includes("Chairs") && (
+          {formData?.room_features?.chairs?.enabled && (
             <FormControl viewMode={isView} label="Chairs Quantity" required>
               <Select
                 disabled={isView}
                 selectOptions={chairOptions}
-                value={formData.chairsQuantity}
-                onChange={(val) => handleChange("chairsQuantity", val)}
+                value={formData.room_features.chairs.quantity || ""}
+                defaultValue={formData.room_features.chairs.quantity || ""}
+                onChange={(val) => handleChanges("chairsQuantity", val)}
                 customClass="custom-select"
               />
             </FormControl>
           )}
 
           {/* Conditional Tables Count Input */}
-          {formData?.room_features?.includes("Tables") && (
+          {formData?.room_features?.tables?.enabled && (
             <FormControl viewMode={isView} label="Tables Count" required>
               <Input
                 type="number"
-                value={formData.tablesCount}
-                onChange={(e) => handleChange("tablesCount", e)}
+                value={formData.room_features.tables.count || ""}
+                onChange={(e) => handleChanges("tablesCount", e)}
                 placeholder="Enter number of tables"
                 disabled={isView}
               />
@@ -636,12 +663,12 @@ const RoomsDrawer = ({
           )}
 
           {/* Conditional Markers Count Input */}
-          {formData?.room_features?.includes("Markers") && (
+          {formData?.room_features?.markers?.enabled && (
             <FormControl viewMode={isView} label="Markers Count" required>
               <Input
                 type="number"
-                value={formData.markersCount}
-                onChange={(e) => handleChange("markersCount", e)}
+                value={formData.room_features.markers.count || ""}
+                onChange={(e) => handleChanges("markersCount", e)}
                 placeholder="Enter number of markers"
                 disabled={isView}
               />
@@ -649,12 +676,12 @@ const RoomsDrawer = ({
           )}
 
           {/* Conditional Dusters Count Input */}
-          {formData?.room_features?.includes("Dusters") && (
+          {formData?.room_features?.dusters?.enabled && (
             <FormControl viewMode={isView} label="Dusters Count" required>
               <Input
                 type="number"
-                value={formData.dustersCount}
-                onChange={(e) => handleChange("dustersCount", e)}
+                value={formData.room_features.dusters.count || ""}
+                onChange={(e) => handleChanges("dustersCount", e)}
                 placeholder="Enter number of dusters"
                 disabled={isView}
               />
@@ -662,18 +689,18 @@ const RoomsDrawer = ({
           )}
 
           {/* Conditional Board Size Dropdown */}
-          {formData?.room_features?.includes("Board") && (
+          {formData?.room_features?.board?.enabled && (
             <FormControl viewMode={isView} label="Board Size" required>
               <Select
                 disabled={isView}
                 selectOptions={boardOptions}
-                value={formData.boardSize}
-                onChange={(val) => handleChange("boardSize", val)}
+                value={formData.room_features.board.size || ""}
+                defaultValue={formData.room_features.board.size || ""}
+                onChange={(val) => handleChanges("boardSize", val)}
                 customClass="custom-select"
               />
             </FormControl>
           )}
-
           {/* <FormControl label="Images" viewMode={isView}>
             
           </FormControl> */}

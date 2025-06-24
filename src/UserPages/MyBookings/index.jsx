@@ -2,6 +2,7 @@ import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AllBookings from "./AllBookings";
 import MyBookings from "./MyBookings";
+import RecentBookings from "./RecentBookings";
 
 const Bookings = () => {
   return (
@@ -13,6 +14,11 @@ const Bookings = () => {
           )
         }
         <TabsTrigger value="mybookings">My Bookings</TabsTrigger>
+        {
+          localStorage.getItem("role") === "admin" && (
+            <TabsTrigger value="recentBooking">Recent Bookings</TabsTrigger>
+          )
+        }
       </TabsList>
       <TabsContent className="w-full px-2" value="mybookings">
         <MyBookings />
@@ -21,6 +27,13 @@ const Bookings = () => {
         localStorage.getItem("role") === "admin" && (
           <TabsContent value="allbookings">
             <AllBookings />
+          </TabsContent>
+        )
+      }
+      {
+        localStorage.getItem("role") === "admin" && (
+          <TabsContent value="recentBooking">
+            <RecentBookings />
           </TabsContent>
         )
       }

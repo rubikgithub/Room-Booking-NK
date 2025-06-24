@@ -7,6 +7,7 @@ import {
   Col,
   DatePicker,
   EventCalendar,
+  Icon,
   Input,
   ModalBox,
   Notification,
@@ -16,9 +17,129 @@ import {
 } from "unygc";
 import { $ajax_post } from "../../Library";
 import { clerk } from "../../LoginRegister/clerk";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
+const ConferenceRoomCard = ({ room }) => {
+  console.log(room, "room")
+  return (
+    <Card className="w-full shadow-lg rounded-lg overflow-hidden">
+      <div className="flex flex-col md:flex-row px-2">
+        {/* Image Section */}
+        {(room.image === "" || room.image === null || room.image === "[]" || !room.image) ? "" :
+          <div className="md:w-1/3 lg:w-1/4 px-2">
+            <img
+              src={room.image ? JSON.parse(room?.image)[0]?.path : "https://via.placeholder.com/400x250"}
+              alt={room?.name}
+              className="w-full h-48 md:h-full object-cover"
+            />
+          </div>}
+
+        {/* Content Section */}
+        <div className="flex-1 flex flex-col">
+          <CardHeader className="bg-gray-100 p-4 border-b">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <CardTitle className="text-xl font-bold text-gray-800">{room?.name}</CardTitle>
+                <CardDescription className="text-sm text-gray-600">
+                  {room?.type} | Capacity: {room?.capacity} people
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${room?.status === 'Available'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800'
+                  }`}>
+                  {room?.status}
+                </span>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-4 flex-1">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Left Column */}
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    <span className="font-semibold">Description:</span>
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">{room?.description}</p>
+                </div>
+
+                <div className="flex flex-wrap gap-4 text-sm">
+                  <div>
+                    <span className="font-semibold text-gray-700">Area:</span>
+                    <span className="text-gray-600 ml-1">{room?.area} sq ft</span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-700">Building:</span>
+                    <span className="text-gray-600 ml-1">{room?.building_name}, {room?.building_location}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Features */}
+              <div>
+                <div className="text-sm text-gray-700">
+                  <span className="font-semibold">Room Features:</span>
+                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1">
+                    {room?.room_features?.board?.enabled && (
+                      <div className="flex items-center text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                        📊 {room?.room_features?.board?.size || 'Board'}
+                      </div>
+                    )}
+                    {room?.room_features?.chairs?.enabled && (
+                      <div className="flex items-center text-xs bg-gray-50 text-gray-700 px-2 py-1 rounded">
+                        🪑 {room?.room_features?.chairs?.quantity} Chairs
+                      </div>
+                    )}
+                    {room?.room_features?.tables?.enabled && (
+                      <div className="flex items-center text-xs bg-brown-50 text-brown-700 px-2 py-1 rounded">
+                        🪑 {room?.room_features?.tables?.count} Tables
+                      </div>
+                    )}
+                    {room?.room_features?.projector?.enabled && (
+                      <div className="flex items-center text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded">
+                        📽️ Projector
+                      </div>
+                    )}
+                    {room?.room_features?.markers?.enabled && (
+                      <div className="flex items-center text-xs bg-green-50 text-green-700 px-2 py-1 rounded">
+                        ✏️ {room?.room_features?.markers?.count} Markers
+                      </div>
+                    )}
+                    {room?.room_features?.dusters?.enabled && (
+                      <div className="flex items-center text-xs bg-yellow-50 text-yellow-700 px-2 py-1 rounded">
+                        🧽 {room?.room_features?.dusters?.count} Dusters
+                      </div>
+                    )}
+                  </div>
+
+                  {room?.features && (
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-600">
+                        <span className="font-medium">Additional:</span> {room?.features}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </div>
+      </div>
+    </Card>
+  );
+};
 
 // Constants
 const TIME_OPTIONS = [
@@ -213,17 +334,15 @@ const timeUtils = {
       hours -= 1;
       if (hours < 1) {
         hours = 12;
-        return `${hours}:${minutes.toString().padStart(2, "0")} ${
-          meridian === "am" ? "pm" : "am"
-        }`;
+        return `${hours}:${minutes.toString().padStart(2, "0")} ${meridian === "am" ? "pm" : "am"
+          }`;
       }
     } else if (minutes >= 60) {
       minutes = 0;
       hours += 1;
       if (hours === 12) {
-        return `${hours}:${minutes.toString().padStart(2, "0")} ${
-          meridian === "am" ? "pm" : "am"
-        }`;
+        return `${hours}:${minutes.toString().padStart(2, "0")} ${meridian === "am" ? "pm" : "am"
+          }`;
       } else if (hours > 12) {
         hours = 1;
       }
@@ -406,7 +525,7 @@ function BookingCalendar() {
   const user = clerk?.user;
   const { fetchData } = useApi();
   const [state, dispatch] = useReducer(bookingReducer, initialState);
-
+  const [roomsDetails, setRoomsDetails] = useState({})
   // Memoized values
   const filteredEndTimeOptions = useMemo(() => {
     if (!state.eventFormValues.startTime) return TIME_OPTIONS;
@@ -422,16 +541,19 @@ function BookingCalendar() {
 
   const headerDropdownTemplate = useMemo(
     () => (
-      <Select
-        name="buildingOption"
-        defaultValue={state.buildingOptions?.map((option) => option?.value)}
-        multiple={true}
-        selectOptions={state.buildingOptions}
-        onChange={(value) => {
-          getRoomsByBuildingIds(value);
-          getBuildingsByIds(value);
-        }}
-      />
+      <>
+        <Select
+          name="buildingOption"
+          defaultValue={state.buildingOptions?.map((option) => option?.value)}
+          multiple={true}
+          selectOptions={state.buildingOptions}
+          onChange={(value) => {
+            getRoomsByBuildingIds(value);
+            getBuildingsByIds(value);
+          }}
+        />
+        {/* <Icon type="filter" /> */}
+      </>
     ),
     [state.buildingOptions]
   );
@@ -839,6 +961,26 @@ function BookingCalendar() {
     getAllBookings,
   ]);
 
+  const getRoomDetails = (id) => {
+    $ajax_post(
+      `room/${id}`,
+      {},
+      (res) => {
+        setRoomsDetails(res)
+      },
+      (error) => {
+        Notification.open(
+          "warning",
+          "Room Unavailable",
+          "The selected room is unavailable for the specified time.",
+          3000,
+          "top-left"
+        );
+      }
+    );
+  }
+
+
   const handleDelete = useCallback(async () => {
     dispatch({ type: "SET_DELETE_LOADING", payload: true });
 
@@ -1100,6 +1242,7 @@ function BookingCalendar() {
           <Col sm={4}>
             <label className="control-label">Booking Date</label>
           </Col>
+
           <Col sm={8}>
             <DatePicker
               open
@@ -1109,8 +1252,8 @@ function BookingCalendar() {
               defaultValue={
                 state.currentEvent?.StartTime
                   ? dateUtils.formatDateForDisplay(
-                      new Date(state.currentEvent.StartTime)
-                    )
+                    new Date(state.currentEvent.StartTime)
+                  )
                   : ""
               }
               allowClear={false}
@@ -1193,6 +1336,7 @@ function BookingCalendar() {
             />
           </Col>
         </Row>
+        <ConferenceRoomCard room={roomsDetails} />
         {/* {state.breakTimeData?.title && (
           <Row style={{ marginBottom: "10px" }}>
             <Col sm={12}>
@@ -1276,6 +1420,7 @@ function BookingCalendar() {
                 />
               </Col>
             </Row>
+
           </>
         )}
       </>
@@ -1320,6 +1465,7 @@ function BookingCalendar() {
               dispatch({ type: "SET_DRAWER_VISIBLE", payload: false });
               dispatch({ type: "RESET_FORM" });
               dispatch({ type: "RESET_ERRORS" });
+              setRoomsDetails({})
             }}
             style={{ marginRight: 8 }}
           >
@@ -1331,7 +1477,12 @@ function BookingCalendar() {
     [state.currentEvent, handleSubmit]
   );
 
-  console.log(state.currentEvent, "current event");
+  useEffect(() => {
+
+    if (state.currentEvent?.RoomId) {
+      getRoomDetails(state.currentEvent?.RoomId);
+    }
+  }, [state.currentEvent])
   return (
     <>
       <div className="event_calendar_container">
@@ -1344,15 +1495,19 @@ function BookingCalendar() {
             resourceHeaderTemplate={resourceHeaderTemplate}
             headerTitle={["Building", "Room", "Type", "Capacity"]}
             currentEvent={state.currentEvent}
-            setCurrentEvent={(event) =>
+            setCurrentEvent={(event) => {
+              // getRoomDetails(event?.RoomId);
               dispatch({ type: "SET_CURRENT_EVENT", payload: event })
+            }
             }
             addEditEventTemplate={addEditEventTemplate}
             headerDropdownTemplate={headerDropdownTemplate}
             ownerColumnWidth={400}
             addEditEventDrawerVisible={state.addEditEventDrawerVisible}
-            setAddEditEventDrawerVisible={(visible) =>
-              dispatch({ type: "SET_DRAWER_VISIBLE", payload: visible })
+            setAddEditEventDrawerVisible={(visible) => {
+
+              dispatch({ type: "SET_DRAWER_VISIBLE", payload: visible });
+            }
             }
             addEditEventDrawerFooterTemplate={addEditEventDrawerFooterTemplate}
             startHour={state.startTime}

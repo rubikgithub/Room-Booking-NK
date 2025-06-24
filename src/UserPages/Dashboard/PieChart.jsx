@@ -13,15 +13,15 @@ import {
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
+    ChartTooltipContent,
 } from "@/components/ui/chart";
 
 export function PieChartComponent({
   data = [],
   title = "Summary of Rooms Booked",
   description = "",
-  valueKey = "count",
-  nameKey = "label",
+  valueKey = "percentage",
+  nameKey = "department",
 }) {
   const total = React.useMemo(
     () => data?.reduce((acc, item) => acc + (item[valueKey] || 0), 0),
@@ -42,7 +42,6 @@ export function PieChartComponent({
     fill: colorPalette[index % colorPalette.length],
   }));
 
-  console.log(processedData, "processedData");
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
@@ -94,7 +93,7 @@ export function PieChartComponent({
                     dominantBaseline="central"
                     className="text-[14px] font-semibold"
                   >
-                    {value}
+                    {value}%
                   </text>
                 );
               }}

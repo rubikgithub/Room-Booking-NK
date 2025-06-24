@@ -94,7 +94,8 @@ const UserDrawer = ({
 
   useEffect(() => {
     if (data && (isEditMode || isViewMode)) {
-      const newDate = data.dob ? new Date(data.dob) : null;
+      // const newDate = data.dob ? new Date(data.dob) : null;
+      const newDate = (data?.dob || formData?.dob) ? new Date(data?.dob || formData?.dob) : null;
       setFormData({ ...formData, ...data });
       setDate(newDate);
     } else if (isCreateMode) {
@@ -227,7 +228,7 @@ const UserDrawer = ({
                 name="Department "
                 selectOptions={[
                   { label: "Math", value: "Math" },
-                  { label: "Science", value: "Science" },
+                  { label: "Science", value: "Science" }, 
                   { label: "Music", value: "Music" },
                   { label: "Cultural", value: "Cultural" },
                 ]}
