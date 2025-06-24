@@ -309,7 +309,7 @@ async function getTopRoomsLastWeek() {
         `)
         .gte("date", oneWeekAgo.toISOString().split('T')[0])
         .lt("date", today.toISOString().split('T')[0])
-        .in("status", ["Booked", "Completed"]);
+        // .in("status", ["Booked", "Completed"]);
 
     if (error) throw error;
 
@@ -499,7 +499,7 @@ async function getKeyMetrics() {
         supabase
             .from("bookings")
             .select("id", { count: 'exact' })
-            .in("status", ["Cancelled", "Rejected"])
+            .in("status", ["Cancelled"])
             .gte("created_at", `${today}T00:00:00`)
             .lt("created_at", `${today}T23:59:59`),
 
@@ -507,7 +507,7 @@ async function getKeyMetrics() {
         supabase
             .from("bookings")
             .select("id", { count: 'exact' })
-            .in("status", ["Cancelled", "Rejected"])
+            .in("status", ["Cancelled"])
             .gte("created_at", oneWeekAgo.toISOString()),
 
         // Rooms under maintenance
