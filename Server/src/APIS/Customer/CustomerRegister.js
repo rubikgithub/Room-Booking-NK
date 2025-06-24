@@ -11,6 +11,13 @@ const USER_ROLES = {
   MODERATOR: "moderator",
 };
 
+const DEPARTMENTS = {
+  MATH: "Math",
+  MUSIC: "Music",
+  SCIENCE: "Science",
+  CULTURAL: "Cultural",
+};
+
 const ERROR_CODES = {
   USER_EXISTS: "USER_EXISTS",
   USER_NOT_FOUND: "USER_NOT_FOUND",
@@ -48,11 +55,24 @@ const validateUserData = (userData, isUpdate = false) => {
     errors.push("Last name is required");
   }
 
+  // Validate department if provided
+  if (userData.department && userData.department.trim()) {
+    const validDepartments = Object.values(DEPARTMENTS);
+    if (!validDepartments.includes(userData.department.trim())) {
+      errors.push(`Department must be one of: ${validDepartments.join(", ")}`);
+    }
+  }
+
+  // Validate role if provided
+  if (userData.role && !Object.values(USER_ROLES).includes(userData.role)) {
+    errors.push(`Role must be one of: ${Object.values(USER_ROLES).join(", ")}`);
+  }
+
   return errors;
 };
 
 const sanitizeUserData = (userData) => {
-  return {
+  const sanitized = {
     first_name: userData.first_name?.trim(),
     last_name: userData.last_name?.trim(),
     email: userData.email?.toLowerCase().trim(),
@@ -60,7 +80,17 @@ const sanitizeUserData = (userData) => {
     phone_number: userData.phone_number?.trim(),
     dob: userData.dob,
     role: userData.role || USER_ROLES.USER,
+    department: userData.department?.trim() || null, // Add department field
   };
+
+  // Remove undefined values to avoid updating with undefined
+  Object.keys(sanitized).forEach((key) => {
+    if (sanitized[key] === undefined) {
+      delete sanitized[key];
+    }
+  });
+
+  return sanitized;
 };
 
 const createSupabaseUser = async (userData) => {
@@ -271,6 +301,8 @@ router.post("/createUser", async (req, res) => {
         email: userData.email,
         first_name: userData.first_name,
         last_name: userData.last_name,
+        department: userData.department,
+        role: userData.role || USER_ROLES.USER,
       },
     });
   } catch (error) {
@@ -318,7 +350,7 @@ router.post("/updateUser/:id", async (req, res) => {
     // Fetch current user data
     const { data: existingUser, error: fetchError } = await supabase
       .from("users")
-      .select("clerk_id, email, first_name, last_name")
+      .select("clerk_id, email, first_name, last_name, department, role")
       .eq("id", id)
       .single();
 
@@ -332,7 +364,7 @@ router.post("/updateUser/:id", async (req, res) => {
 
     const { clerk_id } = existingUser;
 
-    // Update in Clerk if clerk_id exists
+    // Update in Clerk if clerk_id exists (only for fields that Clerk manages)
     if (clerk_id) {
       try {
         const clerk = clearkClientInstance();
@@ -358,11 +390,20 @@ router.post("/updateUser/:id", async (req, res) => {
       }
     }
 
-    // Update in Supabase
+    // Update in Supabase (including department and other fields)
     const sanitizedData = sanitizeUserData(updatedUserData);
+
+    // Remove any fields that are undefined or null to avoid unnecessary updates
+    const updateData = {};
+    Object.keys(sanitizedData).forEach((key) => {
+      if (sanitizedData[key] !== undefined && sanitizedData[key] !== null) {
+        updateData[key] = sanitizedData[key];
+      }
+    });
+
     const { data, error } = await supabase
       .from("users")
-      .update(sanitizedData)
+      .update(updateData)
       .eq("id", id)
       .select()
       .single();
@@ -381,6 +422,7 @@ router.post("/updateUser/:id", async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "Failed to update user",
+      error: error.message,
     });
   }
 });
@@ -462,7 +504,9 @@ router.post("/getUserByEmail/:email", async (req, res) => {
 
     const { data, error } = await supabase
       .from("users")
-      .select("id, first_name, last_name, email, clerk_id, role")
+      .select(
+        "id, first_name, last_name, email, clerk_id, role, department, dob, address, phone_number, status, created_at"
+      )
       .eq("email", email.toLowerCase())
       .single();
 
@@ -482,6 +526,71 @@ router.post("/getUserByEmail/:email", async (req, res) => {
     res.status(500).json({
       status: "error",
       message: "Failed to retrieve user",
+    });
+  }
+});
+
+/**
+ * Update user department only
+ */
+router.patch("/updateDepartment/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { department } = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        status: "error",
+        message: "User ID is required",
+      });
+    }
+
+    if (!department) {
+      return res.status(400).json({
+        status: "error",
+        message: "Department is required",
+      });
+    }
+
+    // Validate department
+    const validDepartments = Object.values(DEPARTMENTS);
+    if (!validDepartments.includes(department)) {
+      return res.status(400).json({
+        status: "error",
+        message: `Department must be one of: ${validDepartments.join(", ")}`,
+      });
+    }
+
+    // Update department in Supabase
+    const { data, error } = await supabase
+      .from("users")
+      .update({ department: department })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to update department: ${error.message}`);
+    }
+
+    if (!data) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
+    res.json({
+      status: "success",
+      message: "Department updated successfully",
+      data,
+    });
+  } catch (error) {
+    console.error("Update department error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to update department",
+      error: error.message,
     });
   }
 });

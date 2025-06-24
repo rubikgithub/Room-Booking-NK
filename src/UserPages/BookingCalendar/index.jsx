@@ -792,23 +792,38 @@ function BookingCalendar() {
         );
 
         if (response.isAvailable) {
-          await fetchData("createBooking", data);
-          Notification.open(
-            "success",
-            "Booking Successful",
-            "Event created successfully",
-            3000,
-            "bottom-right"
+          $ajax_post(
+            "createBooking",
+            data,
+            (res) => {
+              if (!res?.totalConflicts) {
+                Notification.open(
+                  "success",
+                  "Booking Successful",
+                  "Event created successfully",
+                  3000,
+                  "bottom-right"
+                );
+              } else {
+                Notification.open(
+                  "danger",
+                  "Can't create booking.",
+                  "Same time you have another booking.",
+                  5000,
+                  "bottom-right"
+                );
+              }
+            },
+            (error) => {
+              Notification.open(
+                "warning",
+                "Room Unavailable",
+                "The selected room is unavailable for the specified time.",
+                3000,
+                "top-left"
+              );
+            }
           );
-        } else {
-          Notification.open(
-            "warning",
-            "Room Unavailable",
-            "The selected room is unavailable for the specified time.",
-            3000,
-            "top-left"
-          );
-          return;
         }
       }
 
@@ -1334,6 +1349,7 @@ function BookingCalendar() {
     [state.currentEvent, handleSubmit]
   );
 
+  console.log(state.currentEvent, "current event");
   return (
     <>
       <div className="event_calendar_container">

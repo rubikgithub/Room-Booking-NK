@@ -63,10 +63,8 @@ export const $ajax_post = (ref, data, successcallback, errorcallback, options) =
 
         try {
             const response = await axios.post(_ut, { "ref": ref, "body": data, "len":len });
-            console.log('ajjjjssss',response)
             if (response.data.status === "success") {
-
-                successcallback(response.data.data);
+                successcallback(response.data.data || response?.data);
             } else {
                 console.error("Ajax Erroreee", response)
                 if (errorcallback) {

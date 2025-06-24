@@ -265,7 +265,12 @@ const Dashboard = () => {
   return (
     <>
       <h1>Dashboard</h1>
-      <h3>Hi, Welcome <span className="font-bold text-[hsl(var(--chart-3))]">{userDetails?.firstName || "User"}</span></h3>
+      <h3>
+        Hi, Welcome{" "}
+        <span className="font-bold text-[hsl(var(--chart-3))]">
+          {userDetails?.firstName || "User"}
+        </span>
+      </h3>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
         {cardData?.map((card, index) => (
