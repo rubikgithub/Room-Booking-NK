@@ -3,10 +3,16 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import {
+  Alert,
   Button,
   Col,
+  Collapse,
   DatePicker,
+  Drawer,
   EventCalendar,
+  Flex,
+  FormControl,
+  FormRow,
   Icon,
   Input,
   ModalBox,
@@ -24,12 +30,12 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import ChartFilters from "./Filters/Filters";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const ConferenceRoomCard = ({ room }) => {
-  console.log(room, "room")
   return (
     <Card className="w-full shadow-lg rounded-lg overflow-hidden">
       <div className="flex flex-col md:flex-row px-2">
@@ -143,54 +149,14 @@ const ConferenceRoomCard = ({ room }) => {
 
 // Constants
 const TIME_OPTIONS = [
-  "1:00 am",
-  "1:30 am",
-  "2:00 am",
-  "2:30 am",
-  "3:00 am",
-  "3:30 am",
-  "4:00 am",
-  "4:30 am",
-  "5:00 am",
-  "5:30 am",
-  "6:00 am",
-  "6:30 am",
-  "7:00 am",
-  "7:30 am",
-  "8:00 am",
-  "8:30 am",
-  "9:00 am",
-  "9:30 am",
-  "10:00 am",
-  "10:30 am",
-  "11:00 am",
-  "11:30 am",
-  "12:00 pm",
-  "12:30 pm",
-  "1:00 pm",
-  "1:30 pm",
-  "2:00 pm",
-  "2:30 pm",
-  "3:00 pm",
-  "3:30 pm",
-  "4:00 pm",
-  "4:30 pm",
-  "5:00 pm",
-  "5:30 pm",
-  "6:00 pm",
-  "6:30 pm",
-  "7:00 pm",
-  "7:30 pm",
-  "8:00 pm",
-  "8:30 pm",
-  "9:00 pm",
-  "9:30 pm",
-  "10:00 pm",
-  "10:30 pm",
-  "11:00 pm",
-  "11:30 pm",
-  "12:00 am",
-  "12:30 am",
+  "1:00 am", "1:30 am", "2:00 am", "2:30 am", "3:00 am", "3:30 am",
+  "4:00 am", "4:30 am", "5:00 am", "5:30 am", "6:00 am", "6:30 am",
+  "7:00 am", "7:30 am", "8:00 am", "8:30 am", "9:00 am", "9:30 am",
+  "10:00 am", "10:30 am", "11:00 am", "11:30 am", "12:00 pm", "12:30 pm",
+  "1:00 pm", "1:30 pm", "2:00 pm", "2:30 pm", "3:00 pm", "3:30 pm",
+  "4:00 pm", "4:30 pm", "5:00 pm", "5:30 pm", "6:00 pm", "6:30 pm",
+  "7:00 pm", "7:30 pm", "8:00 pm", "8:30 pm", "9:00 pm", "9:30 pm",
+  "10:00 pm", "10:30 pm", "11:00 pm", "11:30 pm", "12:00 am", "12:30 am",
 ];
 
 const STATUS_OPTIONS = [
@@ -434,7 +400,7 @@ const initialState = {
   buildingOptions: [],
   ownerData: [],
   bookingList: [],
-  rawBookings: [], // Add this to store raw booking data
+  rawBookings: [],
   eventList: [],
   currentEvent: null,
   currentBooking: null,
@@ -449,6 +415,8 @@ const initialState = {
   deleteModalOpen: false,
   deleteLoading: false,
   errors: {},
+  filteredEventList: [], // Add filtered event list
+  filteredOwnerData: [], // Add filtered owner data
 };
 
 const bookingReducer = (state, action) => {
@@ -470,6 +438,10 @@ const bookingReducer = (state, action) => {
       return { ...state, rawBookings: action.payload };
     case "SET_EVENT_LIST":
       return { ...state, eventList: action.payload };
+    case "SET_FILTERED_EVENT_LIST":
+      return { ...state, filteredEventList: action.payload };
+    case "SET_FILTERED_OWNER_DATA":
+      return { ...state, filteredOwnerData: action.payload };
     case "SET_CURRENT_EVENT":
       return { ...state, currentEvent: action.payload };
     case "SET_CURRENT_BOOKING":
@@ -525,7 +497,360 @@ function BookingCalendar() {
   const user = clerk?.user;
   const { fetchData } = useApi();
   const [state, dispatch] = useReducer(bookingReducer, initialState);
-  const [roomsDetails, setRoomsDetails] = useState({})
+  const [roomsDetails, setRoomsDetails] = useState({});
+  const [filterDrawer, setFilterDrawer] = useState(false);
+
+  // Create dynamic filter columns based on ownerData and eventList
+  const filterColumns = useMemo(() => {
+    // Get unique values from the data for filter options
+    const uniqueBuildings = [...new Set(state.ownerData.map(room => room.building))].filter(Boolean);
+    const uniqueRoomTypes = [...new Set(state.ownerData.map(room => room.type))].filter(Boolean);
+
+    // Extract unique room features from ownerData
+    const extractRoomFeatures = () => {
+      const allFeatures = new Set();
+
+      state.ownerData.forEach(room => {
+        if (room.room_features) {
+          Object.keys(room.room_features).forEach(feature => {
+            if (room.room_features[feature]?.enabled) {
+              allFeatures.add(feature);
+            }
+          });
+        }
+      });
+
+      return Array.from(allFeatures);
+    };
+
+    const uniqueRoomFeatures = extractRoomFeatures();
+
+    return [
+      {
+        field: "building",
+        headerName: "Building",
+        type: "multiSelect",
+        filter: {
+          enable: true,
+          sticky: true,
+          fixed: false,
+          order: 1,
+          multiple: true,
+          operator: "and",
+          condition: "anyof",
+          defaultValue: []
+        },
+        staticOptions: uniqueBuildings.map(building => ({
+          value: building,
+          label: building
+        })),
+        visible: true,
+      },
+      {
+        field: "roomName",
+        headerName: "Room Name",
+        type: "multiSelect",
+        filter: {
+          enable: true,
+          sticky: true,
+          fixed: false,
+          order: 2,
+          multiple: true,
+          operator: "and",
+          condition: "anyof",
+          defaultValue: []
+        },
+        staticOptions: state.ownerData.map(room => ({
+          value: room.text,
+          label: room.text
+        })),
+        visible: true,
+      },
+      {
+        field: "roomType",
+        headerName: "Room Type",
+        type: "multiSelect",
+        filter: {
+          enable: true,
+          sticky: true,
+          fixed: false,
+          order: 3,
+          multiple: true,
+          operator: "and",
+          condition: "anyof",
+          defaultValue: []
+        },
+        staticOptions: uniqueRoomTypes.map(type => ({
+          value: type,
+          label: type
+        })),
+        visible: true,
+      },
+      {
+        field: "capacity",
+        headerName: "Room Capacity",
+        type: "number",
+        filter: {
+          enable: true,
+          sticky: true,
+          fixed: false,
+          order: 4,
+          operator: "and",
+          condition: "contains",
+          defaultValue: ""
+        },
+        visible: true,
+      },
+      // NEW: Room Features Filter
+      {
+        field: "roomFeatures",
+        headerName: "Room Features",
+        type: "multiSelect",
+        filter: {
+          enable: true,
+          sticky: true,
+          fixed: false, // Set to true if you want it in fixed section
+          order: 5,
+          multiple: true,
+          operator: "and",
+          condition: "anyof",
+          defaultValue: []
+        },
+        staticOptions: uniqueRoomFeatures.map(feature => ({
+          value: feature,
+          label: feature.charAt(0).toUpperCase() + feature.slice(1) // Capitalize first letter
+        })),
+        visible: true,
+      }
+    ];
+  }, [state.ownerData, state.eventList]);
+
+  // Enhanced applyFilters function with room features filtering
+  const applyFilters = useCallback((filterValues) => {
+    console.log('Applying filters:', filterValues);
+
+    let filteredEvents = [...state.eventList];
+    let filteredRooms = [...state.ownerData];
+
+    // Helper function to apply filter conditions
+    const applyFilterCondition = (value, filterValue, condition, isArray = false) => {
+      if (!filterValue) return true;
+
+      if (isArray) {
+        const values = Array.isArray(filterValue) ? filterValue : [filterValue];
+        switch (condition) {
+          case "anyof":
+            return values.some((v) => value.includes(v));
+          case "noneof":
+            return !values.some((v) => value.includes(v));
+          case "isempty":
+            return !value || value.length === 0;
+          case "isnotempty":
+            return value && value.length > 0;
+          default:
+            return values.some((v) => value.includes(v));
+        }
+      } else {
+        switch (condition) {
+          case "is":
+            return value === filterValue;
+          case "isnot":
+            return value !== filterValue;
+          case "contains":
+            return value?.toLowerCase().includes(filterValue.toLowerCase());
+          case "doesnotcontain":
+            return !value?.toLowerCase().includes(filterValue.toLowerCase());
+          case "startswith":
+            return value?.toLowerCase().startsWith(filterValue.toLowerCase());
+          case "doesnotstartwith":
+            return !value?.toLowerCase().startsWith(filterValue.toLowerCase());
+          case "isempty":
+            return !value;
+          case "isnotempty":
+            return !!value;
+          case "on":
+            return value === filterValue;
+          case "noton":
+            return value !== filterValue;
+          case "after":
+            return value > filterValue;
+          case "onorafter":
+            return value >= filterValue;
+          case "before":
+            return value < filterValue;
+          case "onorbefore":
+            return value <= filterValue;
+          default:
+            return value?.toLowerCase().includes(filterValue.toLowerCase());
+        }
+      }
+    };
+
+    // Helper function to check if room has specific features
+    const roomHasFeatures = (room, requiredFeatures, condition) => {
+      if (!room.room_features || !requiredFeatures || requiredFeatures.length === 0) {
+        return true; // If no features specified, don't filter
+      }
+
+      const enabledFeatures = Object.keys(room.room_features).filter(
+        feature => room.room_features[feature]?.enabled
+      );
+
+      switch (condition) {
+        case "anyof":
+          return requiredFeatures.some(feature => enabledFeatures.includes(feature));
+        case "noneof":
+          return !requiredFeatures.some(feature => enabledFeatures.includes(feature));
+        case "isempty":
+          return enabledFeatures.length === 0;
+        case "isnotempty":
+          return enabledFeatures.length > 0;
+        default:
+          return requiredFeatures.some(feature => enabledFeatures.includes(feature));
+      }
+    };
+
+    // Apply building filter
+    if (filterValues.building?.value) {
+      filteredRooms = filteredRooms.filter((room) =>
+        applyFilterCondition(room.building, filterValues.building.value, filterValues.building.c, true)
+      );
+      const filteredRoomIds = filteredRooms.map((room) => room.id);
+      filteredEvents = filteredEvents.filter((event) => filteredRoomIds.includes(event.RoomId));
+    }
+
+    // Apply room name filter
+    if (filterValues.roomName?.value) {
+      filteredRooms = filteredRooms.filter((room) =>
+        applyFilterCondition(room.text, filterValues.roomName.value, filterValues.roomName.c, true)
+      );
+      const filteredRoomIds = filteredRooms.map((room) => room.id);
+      filteredEvents = filteredEvents.filter((event) => filteredRoomIds.includes(event.RoomId));
+    }
+
+    // Apply room type filter
+    if (filterValues.roomType?.value) {
+      filteredRooms = filteredRooms.filter((room) =>
+        applyFilterCondition(room.type, filterValues.roomType.value, filterValues.roomType.c, true)
+      );
+      const filteredRoomIds = filteredRooms.map((room) => room.id);
+      filteredEvents = filteredEvents.filter((event) => filteredRoomIds.includes(event.RoomId));
+    }
+
+    // Apply capacity filter
+    if (filterValues.capacity?.value) {
+      const minCapacity = parseInt(filterValues.capacity.value);
+      if (!isNaN(minCapacity)) {
+        filteredRooms = filteredRooms.filter((room) => {
+          switch (filterValues.capacity.c) {
+            case "is":
+              return room.capacity === minCapacity;
+            case "isnot":
+              return room.capacity !== minCapacity;
+            case "contains":
+              return room.capacity >= minCapacity;
+            case "doesnotcontain":
+              return room.capacity < minCapacity;
+            default:
+              return room.capacity >= minCapacity;
+          }
+        });
+        const filteredRoomIds = filteredRooms.map((room) => room.id);
+        filteredEvents = filteredEvents.filter((event) => filteredRoomIds.includes(event.RoomId));
+      }
+    }
+
+    // NEW: Apply room features filter
+    if (filterValues.roomFeatures?.value) {
+      const requiredFeatures = Array.isArray(filterValues.roomFeatures.value)
+        ? filterValues.roomFeatures.value
+        : [filterValues.roomFeatures.value];
+
+      filteredRooms = filteredRooms.filter((room) =>
+        roomHasFeatures(room, requiredFeatures, filterValues.roomFeatures.c || "anyof")
+      );
+      const filteredRoomIds = filteredRooms.map((room) => room.id);
+      filteredEvents = filteredEvents.filter((event) => filteredRoomIds.includes(event.RoomId));
+    }
+
+    // Apply event status filter
+    if (filterValues.eventStatus?.value) {
+      filteredEvents = filteredEvents.filter((event) =>
+        event.rawData?.status &&
+        applyFilterCondition(event.rawData.status, filterValues.eventStatus.value, filterValues.eventStatus.c, true)
+      );
+    }
+
+    // Apply booking user filter
+    if (filterValues.bookingUser?.value) {
+      filteredEvents = filteredEvents.filter((event) => {
+        if (event.rawData?.user) {
+          const userName = `${event.rawData.user.first_name} ${event.rawData.user.last_name}`;
+          return applyFilterCondition(userName, filterValues.bookingUser.value, filterValues.bookingUser.c, true);
+        }
+        return false;
+      });
+    }
+
+    // Apply booking date filter
+    if (filterValues.bookingDate?.value) {
+      const filterDate = new Date(filterValues.bookingDate.value).toISOString().split("T")[0];
+      filteredEvents = filteredEvents.filter((event) => {
+        if (event.rawData?.date) {
+          switch (filterValues.bookingDate.c) {
+            case "on":
+              return event.rawData.date === filterDate;
+            case "noton":
+              return event.rawData.date !== filterDate;
+            case "after":
+              return event.rawData.date > filterDate;
+            case "onorafter":
+              return event.rawData.date >= filterDate;
+            case "before":
+              return event.rawData.date < filterDate;
+            case "onorbefore":
+              return event.rawData.date <= filterDate;
+            default:
+              return event.rawData.date === filterDate;
+          }
+        }
+        return false;
+      });
+    }
+
+    // Apply start time filter
+    if (filterValues.startTime?.value) {
+      const searchTime = filterValues.startTime.value.toLowerCase();
+      filteredEvents = filteredEvents.filter((event) => {
+        if (event.rawData?.start_time) {
+          return applyFilterCondition(event.rawData.start_time, searchTime, filterValues.startTime.c);
+        }
+        return false;
+      });
+    }
+
+    // Apply end time filter
+    if (filterValues.endTime?.value) {
+      const searchTime = filterValues.endTime.value.toLowerCase();
+      filteredEvents = filteredEvents.filter((event) => {
+        if (event.rawData?.end_time) {
+          return applyFilterCondition(event.rawData.end_time, searchTime, filterValues.endTime.c);
+        }
+        return false;
+      });
+    }
+
+    // Update the filtered data in state
+    dispatch({ type: "SET_FILTERED_EVENT_LIST", payload: filteredEvents });
+    dispatch({ type: "SET_FILTERED_OWNER_DATA", payload: filteredRooms });
+
+  }, [state.eventList, state.ownerData]);
+
+
+  // Use filtered data if available, otherwise use original data
+  const displayEventList = state.filteredEventList.length > 0 ? state.filteredEventList : state.eventList;
+  const displayOwnerData = state.filteredOwnerData.length > 0 ? state.filteredOwnerData : state.ownerData;
+
   // Memoized values
   const filteredEndTimeOptions = useMemo(() => {
     if (!state.eventFormValues.startTime) return TIME_OPTIONS;
@@ -542,17 +867,26 @@ function BookingCalendar() {
   const headerDropdownTemplate = useMemo(
     () => (
       <>
-        <Select
-          name="buildingOption"
-          defaultValue={state.buildingOptions?.map((option) => option?.value)}
-          multiple={true}
-          selectOptions={state.buildingOptions}
-          onChange={(value) => {
-            getRoomsByBuildingIds(value);
-            getBuildingsByIds(value);
-          }}
-        />
-        {/* <Icon type="filter" /> */}
+        <Flex justify="">
+          <Col>
+            <Select
+              name="buildingOption"
+              defaultValue={state.buildingOptions?.map((option) => option?.value)}
+              multiple={true}
+              selectOptions={state.buildingOptions}
+              onChange={(value) => {
+                getRoomsByBuildingIds(value);
+                getBuildingsByIds(value);
+              }}
+            />
+          </Col>
+          <span style={{
+            alignContent: "center",
+            top: "50%"
+          }} onClick={() => { setFilterDrawer(true) }} >
+            <Icon type="filter" />
+          </span>
+        </Flex>
       </>
     ),
     [state.buildingOptions]
@@ -655,8 +989,6 @@ function BookingCalendar() {
     try {
       const response = await fetchData("allBookings", {});
       dispatch({ type: "SET_BOOKING_LIST", payload: response });
-
-      // Store the response to be processed when dependencies are ready
       dispatch({ type: "SET_RAW_BOOKINGS", payload: response });
     } catch (error) {
       console.error("Error fetching bookings:", error);
@@ -751,7 +1083,7 @@ function BookingCalendar() {
       newErrors.endTime = "End Time is required";
     }
 
-    // NEW: Break time validation
+    // Break time validation
     if (
       state.eventFormValues?.startTime &&
       state.eventFormValues?.endTime &&
@@ -793,7 +1125,6 @@ function BookingCalendar() {
 
   const handleSubmit = useCallback(async () => {
     if (!validateForm()) {
-      // Check specifically for break time conflict to show appropriate message
       if (state.errors.timeConflict) {
         Notification.open(
           "error",
@@ -831,7 +1162,7 @@ function BookingCalendar() {
 
     try {
       if (state.eventFormValues.id) {
-        // Update existing booking - also check break time for updates
+        // Update existing booking
         const isBreakTimeConflict = timeUtils.isTimeInBreakPeriod(
           state.eventFormValues.startTime,
           state.eventFormValues.endTime,
@@ -870,7 +1201,7 @@ function BookingCalendar() {
           "bottom-right"
         );
       } else {
-        // Create new booking - double-check break time before availability check
+        // Create new booking
         const isBreakTimeConflict = timeUtils.isTimeInBreakPeriod(
           state.eventFormValues.startTime,
           state.eventFormValues.endTime,
@@ -980,7 +1311,6 @@ function BookingCalendar() {
     );
   }
 
-
   const handleDelete = useCallback(async () => {
     dispatch({ type: "SET_DELETE_LOADING", payload: true });
 
@@ -1063,10 +1393,11 @@ function BookingCalendar() {
         return {
           text: room?.name,
           id: room?.id,
-          color: state.statusColors["Pending"], // Use default status color
+          color: state.statusColors["Pending"],
           capacity: room?.capacity,
           type: room?.type,
           building: building?.name,
+          room_features: room?.room_features
         };
       });
 
@@ -1242,7 +1573,6 @@ function BookingCalendar() {
           <Col sm={4}>
             <label className="control-label">Booking Date</label>
           </Col>
-
           <Col sm={8}>
             <DatePicker
               open
@@ -1337,27 +1667,6 @@ function BookingCalendar() {
           </Col>
         </Row>
         <ConferenceRoomCard room={roomsDetails} />
-        {/* {state.breakTimeData?.title && (
-          <Row style={{ marginBottom: "10px" }}>
-            <Col sm={12}>
-              <div
-                style={{
-                  fontSize: "12px",
-                  color: "#666",
-                  padding: "8px",
-                  backgroundColor: "#f0f9ff",
-                  border: "1px solid #bae6fd",
-                  borderRadius: "4px",
-                }}
-              >
-                <strong>ℹ️ Note:</strong> {state.breakTimeData.title} is from{" "}
-                {state.breakTimeData.start_time} -{" "}
-                {state.breakTimeData.end_time}. Events cannot be scheduled
-                during this time.
-              </div>
-            </Col>
-          </Row>
-        )} */}
 
         {state.currentEvent?.Id && (
           <>
@@ -1420,7 +1729,6 @@ function BookingCalendar() {
                 />
               </Col>
             </Row>
-
           </>
         )}
       </>
@@ -1433,6 +1741,7 @@ function BookingCalendar() {
       filteredEndTimeOptions,
       roomSelectOptions,
       handleFormChange,
+      roomsDetails,
     ]
   );
 
@@ -1464,7 +1773,6 @@ function BookingCalendar() {
             onClick={() => {
               dispatch({ type: "SET_DRAWER_VISIBLE", payload: false });
               dispatch({ type: "RESET_FORM" });
-              dispatch({ type: "RESET_ERRORS" });
               setRoomsDetails({})
             }}
             style={{ marginRight: 8 }}
@@ -1478,7 +1786,6 @@ function BookingCalendar() {
   );
 
   useEffect(() => {
-
     if (state.currentEvent?.RoomId) {
       getRoomDetails(state.currentEvent?.RoomId);
     }
@@ -1490,25 +1797,21 @@ function BookingCalendar() {
           <EventCalendar
             width="100%"
             height="calc(100vh - 100px)"
-            eventList={state.eventList}
-            ownerData={state.ownerData}
+            eventList={displayEventList}
+            ownerData={displayOwnerData}
             resourceHeaderTemplate={resourceHeaderTemplate}
             headerTitle={["Building", "Room", "Type", "Capacity"]}
             currentEvent={state.currentEvent}
             setCurrentEvent={(event) => {
-              // getRoomDetails(event?.RoomId);
               dispatch({ type: "SET_CURRENT_EVENT", payload: event })
-            }
-            }
+            }}
             addEditEventTemplate={addEditEventTemplate}
             headerDropdownTemplate={headerDropdownTemplate}
             ownerColumnWidth={400}
             addEditEventDrawerVisible={state.addEditEventDrawerVisible}
             setAddEditEventDrawerVisible={(visible) => {
-
               dispatch({ type: "SET_DRAWER_VISIBLE", payload: visible });
-            }
-            }
+            }}
             addEditEventDrawerFooterTemplate={addEditEventDrawerFooterTemplate}
             startHour={state.startTime}
             endHour={state.endTime}
@@ -1542,6 +1845,17 @@ function BookingCalendar() {
           <strong>{state.currentBooking?.title}</strong>
         </div>
       </ModalBox>
+
+      <ChartFilters
+        filterDrawer={filterDrawer}
+        setFilterDrawer={setFilterDrawer}
+        tableId="booking-calendar"
+        columns={filterColumns}
+        applyFilters={applyFilters}
+        onClose={() => setFilterDrawer(false)}
+        drawerData={{ title: "Room Booking Calendar Filters" }}
+        dev={{}}
+      />
     </>
   );
 }
