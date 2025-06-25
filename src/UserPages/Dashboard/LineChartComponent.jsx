@@ -53,8 +53,12 @@ const months = [
 ];
 export function LineChartComponent() {
   const [activeChart, setActiveChart] = useState("mobile");
-  const [selectedYear, setSelectedYear] = useState(null); // Track selected year
-  const [selectedMonth, setSelectedMonth] = useState(null); // Track selected month
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+  const [selectedYear, setSelectedYear] = useState(currentYear); // Set current year as default
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  // const [selectedYear, setSelectedYear] = useState(null); // Track selected year
+  // const [selectedMonth, setSelectedMonth] = useState(null); // Track selected month
   const [chartData, setChartData] = useState([]);
 
   // Function to call API based on selected year and/or month
@@ -119,6 +123,7 @@ export function LineChartComponent() {
                         }}
                         placeholder="Years"
                         value={selectedYear}
+                        defaultValue={selectedYear}
                       />
                     </FormControl>
                   </Col>
@@ -133,6 +138,7 @@ export function LineChartComponent() {
                         }}
                         placeholder="Months"
                         value={selectedMonth}
+                        defaultValue={selectedMonth}
                       />
                     </FormControl>
                   </Flex>
