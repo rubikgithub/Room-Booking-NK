@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label"
 import { clerk, loadClerk } from '../LoginRegister/clerk';
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardTitle } from "@/components/ui/card"
 import { useNavigate } from "react-router-dom";
 import { $ajax_post } from "../Library";
 import { DatePicker, FormControl, Select, TextArea } from "unygc";
@@ -109,6 +109,7 @@ const Register = () => {
 
             <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#7939d7] to-[#a770f7]">
                 <Card className="w-[450px] bg-white border-none p-6 shadow-none">
+                    <CardTitle style={{ fontSize: '1rem', textAlign: "center" }}>Room Booking System</CardTitle>
                     <CardContent className="p-0">
                         <form onSubmit={handleSubmit} className="">
                             <div className="mb-4">
