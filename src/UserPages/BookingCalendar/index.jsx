@@ -1653,7 +1653,7 @@ function BookingCalendar() {
           </Col>
         </Row>
 
-        <Row style={{ marginBottom: "10px" }}>
+        <Row style={{ marginBottom: "20px" }}>
           <Col sm={4}>
             <label className="control-label">Status</label>
           </Col>
@@ -1666,7 +1666,9 @@ function BookingCalendar() {
             />
           </Col>
         </Row>
+
         <ConferenceRoomCard room={roomsDetails} />
+
 
         {state.currentEvent?.Id && (
           <>

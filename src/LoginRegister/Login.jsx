@@ -9,6 +9,7 @@ import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import { clerk, loadClerk } from "../LoginRegister/clerk";
 import ForgetPassword from "./ForgetPassword";
 import { $ajax_post } from "../Library";
+import { Notification } from "unygc";
 
 // Constants
 const VALIDATION_RULES = {
@@ -168,6 +169,7 @@ const Login = () => {
                 throw new Error("Sign in incomplete");
               }
             } catch (error) {
+              console.log(error, "signInAttempt")
               reject(error);
             }
           },
@@ -178,7 +180,13 @@ const Login = () => {
       });
     } catch (error) {
       console.error("Login error:", error);
-
+      Notification.open(
+        "error",
+        "",
+        error.message?.includes("Network error") ? "User is Not Found" : "Invalid credentials",
+        4000,
+        "top-right"
+      );
       // Handle specific error types
       if (
         error.message?.includes("Invalid credentials") ||
@@ -216,12 +224,12 @@ const Login = () => {
       <Card className="w-full max-w-md bg-white border-none shadow-lg">
         <CardTitle style={{ fontSize: '1rem', textAlign: "center" }}>Room Booking System</CardTitle>
         <CardContent className="space-y-4">
-          {generalError && (
+          {/* {generalError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{generalError}</AlertDescription>
             </Alert>
-          )}
+          )} */}
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             {/* Email Field */}
