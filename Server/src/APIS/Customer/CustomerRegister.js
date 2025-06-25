@@ -101,7 +101,6 @@ const createSupabaseUser = async (userData) => {
     const user = {
       id: userId,
       ...sanitizedData,
-      status: "Inactive",
     };
 
     // Check if user already exists
