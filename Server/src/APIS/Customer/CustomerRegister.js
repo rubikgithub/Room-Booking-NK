@@ -101,7 +101,6 @@ const createSupabaseUser = async (userData) => {
     const user = {
       id: userId,
       ...sanitizedData,
-      status: "Inactive",
     };
 
     // Check if user already exists
@@ -688,12 +687,12 @@ router.post("/updateUser/:id", async (req, res) => {
 router.post("/updatePassword/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { currentPassword, newPassword, confirmPassword } =
+    const { currentPassword, password, confirmPassword } =
       req.body.body || req.body;
 
     console.log("Password update request for user:", id);
 
-    if (!id || !newPassword || !confirmPassword) {
+    if (!id || !password || !confirmPassword) {
       return res.status(400).json({
         status: "error",
         code: "VALIDATION_ERROR",
@@ -701,7 +700,7 @@ router.post("/updatePassword/:id", async (req, res) => {
       });
     }
 
-    if (newPassword !== confirmPassword) {
+    if (password !== confirmPassword) {
       return res.status(400).json({
         status: "error",
         code: "VALIDATION_ERROR",
@@ -711,7 +710,7 @@ router.post("/updatePassword/:id", async (req, res) => {
 
     // Validate password strength
     const validationErrors = validateUserUpdateData(
-      { password: newPassword },
+      { password: password },
       true
     );
     if (validationErrors.length > 0) {
@@ -749,7 +748,7 @@ router.post("/updatePassword/:id", async (req, res) => {
     // Update password in Clerk
     const passwordResult = await updatePasswordInClerk(
       existingUser.clerk_id,
-      newPassword
+      password
     );
 
     if (!passwordResult.success) {
@@ -994,7 +993,9 @@ router.post("/getUserByEmail/:email", async (req, res) => {
       });
     }
 
-    const { data, error } = await supabase
+    console.log("Getting user by email:", email);
+
+    const { data: user, error } = await supabase
       .from("users")
       .select(
         "id, first_name, last_name, email, clerk_id, role, department, dob, address, phone_number, status, created_at"
@@ -1002,22 +1003,26 @@ router.post("/getUserByEmail/:email", async (req, res) => {
       .eq("email", email.toLowerCase())
       .single();
 
-    if (error || !data) {
+    if (error || !user) {
       return res.status(404).json({
         status: "error",
         message: "User not found",
       });
     }
 
+    console.log("User found:", user.id);
+
     res.json({
       status: "success",
-      data,
+      data: user,
+      message: "User retrieved successfully",
     });
   } catch (error) {
-    console.error("Get user error:", error);
+    console.error("Get user by email error:", error);
     res.status(500).json({
       status: "error",
-      message: "Failed to retrieve user",
+      message: "Failed to get user information",
+      error: error.message,
     });
   }
 });
