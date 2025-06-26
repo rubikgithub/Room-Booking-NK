@@ -10,6 +10,7 @@ import {
     Button,
     ImageUploader,
     Form,
+    Notification,
 } from "unygc";
 import {
     DropdownMenu,
@@ -27,6 +28,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 import { format } from "date-fns";
 import { $ajax_post } from "../../Library";
+import axios from "axios";
 
 
 const EditProfileDrawer = ({
@@ -53,6 +55,7 @@ const EditProfileDrawer = ({
         role: "",
         password: "",
         confirmPassword: "",
+        image_url: "",
     });
 
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -109,41 +112,71 @@ const EditProfileDrawer = ({
                 role: "",
                 password: "",
                 confirmPassword: "",
+                image_url: ""
             });
             setDate(null);
         }
     }, [data, mode]);
 
-    const uploadApi = 'https://660d2bd96ddfa2943b33731c.mockapi.io/api/upload';
-    const uploadToServer = async (file) => {
+    const handleFileUpload = async (files) => {
         try {
-            const formData = new FormData();
-            formData.append("file", file);
+            const formDataToSend = new FormData();
+            files.forEach((file) => formDataToSend.append("files", file));
+            // formDataToSend.append("file", file); // Use "file" instead of "files" for clarity
 
-            const response = await fetch(uploadApi, {
-                method: "POST",
-                body: formData,
-            });
+            const response = await axios.post(
+                "/api/upload-multiple", // Adjust endpoint if needed
+                formDataToSend,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                }
+            );
 
-            if (!response.ok) {
-                throw new Error("Failed to upload image");
+            // Assuming API returns a single file path, e.g., { filePath: "path/to/image.jpg" }
+            const uploadedImagePath = response?.data?.files?.filePath || response?.data?.files || "";
+
+            if (!uploadedImagePath) {
+                throw new Error("No file path returned from server");
             }
 
-            const data = await response.json();
-            return data; // Use the server response as needed
+            console.log("Uploaded image path:", uploadedImagePath);
+            setFormData((prev) => ({
+                ...prev,
+                image_url: uploadedImagePath[0]?.path, // Store as plain string
+            }));
+
+            if (response.status === 200) {
+                Notification.open(
+                    "success",
+                    "Success",
+                    "Image uploaded successfully",
+                    3000,
+                    "bottom-right"
+                );
+            } else {
+                throw new Error("Upload response not OK");
+            }
         } catch (error) {
-            console.error("Error uploading image:", error);
-            return null;
+            console.error("Image upload error:", error);
+            Notification.open(
+                "error",
+                "Upload Failed",
+                "Image upload failed. Please try again.",
+                3000,
+                "top-right"
+            );
         }
     };
-    const handleFileUpload = async (files) => {
-        for await (const file of files) {
-            await uploadToServer(file);
-        }
-    }
-    const handleFileDelete = async (id) => {
-        console.log("file id", id);
-    }
+
+    const handleImageDelete = () => {
+        setFormData((prev) => ({
+            ...prev,
+            image_url: "", // Clear the image path
+        }));
+    };
+    // const handleFileDelete = async (id) => {
+    //     console.log("file id", id);
+    // }
     return (
         <>
             <Drawer
@@ -220,8 +253,8 @@ const EditProfileDrawer = ({
                 <div className="flex-1 overflow-y-auto p-2 space-y-5">
                     <FormRow cols={1} fieldAlign={"side"}>
 
-                        <FormControl helpTextIcon={true} label="Upload Profile">
-                            <ImageUploader
+                        <FormControl helpTextIcon={true} viewMode={isViewMode} label="Upload Profile">
+                            {/* <ImageUploader
                                 multiple={false}
                                 maxFileSizeMB={50}
                                 theme='theme1'
@@ -230,6 +263,13 @@ const EditProfileDrawer = ({
                                 onChange={(updatedFiles) => {
                                     console.log('Updated files in theme 1', updatedFiles);
                                 }}
+                            /> */}
+                            <ImageUploader
+                                multiple={false}
+                                maxFileSizeMB={50}
+                                handleFileUpload={handleFileUpload}
+                                handleFileDelete={handleImageDelete}
+                                theme="theme2"
                             />
                         </FormControl>
 
