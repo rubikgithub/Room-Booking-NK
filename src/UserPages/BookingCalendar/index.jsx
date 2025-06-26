@@ -168,28 +168,28 @@ const STATUS_OPTIONS = [
 
 const CALENDAR_STYLES = {
   xAxisHeaderLabel: {
-    color: "#000000",
+    color: "rgb(43 31 21)",
     fontSize: "14px",
     fontWeight: "bold",
-    backgroundColor: "#FF851B",
+    backgroundColor: "rgb(241 214 190)",
   },
   xAxisTitle: {
-    color: "white",
+    color: "rgb(61 1 2)",
     fontSize: "16px",
     fontWeight: "bold",
-    backgroundColor: "crimson",
+    backgroundColor: "rgb(227 193 184)",
   },
   xAxisTimeline: {
     color: "white",
     fontSize: "15px",
     fontWeight: "bold",
-    backgroundColor: "teal",
+    backgroundColor: "rgb(13 128 128)",
   },
   yAxisValue: {
-    backgroundColor: "#990011",
+    backgroundColor: "rgb(227 193 184)",
     fontSize: "13px",
     fontWeight: "bold",
-    color: "#FCF6F5",
+    color: "rgb(54 58 71)",
   },
 };
 
