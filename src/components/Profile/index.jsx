@@ -101,9 +101,13 @@ const Profile = ({
         <div className="profile-nav">
           <div className="profile-avatar" style={{ "background": bgColor }}>
             {
-              <span className="profile-letter-thumbnail">
-                {`${userDetails?.firstName?.charAt(0).toUpperCase()}`}
-              </span>
+              (selectedUser?.image_url || userDetails?.imageUrl) ? <img src={selectedUser?.image_url || userDetails?.imageUrl} alt="profile_pic" style={{
+                height: "100%",
+                width: "100%",
+              }} /> :
+                <span className="profile-letter-thumbnail">
+                  {`${userDetails?.firstName?.charAt(0).toUpperCase()}`}
+                </span>
             }
 
 

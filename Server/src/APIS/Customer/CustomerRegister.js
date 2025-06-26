@@ -1056,7 +1056,7 @@ router.post("/getUserByEmail/:email", async (req, res) => {
     const { data: user, error } = await supabase
       .from("users")
       .select(
-        "id, first_name, last_name, email, clerk_id, role, department, dob, address, phone_number, status, created_at"
+        "id, first_name, last_name, email, clerk_id, role, department, dob, address, phone_number, status, created_at, image_url"
       )
       .eq("email", email.toLowerCase())
       .single();
