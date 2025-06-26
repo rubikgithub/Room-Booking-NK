@@ -11,6 +11,8 @@ import {
     ImageUploader,
     Form,
     Notification,
+    Flex,
+    Col,
 } from "unygc";
 import {
     DropdownMenu,
@@ -38,8 +40,9 @@ const EditProfileDrawer = ({
     data = {},
     onRefresh,
     setDrawerMode,
+    imageUrl,
 }) => {
-    console.log(data, "data")
+
     const isViewMode = mode === "view";
     const isCreateMode = mode === "create";
     const isEditMode = mode === "edit";
@@ -253,17 +256,17 @@ const EditProfileDrawer = ({
                 <div className="flex-1 overflow-y-auto p-2 space-y-5">
                     <FormRow cols={1} fieldAlign={"side"}>
 
-                        <FormControl helpTextIcon={true} viewMode={isViewMode} label="Upload Profile">
-                            {/* <ImageUploader
-                                multiple={false}
-                                maxFileSizeMB={50}
-                                theme='theme1'
-                                handleFileUpload={handleFileUpload}
-                                handleFileDelete={handleFileDelete}
-                                onChange={(updatedFiles) => {
-                                    console.log('Updated files in theme 1', updatedFiles);
-                                }}
-                            /> */}
+                        {isViewMode ? <Flex justify="space-between"><Flex justify="start" style={{
+                            color: "#2b2065",
+                            fontSize: "13px",
+                            fontWeight: 500,
+                            lineHeight: "25px"
+                        }}>Profile</Flex><Col><img src={formData?.image_url || imageUrl} alt="profile_picture" height="200px" style={{
+                            height: "100px",
+                            margin: "5px"
+                            // width: "100px",
+                        }} /></Col></Flex> : <FormControl helpTextIcon={true} viewMode={isViewMode} label="Upload Profile">
+
                             <ImageUploader
                                 multiple={false}
                                 maxFileSizeMB={50}
@@ -271,7 +274,7 @@ const EditProfileDrawer = ({
                                 handleFileDelete={handleImageDelete}
                                 theme="theme2"
                             />
-                        </FormControl>
+                        </FormControl>}
 
                         {[
                             { key: "first_name", label: "First Name", required: true },

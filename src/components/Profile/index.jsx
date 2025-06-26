@@ -90,6 +90,7 @@ const Profile = ({
       getUsers();
     });
   };
+
   return (
     <>
       <div
@@ -182,6 +183,7 @@ const Profile = ({
         setDrawerMode={setDrawerMode}
         handleEditUser={handleEditUser}
         onClose={() => setDrawerOpen(false)}
+        imageUrl={userDetails?.imageUrl}
         onRefresh={() => {
           setDrawerOpen(false);
           // getUsers();
