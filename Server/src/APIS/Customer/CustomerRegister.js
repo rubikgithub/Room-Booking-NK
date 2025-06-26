@@ -595,18 +595,11 @@ router.post("/updateUser/:id", async (req, res) => {
         }
 
         // Handle image update in Clerk
-        if (
-          updatedUserData.image_url &&
-          updatedUserData.image_url !== existingUser.image_url
-        ) {
-         
-          clerkUpdateData.profile_image_url = updatedUserData.image_url;
-
-          //  Use unsafeMetadata for custom image handling
-          // clerkUpdateData.unsafe_metadata = {
-          //   ...existingUser.unsafe_metadata,
-          //   profile_image_url: updatedUserData.image_url
-          // };
+        if (updatedUserData.image_url && updatedUserData.image_url !== existingUser.image_url) {
+          clerkUpdateData.unsafe_metadata = {
+            ...existingUser.unsafe_metadata,
+            custom_profile_image_url: updatedUserData.image_url
+          };
         }
 
         if (Object.keys(clerkUpdateData).length > 0) {
