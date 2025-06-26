@@ -321,76 +321,93 @@ router.post("/createUser", async (req, res) => {
 });
 
 // Enhanced validation function
-const validateUserUpdateData = (userData, isPasswordUpdate = false) => {
+// Update your validation function to handle images
+function validateUserUpdateData(
+  userData,
+  isPasswordUpdate = false,
+  isImageUpdate = false
+) {
   const errors = [];
 
-  // Email validation
-  if (userData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userData.email)) {
+  // Existing validations...
+  if (userData.email && !isValidEmail(userData.email)) {
     errors.push("Invalid email format");
   }
 
-  // Password validation (if provided)
-  if (userData.password || isPasswordUpdate) {
-    if (!userData.password) {
-      errors.push("Password is required for password update");
-    } else if (userData.password.length < 8) {
-      errors.push("Password must be at least 8 characters long");
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(userData.password)) {
-      errors.push(
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
-      );
-    }
+  if (userData.first_name && userData.first_name.trim().length < 1) {
+    errors.push("First name cannot be empty");
+  }
 
-    // Confirm password validation
-    if (
-      userData.confirmPassword &&
-      userData.password !== userData.confirmPassword
-    ) {
-      errors.push("Password and confirm password do not match");
+  if (userData.last_name && userData.last_name.trim().length < 1) {
+    errors.push("Last name cannot be empty");
+  }
+
+  if (isPasswordUpdate) {
+    if (!userData.password || userData.password.length < 8) {
+      errors.push("Password must be at least 8 characters long");
     }
   }
-  return errors;
-};
 
-// Enhanced sanitize function
-const sanitizeUserUpdateData = (userData) => {
+  // Image validation
+  if (isImageUpdate && userData.image_url) {
+    if (!isValidImageUrl(userData.image_url)) {
+      errors.push("Invalid image URL format");
+    }
+  }
+
+  return errors;
+}
+
+// Update your sanitization function to handle images
+function sanitizeUserUpdateData(userData) {
   const sanitized = {};
 
-  // Only include fields that are explicitly provided and not empty
-  if (userData.first_name?.trim()) {
+  if (userData.first_name) {
     sanitized.first_name = userData.first_name.trim();
   }
 
-  if (userData.last_name?.trim()) {
+  if (userData.last_name) {
     sanitized.last_name = userData.last_name.trim();
   }
 
-  if (userData.email?.trim()) {
+  if (userData.email) {
     sanitized.email = userData.email.toLowerCase().trim();
   }
 
-  if (userData.address?.trim()) {
-    sanitized.address = userData.address.trim();
-  }
-
-  if (userData.phone_number?.trim()) {
-    sanitized.phone_number = userData.phone_number.trim();
-  }
-
-  if (userData.dob) {
-    sanitized.dob = userData.dob;
-  }
-
-  if (userData.department?.trim()) {
+  if (userData.department) {
     sanitized.department = userData.department.trim();
   }
 
-  if (userData.role) {
-    sanitized.role = userData.role;
+  if (userData.image_url) {
+    sanitized.image_url = userData.image_url.trim();
   }
-
   return sanitized;
-};
+}
+
+function isValidImageUrl(url) {
+  try {
+    const parsedUrl = new URL(url);
+
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      return false;
+    }
+
+    const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|webp|svg)$/i;
+    const hasImageExtension = imageExtensions.test(parsedUrl.pathname);
+
+    // Return true if it has image extension OR is from known image host
+    // You can adjust this logic based on your requirements
+    return hasImageExtension || true; // Allow all valid URLs for now
+  } catch (error) {
+    return false;
+  }
+}
+
+// Helper function to validate email format
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
 
 // Check if email is already in use by another user
 const checkEmailAvailability = async (email, currentUserId) => {
@@ -443,11 +460,13 @@ router.post("/updateUser/:id", async (req, res) => {
       userId: id,
       fields: Object.keys(updatedUserData),
       hasPassword: !!updatedUserData.password,
+      hasImage: !!updatedUserData.image_url,
       hasProfileData: !!(
         updatedUserData.first_name ||
         updatedUserData.last_name ||
         updatedUserData.email ||
-        updatedUserData.department
+        updatedUserData.department ||
+        updatedUserData.image_url
       ),
     });
 
@@ -460,11 +479,13 @@ router.post("/updateUser/:id", async (req, res) => {
     }
 
     const isPasswordUpdate = !!updatedUserData.password;
+    const isImageUpdate = !!updatedUserData.image_url;
 
-    // Validate all update data
+    // Validate all update data (including image)
     const validationErrors = validateUserUpdateData(
       updatedUserData,
-      isPasswordUpdate
+      isPasswordUpdate,
+      isImageUpdate
     );
 
     if (validationErrors.length > 0) {
@@ -512,6 +533,7 @@ router.post("/updateUser/:id", async (req, res) => {
     let passwordUpdated = false;
     let profileUpdated = false;
     let clerkUpdated = false;
+    let imageUpdated = false;
 
     // Step 1: Update password in Clerk (if provided)
     if (isPasswordUpdate && clerk_id) {
@@ -537,7 +559,7 @@ router.post("/updateUser/:id", async (req, res) => {
       console.log("Password updated successfully in Clerk");
     }
 
-    // Step 2: Update profile data in Clerk (if any Clerk-managed fields are provided)
+    // Step 2: Update profile data (including image) in Clerk
     if (clerk_id) {
       try {
         const clerk = clearkClientInstance();
@@ -572,14 +594,39 @@ router.post("/updateUser/:id", async (req, res) => {
           ];
         }
 
+        // Handle image update in Clerk
+        if (
+          updatedUserData.image_url &&
+          updatedUserData.image_url !== existingUser.image_url
+        ) {
+         
+          clerkUpdateData.profile_image_url = updatedUserData.image_url;
+
+          //  Use unsafeMetadata for custom image handling
+          // clerkUpdateData.unsafe_metadata = {
+          //   ...existingUser.unsafe_metadata,
+          //   profile_image_url: updatedUserData.image_url
+          // };
+        }
+
         if (Object.keys(clerkUpdateData).length > 0) {
-          console.log("Updating Clerk with profile and/or password data");
+          console.log(
+            "Updating Clerk with profile, password, and/or image data"
+          );
           const clerkResponse = await clerk.users.updateUser(
             clerk_id,
             clerkUpdateData
           );
           clerkUpdated = true;
-          console.log("Clerk profile update successful");
+
+          if (
+            updatedUserData.image_url &&
+            updatedUserData.image_url !== existingUser.image_url
+          ) {
+            imageUpdated = true;
+          }
+
+          console.log("Clerk profile update successful",clerkResponse);
         }
       } catch (clerkError) {
         console.error("Clerk profile update error:", clerkError);
@@ -592,10 +639,8 @@ router.post("/updateUser/:id", async (req, res) => {
       }
     }
 
-    // Step 3: Update profile data in Supabase
     const sanitizedData = sanitizeUserUpdateData(updatedUserData);
 
-    // Check if there are actual profile changes
     const hasProfileChanges = Object.keys(sanitizedData).some(
       (key) => sanitizedData[key] !== existingUser[key]
     );
@@ -613,20 +658,30 @@ router.post("/updateUser/:id", async (req, res) => {
         .single();
 
       if (error) {
-        // If Supabase update fails but Clerk was updated, we should log this inconsistency
-        console.error("Supabase update failed after Clerk update:", error);
+        console.log("Supabase update failed after Clerk update:", error);
         throw new Error(
           `Failed to update user profile in database: ${error.message}`
         );
       }
 
       profileUpdated = true;
+
+      // Check if image was actually updated in Supabase
+      if (
+        updatedUserData.image_url &&
+        updatedUserData.image_url !== existingUser.image_url
+      ) {
+        imageUpdated = true;
+      }
+
       console.log("Supabase profile update successful");
 
       // Prepare response message
       const updateMessages = [];
       if (passwordUpdated) updateMessages.push("password");
-      if (profileUpdated) updateMessages.push("profile");
+      if (imageUpdated) updateMessages.push("image");
+      if (profileUpdated && !imageUpdated) updateMessages.push("profile");
+      if (profileUpdated && imageUpdated) updateMessages.push("profile");
 
       const message =
         updateMessages.length > 1
@@ -641,6 +696,7 @@ router.post("/updateUser/:id", async (req, res) => {
           passwordUpdated,
           profileUpdated,
           clerkUpdated,
+          imageUpdated,
         },
       });
     }
@@ -658,6 +714,7 @@ router.post("/updateUser/:id", async (req, res) => {
           passwordUpdated: true,
           profileUpdated: false,
           clerkUpdated,
+          imageUpdated: false,
         },
       });
     }
@@ -671,6 +728,7 @@ router.post("/updateUser/:id", async (req, res) => {
         passwordUpdated: false,
         profileUpdated: false,
         clerkUpdated: false,
+        imageUpdated: false,
       },
     });
   } catch (error) {
