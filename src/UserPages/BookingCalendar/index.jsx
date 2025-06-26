@@ -1492,7 +1492,7 @@ function BookingCalendar() {
     ),
     []
   );
-  
+
   useEffect(() => {
     const placeholders = document.querySelectorAll(".uny-picker-placeholder");
     placeholders.forEach((placeholder) => {
@@ -1812,7 +1812,7 @@ function BookingCalendar() {
           <EventCalendar
             width="100%"
             height="calc(100vh - 100px)"
-            eventList={displayEventList}
+            eventList={displayEventList?.filter((item) => item?.rawData?.status !== "Cancelled")}
             ownerData={displayOwnerData}
             resourceHeaderTemplate={resourceHeaderTemplate}
             headerTitle={["Building", "Room", "Type", "Capacity"]}

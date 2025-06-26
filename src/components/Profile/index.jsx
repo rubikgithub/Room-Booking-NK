@@ -101,7 +101,8 @@ const Profile = ({
         <div className="profile-nav">
           <div className="profile-avatar" style={{ "background": bgColor }}>
             {
-              (selectedUser?.image_url || userDetails?.imageUrl) ? <img src={selectedUser?.image_url || userDetails?.imageUrl} alt="profile_pic" style={{
+              (selectedUser?.image_url || userDetails?.imageUrl) ? 
+              <img src={selectedUser?.image_url || userDetails?.imageUrl} alt="profile_pic" style={{
                 height: "100%",
                 width: "100%",
               }} /> :
