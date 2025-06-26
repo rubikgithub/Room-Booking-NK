@@ -32,3 +32,8 @@ body {
         --chart-5: 340 75% 55%;
     }
 }
+
+.event-calendar.e-schedule .template-wrap>div{padding-left:15px !important; font-weight: 700 !important;}
+.event_calendar_owner_container div{    justify-content: center !important;}
+.event-calendar.e-schedule .e-timeline-view .e-date-header-wrap table td.e-current-day{padding-left:50px !important;}
+td.e-time-slots {    text-align: center !important;}

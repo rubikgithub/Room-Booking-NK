@@ -187,8 +187,9 @@ const CALENDAR_STYLES = {
   },
   yAxisValue: {
     backgroundColor: "rgb(227 193 184)",
-    fontSize: "13px",
-    fontWeight: "bold",
+    fontSize: "12px",
+    fontWeight: 500,
+    paddingLeft: "15px",
     color: "rgb(54 58 71)",
   },
 };
@@ -522,6 +523,7 @@ function BookingCalendar() {
 
       return Array.from(allFeatures);
     };
+
 
     const uniqueRoomFeatures = extractRoomFeatures();
 
