@@ -8,6 +8,8 @@ import {
     DatePicker,
     TextArea,
     Button,
+    ImageUploader,
+    Form,
 } from "unygc";
 import {
     DropdownMenu,
@@ -112,6 +114,36 @@ const EditProfileDrawer = ({
         }
     }, [data, mode]);
 
+    const uploadApi = 'https://660d2bd96ddfa2943b33731c.mockapi.io/api/upload';
+    const uploadToServer = async (file) => {
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const response = await fetch(uploadApi, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to upload image");
+            }
+
+            const data = await response.json();
+            return data; // Use the server response as needed
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            return null;
+        }
+    };
+    const handleFileUpload = async (files) => {
+        for await (const file of files) {
+            await uploadToServer(file);
+        }
+    }
+    const handleFileDelete = async (id) => {
+        console.log("file id", id);
+    }
     return (
         <>
             <Drawer
@@ -187,6 +219,20 @@ const EditProfileDrawer = ({
             >
                 <div className="flex-1 overflow-y-auto p-2 space-y-5">
                     <FormRow cols={1} fieldAlign={"side"}>
+
+                        <FormControl helpTextIcon={true} label="Upload Profile">
+                            <ImageUploader
+                                multiple={false}
+                                maxFileSizeMB={50}
+                                theme='theme1'
+                                handleFileUpload={handleFileUpload}
+                                handleFileDelete={handleFileDelete}
+                                onChange={(updatedFiles) => {
+                                    console.log('Updated files in theme 1', updatedFiles);
+                                }}
+                            />
+                        </FormControl>
+
                         {[
                             { key: "first_name", label: "First Name", required: true },
                             { key: "last_name", label: "Last Name" },

@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent} from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import { clerk, loadClerk } from "../LoginRegister/clerk";
 import ForgetPassword from "./ForgetPassword";
 import { $ajax_post } from "../Library";
+import { Notification } from "unygc";
 
 // Constants
 const VALIDATION_RULES = {
@@ -168,6 +169,7 @@ const Login = () => {
                 throw new Error("Sign in incomplete");
               }
             } catch (error) {
+              console.log(error, "signInAttempt")
               reject(error);
             }
           },
@@ -178,7 +180,13 @@ const Login = () => {
       });
     } catch (error) {
       console.error("Login error:", error);
-
+      Notification.open(
+        "error",
+        "",
+        error.message?.includes("Network error") ? "User is Not Found" : "Invalid credentials",
+        4000,
+        "top-right"
+      );
       // Handle specific error types
       if (
         error.message?.includes("Invalid credentials") ||
@@ -214,13 +222,14 @@ const Login = () => {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#7939d7] to-[#a770f7] p-4">
       <Card className="w-full max-w-md bg-white border-none shadow-lg">
+        <CardTitle style={{ fontSize: '1rem', textAlign: "center" }}>Room Booking System</CardTitle>
         <CardContent className="space-y-4">
-          {generalError && (
+          {/* {generalError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{generalError}</AlertDescription>
             </Alert>
-          )}
+          )} */}
 
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             {/* Email Field */}
@@ -239,9 +248,8 @@ const Login = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 onKeyPress={handleKeyPress}
-                className={`h-11 ${
-                  errors.email ? "border-red-500 focus:border-red-500" : ""
-                }`}
+                className={`h-11 ${errors.email ? "border-red-500 focus:border-red-500" : ""
+                  }`}
                 autoComplete="email"
                 disabled={isSubmitting}
                 aria-describedby={errors.email ? "email-error" : undefined}
@@ -274,9 +282,8 @@ const Login = () => {
                   value={formData.password}
                   onChange={handleInputChange}
                   onKeyPress={handleKeyPress}
-                  className={`h-11 pr-10 ${
-                    errors.password ? "border-red-500 focus:border-red-500" : ""
-                  }`}
+                  className={`h-11 pr-10 ${errors.password ? "border-red-500 focus:border-red-500" : ""
+                    }`}
                   autoComplete="current-password"
                   disabled={isSubmitting}
                   aria-describedby={
