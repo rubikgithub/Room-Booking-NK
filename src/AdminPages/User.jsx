@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { $ajax_post } from "../Library";
 import UserDrawer from "./UserDrawer";
+import { X } from "lucide-react";
 
 const User = () => {
   const [data, setData] = useState([]);
@@ -223,7 +224,16 @@ const User = () => {
       />
       {/* Status Update Confirmation Dialog */}
       <AlertDialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
-        <AlertDialogContent className="bg-white">
+        <AlertDialogContent className="bg-white relative fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 max-w-lg w-full mx-4">
+          {/* Cross Icon Button */}
+          <button
+            onClick={() => setStatusDialogOpen(false)}
+            className="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-100 transition-colors duration-200"
+            aria-label="Close dialog"
+          >
+            <X className="h-4 w-4 text-gray-500 hover:text-gray-700" />
+          </button>
+
           <AlertDialogHeader>
             <AlertDialogTitle>Change User Status</AlertDialogTitle>
             <AlertDialogDescription>
@@ -247,7 +257,7 @@ const User = () => {
                 className="bg-red-600 hover:bg-red-700 text-white flex-1 min-w-[100px]"
                 disabled={userToToggle?.status === "rejected"}
               >
-                {userToToggle?.status === "Approved" ? "Inactive" : "Rejected"}
+                {userToToggle?.status === "Approved" ? "Inactive" : "Reject"}
               </Button>
               {/* <Button
                 onClick={() => handleStatusUpdate("pending")}
@@ -257,12 +267,6 @@ const User = () => {
                 Pending
               </Button> */}
             </div>
-            <AlertDialogCancel
-              onClick={() => setStatusDialogOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Cancel
-            </AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

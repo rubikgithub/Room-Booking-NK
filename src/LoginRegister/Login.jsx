@@ -221,7 +221,7 @@ const Login = () => {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#7939d7] to-[#a770f7] p-4">
-      <div style={{ fontSize: '2rem', fontWeight: 500, textAlign: "center", marginBottom: "5px" }}>Room Booking System</div>
+      <div style={{ fontSize: '2rem', fontWeight: 500, textAlign: "center", paddingBottom: "20px" ,color:"#ffffff"}}>Room Booking System</div>
       <Card className="w-full max-w-md bg-white border-none shadow-lg">
         {/* <CardTitle style={{ fontSize: '1rem', textAlign: "center" }}>Room Booking System</CardTitle> */}
         <CardContent className="space-y-4">

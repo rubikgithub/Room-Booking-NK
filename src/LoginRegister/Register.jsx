@@ -108,7 +108,7 @@ const Register = () => {
         <>
 
             <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#7939d7] to-[#a770f7]">
-            <div style={{ fontSize: '2rem', fontWeight: 500, textAlign: "center", marginBottom: "5px" }}>Room Booking System</div>
+            <div style={{ fontSize: '2rem', fontWeight: 500, textAlign: "center", paddingBottom: "20px" ,color:"#ffffff"}}>Room Booking System</div>
                 <Card className="w-[450px] bg-white border-none p-6 shadow-none">
                     {/* <CardTitle style={{ fontSize: '1rem', textAlign: "center" }}>Room Booking System</CardTitle> */}
                     <CardContent className="p-0">
