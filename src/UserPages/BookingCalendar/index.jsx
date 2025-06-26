@@ -162,7 +162,7 @@ const TIME_OPTIONS = [
 const STATUS_OPTIONS = [
   { value: "Pending", label: "Pending Confirmation" },
   { value: "Booked", label: "Booking Confirmed" },
-  { value: "Completed", label: "Completed" },
+  // { value: "Completed", label: "Completed" },
   { value: "Cancelled", label: "Cancelled" },
 ];
 
@@ -846,7 +846,6 @@ function BookingCalendar() {
 
   }, [state.eventList, state.ownerData]);
 
-
   // Use filtered data if available, otherwise use original data
   const displayEventList = state.filteredEventList.length > 0 ? state.filteredEventList : state.eventList;
   const displayOwnerData = state.filteredOwnerData.length > 0 ? state.filteredOwnerData : state.ownerData;
@@ -1493,6 +1492,19 @@ function BookingCalendar() {
     ),
     []
   );
+  
+  useEffect(() => {
+    const placeholders = document.querySelectorAll(".uny-picker-placeholder");
+    placeholders.forEach((placeholder) => {
+      if (placeholder && placeholder.parentNode) {
+        placeholder.parentNode.removeChild(placeholder);
+      }
+    });
+  }, [state.currentEvent?.StartTime
+    ? dateUtils.formatDateForDisplay(
+      new Date(state.currentEvent.StartTime)
+    )
+    : ""]); // Empty dependency array to run once after mount
 
   const addEditEventTemplate = useMemo(
     () => (
@@ -1576,7 +1588,7 @@ function BookingCalendar() {
           <Col sm={8}>
             <DatePicker
               open
-              style={{ width: 100 }}
+              // style={{ width: 100 }}
               dropdownClassName="calendar-only"
               suffixIcon=""
               defaultValue={
@@ -1587,6 +1599,7 @@ function BookingCalendar() {
                   : ""
               }
               allowClear={false}
+              placeholder=""
               onChange={(value) => {
                 const formattedDate = dateUtils.formatDateForDisplay(
                   new Date(value)

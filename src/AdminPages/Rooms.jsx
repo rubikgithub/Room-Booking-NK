@@ -82,11 +82,11 @@ const Rooms = () => {
       headerName: "Area (sq ft)",
       type: "number",
     },
-    {
-      field: "features",
-      headerName: "Additional Features",
-      type: "text",
-    },
+    // {
+    //   field: "features",
+    //   headerName: "Additional Features",
+    //   type: "text",
+    // },
     {
       field: "status",
       headerName: "Status",
@@ -258,8 +258,10 @@ export default Rooms;
 const roomTypes = [
   { value: "Conference Room", label: "Conference Room" },
   { value: "Meeting Room", label: "Meeting Room" },
-  { value: "Training Room", label: "Training Room" },
-  { value: "Cabin", label: "Cabin" },
+  // { value: "Training Room", label: "Training Room" },
+  { value: "ClassRoom", label: "ClassRoom" },
+  { value: "Cabinet", label: "Cabinet" },
+  { value: "Multi-use", label: "Multi - use" },
 ];
 
 
@@ -462,11 +464,12 @@ const RoomsDrawer = ({
             if (key === "chairs") delete updatedRoomFeatures[key].quantity;
             if (key === "tables") delete updatedRoomFeatures[key].count;
             if (key === "markers") delete updatedRoomFeatures[key].count;
-            if (key === "dusters") delete updatedRoomFeatures[key].count;
+            // if (key === "dusters") delete updatedRoomFeatures[key].count;
             if (key === "board") delete updatedRoomFeatures[key].size;
           }
         });
       } else if (field === "chairsQuantity") {
+        console.log(value?.value, value)
         updatedRoomFeatures.chairs = {
           ...updatedRoomFeatures.chairs,
           enabled: true,
@@ -476,19 +479,19 @@ const RoomsDrawer = ({
         updatedRoomFeatures.tables = {
           ...updatedRoomFeatures.tables,
           enabled: true,
-          count: parseInt(value, 10) || 0, // Handle Input value
+          count: value.value || value, // Handle Input value
         };
       } else if (field === "markersCount") {
         updatedRoomFeatures.markers = {
           ...updatedRoomFeatures.markers,
           enabled: true,
-          count: parseInt(value, 10) || 0,
+          count: value.value || value,
         };
       } else if (field === "dustersCount") {
         updatedRoomFeatures.dusters = {
           ...updatedRoomFeatures.dusters,
           enabled: true,
-          count: parseInt(value, 10) || 0,
+          // count: parseInt(value, 10) || 0,
         };
       } else if (field === "boardSize") {
         updatedRoomFeatures.board = {
@@ -609,14 +612,14 @@ const RoomsDrawer = ({
               placeholder="Enter Description"
             />
           </FormControl>
-
+          {/* 
           <FormControl viewMode={isView} label="Additional Features">
             <Input
               value={formData.features}
               onChange={(e) => handleChange("features", e)}
               placeholder="Enter Additional Features"
             />
-          </FormControl>
+          </FormControl> */}
 
           <FormControl viewMode={isView} label="Room Features" required>
             <Select
@@ -652,31 +655,56 @@ const RoomsDrawer = ({
           {/* Conditional Tables Count Input */}
           {formData?.room_features?.tables?.enabled && (
             <FormControl viewMode={isView} label="Tables Count" required>
-              <Input
-                type="number"
-                value={formData.room_features.tables.count || ""}
-                onChange={(e) => handleChanges("tablesCount", e)}
-                placeholder="Enter number of tables"
+              <Select
                 disabled={isView}
+                selectOptions={[
+                  {
+                    value: "5-10", label: "5-10"
+                  },
+                  {
+                    value: "10-15", label: "10-15"
+                  },
+                  {
+                    value: "15-20", label: "15-20"
+                  },
+                ]}
+
+                value={formData.room_features.tables.count || ""}
+                defaultValue={formData.room_features.tables.count || ""}
+                onChange={(e) => handleChanges("tablesCount", e)}
+                customClass="custom-select"
               />
             </FormControl>
           )}
 
           {/* Conditional Markers Count Input */}
           {formData?.room_features?.markers?.enabled && (
+
             <FormControl viewMode={isView} label="Markers Count" required>
-              <Input
-                type="number"
-                value={formData.room_features.markers.count || ""}
-                onChange={(e) => handleChanges("markersCount", e)}
-                placeholder="Enter number of markers"
+              <Select
                 disabled={isView}
+                selectOptions={[
+                  {
+                    value: "2-5,", label: "2-5,"
+                  },
+                  {
+                    value: "5-10", label: "5-10"
+                  },
+                  {
+                    value: "10-15", label: "10-15"
+                  },
+                ]}
+                value={formData.room_features.markers.count || ""}
+                defaultValue={formData.room_features.markers.count || ""}
+                onChange={(e) => handleChanges("markersCount", e)}
+                customClass="custom-select"
               />
+
             </FormControl>
           )}
 
           {/* Conditional Dusters Count Input */}
-          {formData?.room_features?.dusters?.enabled && (
+          {/* {formData?.room_features?.dusters?.enabled && (
             <FormControl viewMode={isView} label="Dusters Count" required>
               <Input
                 type="number"
@@ -686,7 +714,7 @@ const RoomsDrawer = ({
                 disabled={isView}
               />
             </FormControl>
-          )}
+          )} */}
 
           {/* Conditional Board Size Dropdown */}
           {formData?.room_features?.board?.enabled && (

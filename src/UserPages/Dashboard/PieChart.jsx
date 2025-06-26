@@ -54,7 +54,7 @@ export function PieChartComponent({
           config={{}}
         >
           <PieChart>
-            <ChartTooltip
+            {/* <ChartTooltip
               cursor={false}
               content={
                 <ChartTooltipContent
@@ -63,12 +63,27 @@ export function PieChartComponent({
                   hideLabel
                 />
               }
+            /> */}
+            <ChartTooltip
+              cursor={false}
+              content={
+                <ChartTooltipContent
+                  nameKey={nameKey}
+                  hideValue // Add this prop to hide the value
+                  hideLabel={true} // Ensure the label (name) is shown
+                  formatter={(value, name, payload) => {
+
+                    // Return only the name for the tooltip
+                    return name;
+                  }}
+                />
+              }
             />
             <Pie
               data={processedData || []}
               dataKey={valueKey}
               nameKey={nameKey}
-              innerRadius={60}
+              innerRadius={55}
               strokeWidth={5}
               labelLine={false}
               label={({
@@ -91,7 +106,7 @@ export function PieChartComponent({
                     fill="white"
                     textAnchor="middle"
                     dominantBaseline="central"
-                    className="text-[14px] font-semibold"
+                    className="text-[10px] font-semibold"
                   >
                     {value}%
                   </text>

@@ -277,7 +277,7 @@ const Dashboard = () => {
         {cardData?.map((card, index) => (
           <Card key={index} className={card.bg}>
             <CardHeader>
-              <CardTitle >{card.title}</CardTitle>
+              <CardTitle style={{fontSize:"larger"}}>{card.title}</CardTitle>
               <CardDescription>{card.description}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -386,8 +386,8 @@ function BarChartComponent({ data = [] }) {
                     nameKey={activeChart}
                     labelFormatter={(label) => `Room: ${label}`}
                     formatter={(value, name, props) => [
-                      activeChart === "capacity" ? `${value.toLocaleString()} capacity` : `${value} bookings`,
-                      chartConfigs[activeChart].label,
+                      // activeChart === "capacity" ? `${value.toLocaleString()} capacity` : `${value} bookings`,
+                      // chartConfigs[activeChart].label,
                       props.payload.building_name ? `Building: ${props.payload.building_name}` : null
                     ].filter(Boolean)}
                   />
