@@ -20,7 +20,37 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { $ajax_post } from "../Library";
+function ToggleButton({ isChecked = false, setIsChecked = () => { }, onChange = () => { }, viewMode = false }) {
 
+
+  const handleToggle = () => {
+    setIsChecked(!isChecked);
+    onChange(!isChecked)
+  };
+
+  return (
+    <div className="btn-status">
+      <input
+        type="checkbox"
+        id="checkbox"
+        className="hidden"
+        checked={isChecked}
+        onChange={handleToggle}
+        disabled={viewMode}
+      />
+      <label
+        htmlFor="checkbox"
+        className={`flex items-center p-1 rounded-lg w-12 h-6 cursor-pointer transition-all duration-300 ${isChecked ? 'bg-red-200' : 'bg-green-200'
+          }`}
+      >
+        <span
+          className={`block w-[17px] h-[17px] rounded-full transition-transform duration-300 ${isChecked ? 'bg-red-600 translate-x-[23px]' : 'bg-green-600 translate-x-0'
+            }`}
+        ></span>
+      </label>
+    </div>
+  );
+}
 const Rooms = () => {
   const [data, setData] = useState([]);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -313,7 +343,7 @@ const RoomsDrawer = ({
   });
 
   const [buildings, setBuildings] = useState([]);
-
+  const [isChecked, setIsChecked] = useState(false);
   const handleChange = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
@@ -637,7 +667,7 @@ const RoomsDrawer = ({
               dataActions={true}
             />
           </FormControl>
-
+          <FormControl viewMode={isView} label="AC" required>  <ToggleButton viewMode={isView} isChecked={isChecked} setIsChecked={setIsChecked} onChange={(val) => handleChange("AC", val)} /> </FormControl>
           {/* Conditional Chairs Quantity Dropdown */}
           {formData?.room_features?.chairs?.enabled && (
             <FormControl viewMode={isView} label="Chairs Quantity" required>

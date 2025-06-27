@@ -192,7 +192,7 @@ const UserDrawer = ({
               { key: "first_name", label: "First Name", required: true },
               { key: "last_name", label: "Last Name" },
               { key: "email", label: "Email", required: true, type: "email" },
-              { key: "phone_number", label: "Phone Number", type: "number" },
+              // { key: "phone_number", label: "Phone Number", type: "number" },
             ].map((field, idx) => (
               <div key={idx}>
                 <FormControl
@@ -211,6 +211,21 @@ const UserDrawer = ({
               </div>
             ))}
 
+            <FormControl
+              label={"Phone Number"}
+              required={true}
+              viewMode={isViewMode}
+            >
+              <Input
+                type={"number"}
+                value={formData?.phone_number || ""}
+                minLength={10}
+                maxLength={10}
+                onChange={(e) => handleChange("phone_number", e)}
+                disabled={isViewMode}
+                placeholder={`Enter Phone-Number`}
+              />
+            </FormControl>
             <FormControl label="User Role" viewMode={isViewMode} required={true}>
               <Select
                 defaultValue={formData?.role}

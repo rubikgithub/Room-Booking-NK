@@ -172,7 +172,8 @@ const Register = () => {
                                     id="phone_number"
                                     name="phone_number"
                                     type="phone_number"
-
+                                    minLength={10}
+                                    maxLength={10}
                                     value={formData.phone_number}
                                     onChange={handleChange}
                                 />
