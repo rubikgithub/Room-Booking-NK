@@ -236,18 +236,51 @@ router.post("/createRoom", async (req, res) => {
     });
   }
 });
-
 router.post("/deleteRoom/:roomId", async (req, res) => {
   const { roomId } = req.params;
 
+  if (!roomId) {
+    return res.status(400).json({
+      status: "error",
+      message: "Room ID is required.",
+    });
+  }
+
   try {
+    const { data: roomExists, error: roomError } = await supabase
+      .from("rooms")
+      .select("id")
+      .eq("id", roomId)
+      .single();
+
+    if (roomError) {
+      return res.status(500).json({
+        status: "error",
+        message: "Error checking room existence.",
+        error: roomError.message,
+      });
+    }
+
+    if (!roomExists) {
+      return res.status(404).json({
+        status: "error",
+        message: "Room not found.",
+      });
+    }
+
     const { data: bookings, error: bookingsError } = await supabase
       .from("bookings")
       .select("id")
       .eq("room_id", roomId)
-      .eq("status", "Confirmed");
+      .eq("status", "Booked");
 
-    if (bookingsError) throw bookingsError;
+    if (bookingsError) {
+      return res.status(500).json({
+        status: "error",
+        message: "Error checking room bookings.",
+        error: bookingsError.message,
+      });
+    }
 
     if (bookings && bookings.length > 0) {
       return res.status(400).json({
@@ -256,25 +289,33 @@ router.post("/deleteRoom/:roomId", async (req, res) => {
       });
     }
 
-    const { data, error } = await supabase
+    const { error: deleteError } = await supabase
       .from("rooms")
       .delete()
       .eq("id", roomId);
 
-    if (error) throw error;
+    if (deleteError) {
+      return res.status(500).json({
+        status: "error",
+        message: "Failed to delete room.",
+        error: deleteError.message,
+      });
+    }
 
-    res.status(200).json({
+    return res.status(200).json({
       status: "success",
       message: "Room deleted successfully.",
     });
+
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       status: "error",
-      message: "Failed to delete room.",
+      message: "Unexpected server error.",
       error: error.message || error,
     });
   }
 });
+
 
 router.post("/updateRoom/:roomId", async (req, res) => {
   const { roomId } = req.params;
