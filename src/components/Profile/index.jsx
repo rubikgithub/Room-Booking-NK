@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { clerk, loadClerk } from "../../LoginRegister/clerk";
 import { $ajax_post } from "../../Library";
 import EditProfileDrawer from "./EditProfileDrawer";
+import { LogOut } from "lucide-react";
 
 const Profile = ({
   profileName,
@@ -30,7 +31,7 @@ const Profile = ({
     "#006064", // Dark Cyan
     "#004D40", // Dark Teal
     "#827717", // Dark Lime
-    "#1A237E"  // Dark Indigo
+    "#1A237E", // Dark Indigo
   ];
 
   const getFixedDarkColor = (letter) => {
@@ -65,19 +66,23 @@ const Profile = ({
   useEffect(() => {
     getUserDetails();
   }, []);
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [drawerMode, setDrawerMode] = useState("view");
 
   const getUsers = async () => {
-    $ajax_post(`getUserByEmail/${clerk.user?.primaryEmailAddress?.emailAddress}`, {}, (response) => {
-      console.log(response, "users")
-      setSelectedUser(response);
-    });
+    $ajax_post(
+      `getUserByEmail/${clerk.user?.primaryEmailAddress?.emailAddress}`,
+      {},
+      (response) => {
+        console.log(response, "users");
+        setSelectedUser(response);
+      }
+    );
   };
   useEffect(() => {
-    getUsers()
-  }, [])
+    getUsers();
+  }, []);
   const handleOpenDrawer = (user = {}, mode = "view") => {
     setDrawerMode(mode);
     setSelectedUser(user);
@@ -99,31 +104,34 @@ const Profile = ({
         onMouseLeave={() => setIsOpen(false)}
       >
         <div className="profile-nav">
-          <div className="profile-avatar" style={{ "background": bgColor }}>
-            {
-              (selectedUser?.image_url || userDetails?.unsafeMetadata?.custom_profile_image_url || userDetails?.imageUrl) ?
-                <img src={selectedUser?.image_url || userDetails?.unsafeMetadata?.custom_profile_image_url || userDetails?.imageUrl} alt="profile_pic" style={{
+          <div className="profile-avatar" style={{ background: bgColor }}>
+            {selectedUser?.image_url ||
+            userDetails?.unsafeMetadata?.custom_profile_image_url ||
+            userDetails?.imageUrl ? (
+              <img
+                src={
+                  selectedUser?.image_url ||
+                  userDetails?.unsafeMetadata?.custom_profile_image_url ||
+                  userDetails?.imageUrl
+                }
+                alt="profile_pic"
+                style={{
                   height: "100%",
                   width: "100%",
-                }} /> :
-                <span className="profile-letter-thumbnail">
-                  {`${userDetails?.firstName?.charAt(0).toUpperCase()}`}
-                </span>
-            }
-
-
+                }}
+              />
+            ) : (
+              <span className="profile-letter-thumbnail">
+                {`${userDetails?.firstName?.charAt(0).toUpperCase()}`}
+              </span>
+            )}
           </div>
           <div className="profile-toggle">
             <div className="profile-name">
-              {profileName ?? `${userDetails?.fullName ?? 'Something wrong'}`}
+              {profileName ?? `${userDetails?.fullName ?? "Something wrong"}`}
             </div>
             <div className="profile-nav-container">
-              {
-                accountText && (
-                  <span className="premium">{accountText}</span>
-                )
-              }
-
+              {accountText && <span className="premium">{accountText}</span>}
             </div>
           </div>
         </div>
@@ -145,7 +153,9 @@ const Profile = ({
                 </div>
               )
             )}
-            <div onClick={() => handleOpenDrawer()}>Edit Profile</div>
+            <div className="profile-item" onClick={() => handleOpenDrawer()}>
+              Edit Profile
+            </div>
             <div key={`divider-logout`} className="divider"></div>
             <div
               className="profile-item"
@@ -153,13 +163,17 @@ const Profile = ({
               onClick={() => {
                 // UnyProtect.logout();
                 try {
-                  document.cookie.split(";").forEach(cookie => {
+                  document.cookie.split(";").forEach((cookie) => {
                     const eqPos = cookie.indexOf("=");
-                    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+                    const name =
+                      eqPos > -1
+                        ? cookie.substr(0, eqPos).trim()
+                        : cookie.trim();
 
                     // Skip deletion if the cookie name is 'userData'
                     if (name !== "userData") {
-                      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+                      document.cookie =
+                        name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
                     }
                   });
 
@@ -175,7 +189,13 @@ const Profile = ({
                 }
               }}
             >
-              <span className="profile-item-icon" style={{ marginRight: "5px" }}>⏻</span>
+              <span
+                className="profile-item-icon"
+                style={{ marginRight: "5px" }}
+              >
+                {" "}
+                <LogOut className="h-[1.2rem] w-[1.2rem] transition-all" />
+              </span>
               <span className="profile-item-label">Logout</span>
             </div>
           </div>
@@ -188,7 +208,10 @@ const Profile = ({
         setDrawerMode={setDrawerMode}
         handleEditUser={handleEditUser}
         onClose={() => setDrawerOpen(false)}
-        imageUrl={userDetails?.unsafeMetadata?.custom_profile_image_url || userDetails?.imageUrl}
+        imageUrl={
+          userDetails?.unsafeMetadata?.custom_profile_image_url ||
+          userDetails?.imageUrl
+        }
         onRefresh={() => {
           setDrawerOpen(false);
           // getUsers();

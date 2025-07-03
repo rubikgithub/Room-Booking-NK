@@ -9,9 +9,11 @@ import {
 } from "@/components/ui/table";
 import { $ajax_post } from "../Library";
 import { ColorPicker, Notification } from "unygc";
+import { useTheme } from "@/components/theme-provider";
 
 const Status = () => {
   const [data, setData] = useState([]);
+  const { theme } = useTheme();
 
   const getStatusList = async () => {
     try {
@@ -50,42 +52,52 @@ const Status = () => {
       field: "status",
       headerName: "Status",
       type: "text",
+      renderCell: (params) => (
+        <span className="font-medium text-foreground">{params?.value}</span>
+      ),
     },
     {
       field: "indicator",
       headerName: "Indicator",
       type: "text",
       renderCell: (params) => (
-        <ColorPicker
-          value={params.row.color}
-          onChange={(color) => handleColorChange(params.row.id, color)}
-        />
+        <div className="flex items-center gap-3">
+          <div
+            className="w-6 h-6 rounded-full border-2 border-gray-300 shadow-sm"
+            style={{ backgroundColor: params.row.color }}
+          />
+          <ColorPicker
+            value={params.row.color}
+            onChange={(color) => handleColorChange(params.row.id, color)}
+          />
+        </div>
       ),
     },
   ];
 
   return (
-    <div className="p-4">
-      <div className="overflow-x-auto rounded-lg shadow border border-gray-200">
-        <Table className="min-w-full divide-y divide-gray-200 bg-white">
-          <TableHeader className="bg-gray-100">
+    <div>
+      <div className="overflow-x-auto max-h-[80vh] rounded-2xl shadow-md border border-border">
+        <Table className="min-w-full divide-y divide-border bg-card text-sm">
+          <TableHeader className="bg-muted/50 backdrop-blur-sm sticky top-0 z-10">
             <TableRow>
               {columns?.map((col) => (
                 <TableHead
                   key={col.field}
-                  className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                  className="px-2 py-2 text-left text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                 >
                   {col.headerName}
                 </TableHead>
               ))}
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-gray-100">
+
+          <TableBody className="divide-y divide-border">
             {data.length > 0 ? (
               data.map((row, rowIndex) => (
                 <TableRow
                   key={rowIndex}
-                  className="hover:bg-gray-50 transition-colors duration-150"
+                  className="hover:bg-secondary/30 transition-colors duration-150 group"
                 >
                   {columns.map((col) => {
                     const value = row[col.field];
@@ -93,7 +105,7 @@ const Status = () => {
                     return (
                       <TableCell
                         key={col.field}
-                        className="px-4 py-2 text-sm text-gray-800"
+                        className="px-2 py-2 whitespace-nowrap text-foreground group-hover:text-primary transition-colors duration-200"
                       >
                         {col.renderCell ? col.renderCell(params) : value}
                       </TableCell>
@@ -105,7 +117,7 @@ const Status = () => {
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="px-4 py-6 text-center text-sm text-gray-500"
+                  className="px-2 py-6 text-center text-muted-foreground"
                 >
                   No status data available.
                 </TableCell>

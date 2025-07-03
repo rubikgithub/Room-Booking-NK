@@ -1,11 +1,4 @@
-body {
-    padding: 0em;
-    margin: 0em;
-}
-
 @import "tailwindcss";
-
-
 
 :root {
     --color-chrome: hsl(210, 100%, 50%);
@@ -17,6 +10,39 @@ body {
 
 @layer base {
     :root {
+        /* Light theme: Modern light gray palette */
+        --background: 0 0% 98%;
+        /* Very light gray instead of pure white */
+        --foreground: 224 71.4% 4.1%;
+        /* Dark blue-gray instead of pure black */
+        --card: 0 0% 100%;
+        /* Pure white for cards to stand out */
+        --card-foreground: 224 71.4% 4.1%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 224 71.4% 4.1%;
+        --primary: 262.1 83.3% 57.8%;
+        /* Nice purple primary */
+        --primary-foreground: 210 20% 98%;
+        --secondary: 220 14.3% 95.9%;
+        /* Light blue-gray */
+        --secondary-foreground: 220.9 39.3% 11%;
+        --muted: 220 14.3% 95.9%;
+        --muted-foreground: 220 8.9% 46.1%;
+        --accent: 220 14.3% 95.9%;
+        --accent-foreground: 220.9 39.3% 11%;
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 210 20% 98%;
+        /* --border: 220 13% 91%; */
+        --border: 0 100% 50%;
+
+        /* Subtle borders */
+        --input: 220 13% 91%;
+        --ring: 262.1 83.3% 57.8%;
+        /* Match primary */
+        --radius: 0.75rem;
+        /* Slightly more rounded */
+
+        /* Chart variables */
         --chart-1: 12 76% 61%;
         --chart-2: 173 58% 39%;
         --chart-3: 197 37% 24%;
@@ -25,6 +51,37 @@ body {
     }
 
     .dark {
+        /* Dark theme: Modern dark palette with softer colors */
+        --background: 224 71.4% 4.1%;
+        /* Dark blue-gray instead of pure black */
+        --foreground: 210 20% 98%;
+        /* Off-white instead of pure white */
+        --card: 224 71.4% 4.1%;
+        /* Same as background for subtle cards */
+        --card-foreground: 210 20% 98%;
+        --popover: 224 71.4% 4.1%;
+        --popover-foreground: 210 20% 98%;
+        --primary: 263.4 70% 50.4%;
+        /* Slightly muted purple */
+        --primary-foreground: 210 20% 98%;
+        --secondary: 215 27.9% 16.9%;
+        /* Dark blue-gray */
+        --secondary-foreground: 210 20% 98%;
+        --muted: 215 27.9% 16.9%;
+        --muted-foreground: 217.9 10.6% 64.9%;
+        --accent: 215 27.9% 16.9%;
+        --accent-foreground: 210 20% 98%;
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 210 20% 98%;
+        /* --border: 215 27.9% 16.9%; */
+        --border: 0 100% 50%;
+
+        /* Subtle dark borders */
+        --input: 215 27.9% 16.9%;
+        --ring: 263.4 70% 50.4%;
+        /* Match primary */
+
+        /* Chart variables for dark mode */
         --chart-1: 220 70% 50%;
         --chart-2: 160 60% 45%;
         --chart-3: 30 80% 55%;
@@ -33,7 +90,214 @@ body {
     }
 }
 
-.event-calendar.e-schedule .template-wrap>div{padding-left:15px !important; font-weight: 700 !important;}
-.event_calendar_owner_container div{    justify-content: center !important;}
-.event-calendar.e-schedule .e-timeline-view .e-date-header-wrap table td.e-current-day{padding-left:50px !important;}
-td.e-time-slots {    text-align: center !important;}
+/* Apply base styles to body */
+body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: system-ui, -apple-system, sans-serif;
+    padding: 0;
+    margin: 0;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Smooth transitions for theme switching */
+* {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Your existing custom styles */
+.event-calendar.e-schedule .template-wrap>div {
+    padding-left: 15px !important;
+    font-weight: 700 !important;
+}
+
+.event_calendar_owner_container div {
+    justify-content: center !important;
+}
+
+.event-calendar.e-schedule .e-timeline-view .e-date-header-wrap table td.e-current-day {
+    padding-left: 50px !important;
+}
+
+td.e-time-slots {
+    text-align: center !important;
+}
+
+html.dark .profile-container .profile-nav .profile-toggle .profile-name {
+    color: #fff;
+}
+
+html.dark .profile-container .profile-nav .profile-toggle .profile-nav-container .premium {
+    color: #fff;
+    opacity: 0.7;
+}
+
+html.dark .profile-container .profile-menu {
+    background-color: #000;
+}
+
+html.dark .profile-container .profile-menu .profile-content .profile-item:hover {
+    background-color: #000;
+    color: #e88c30;
+}
+
+html.dark .profile-container .profile-menu .profile-content .profile-item {
+    color: #fff;
+}
+
+html.dark .cr-ng-select-selected-options.form-control {
+    background-color: #000;
+    color: #fff;
+}
+
+html.dark .cr-ng-select-dropdown {
+    background-color: #000;
+    color: #fff;
+}
+
+html.dark .cr-ng-select-dropdown .option-item:hover {
+    background-color: #000;
+    color: #fff;
+}
+
+html.dark .cr-ng-select-dropdown .searchbox input {
+    background-color: #000;
+    color: #fff;
+}
+
+html.dark .e-toolbar .e-toolbar-items {
+    background-color: #000;
+    color: #fff;
+}
+
+html.dark .e-schedule .e-timeline-view .e-work-cells,
+html.dark .e-schedule .e-timeline-month-view .e-work-cells {
+    background: #000;
+    color: #fff;
+    border-color: #fff;
+}
+
+html.dark .e-schedule .e-block-appointment {
+    background: rgba(255, 255, 255, 0.2);
+    color: #000;
+}
+
+html.dark .e-schedule .e-timeline-view .e-work-cells:hover:not(.e-resource-group-cells),
+html.dark .e-schedule .e-timeline-month-view .e-work-cells:hover:not(.e-resource-group-cells) {
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #fff;
+}
+
+html.dark .e-toolbar .e-toolbar-item .e-tbar-btn {
+    border: 1px solid;
+}
+
+html.dark .e-toolbar .e-toolbar-item .e-tbar-btn,
+html.dark .search-container .control-group .controls.search input,
+html.dark .search-container .control-group .controls.search .uny-btn,
+html.dark .uny-dropdown-trigger .uny-btn-default,
+html.dark .uny-dropdown-menu,
+html.dark .uny-dropdown-menu-item,
+html.dark .cr-ng-select-dropdown .actionsbox,
+html.dark .cr-ng-select-dropdown .option-item.selected,
+html.dark .e-header-calendar.e-control.e-calendar.e-lib.e-keyboard,
+html.dark .e-calendar .e-footer-container {
+    background: #000;
+    color: #fff;
+    border-color: #fff;
+}
+
+html.dark .e-toolbar .e-toolbar-item .e-tbar-btn .e-icons,
+html.dark .e-toolbar .e-toolbar-item .e-tbar-btn .e-tbar-btn-text,
+html.dark .e-calendar .e-content th,
+.e-calendar .e-content td,
+html.dark .e-calendar .e-header .e-title,
+html.dark .e-calendar .e-date-icon-prev,
+html.dark .e-calendar .e-date-icon-next,
+html.dark .e-calendar .e-content span.e-day {
+    color: #fff;
+}
+
+html.dark .e-calendar .e-content td.e-today.e-selected:hover span.e-day,
+html.dark .e-calendar .e-content td.e-selected:hover span.e-day,
+html.dark .e-calendar .e-content td.e-selected.e-focused-date span.e-day,
+html.dark .e-calendar .e-content td:hover span.e-day,
+html.dark .e-calendar .e-content td:focus span.e-day {
+    background: rgba(255, 255, 255, 0.5);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: none;
+}
+
+html.dark .kanban-actionbar .form-control,
+html.dark .uny-grid-action-btn .uny-btn-shape-circle {
+    background: #000;
+    color: #fff;
+    border-color: #fff;
+}
+
+html.dark .kanban-actionbar .form-control:placeholder {
+    color: #fff;
+}
+
+html.dark .kanbanColContainer .kanbanCol .taskCard {
+    background: #000 !important;
+    color: #fff;
+    border-color: #fff;
+}
+
+html.dark .kanbanColContainer .kanbanCol .taskCard .flex-container>div>label,
+html.dark .kanbanColContainer .kanbanCol .taskCard .flex-container>span {
+    color: #fff !important;
+}
+
+html.dark .uny-drawer-header {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    color: #fff !important;
+}
+
+html.dark .uny-drawer-content,
+html.dark .uny-drawer-footer,
+html.dark .form-control,
+html.dark .uny-collapse-content {
+    background: #000 !important;
+    color: #fff !important;
+}
+
+html.dark .uny-drawer-content .control-group .control-label,
+html.dark .side-form-label .flex-container>.flex-container {
+    color: #fff !important;
+}
+
+html.dark .uny-collapse-header .arrow-icon svg {
+    fill: #fff
+}
+
+html.dark .uny-collapse-label {
+    color: #fff;
+}
+
+html.dark .uny-collapse-header,
+html.dark .uny-collapse-panel:last-child .uny-collapse-header {
+    border-color: #fff !important;
+}
+
+html.dark .alert.alert-info {
+    background-color: #000;
+    color: #fff;
+    border-color: #fff;
+}
+
+html.dark .block-container{
+    border: 1px solid #fff !important;
+}
+html.dark .top-form-label .control-label .uny-tooltip{
+    color: #fff !important;
+}
+
+html.dark .block-header,
+html.dark .block-content {
+    background-color: #000;
+    color: #fff !important;
+    border-color: #fff !important;
+}
