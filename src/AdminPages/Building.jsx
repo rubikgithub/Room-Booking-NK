@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { $ajax_post } from "../Library";
+import { useTheme } from "@/components/theme-provider";
 
 // ======================= Main Component =======================
 
@@ -17,6 +18,7 @@ const Buildings = () => {
   const [openDrawer, setOpenDrawer] = useState(false);
   const [drawerMode, setDrawerMode] = useState("view");
   const [selectedBuilding, setSelectedBuilding] = useState(null);
+  const { theme } = useTheme();
 
   const getBuildings = async () => {
     $ajax_post("buildings", {}, (response) => {
@@ -44,63 +46,91 @@ const Buildings = () => {
       {
         field: "name",
         headerName: "Name",
-        render: (value, row) => (
+        renderCell: (params) => (
           <a
-            className="text-blue-600 cursor-pointer hover:underline"
-            onClick={() => handleOpenDrawer(row, "view")}
+            style={{
+              cursor: "pointer",
+              color: theme === "dark" ? "#f7b00f" : "blue",
+            }}
+            onClick={() => handleOpenDrawer(params?.row, "view")}
           >
-            {value}
+            {params?.value}
           </a>
         ),
       },
       { field: "location", headerName: "Location" },
       { field: "area", headerName: "Area (sq ft)" },
-      { field: "status", headerName: "Status" },
+      {
+        field: "status",
+        headerName: "Status",
+        renderCell: (params) => (
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-medium transition-colors duration-200 ${
+              params?.value?.toLowerCase() === "active"
+                ? "bg-green-100 text-green-800 hover:bg-green-200"
+                : "bg-red-100 text-red-800 hover:bg-red-200"
+            }`}
+          >
+            {params?.value?.charAt(0).toUpperCase() + params?.value?.slice(1)}
+          </span>
+        ),
+      },
     ],
-    []
+    [theme]
   );
 
   return (
-    <div className="p-4">
-      <div className="flex justify-end mb-4">
+    <div>
+      <div className="flex justify-end">
         <Button
-          className="ml-auto hover:bg-gray-100 border-1 border-gray-200"
           onClick={() => handleOpenDrawer(null, "create")}
+          className="mb-4 border border-border cursor-pointer hover:bg-accent hover:text-accent-foreground"
         >
           Add Building
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-lg shadow border border-gray-200">
-        <Table className="min-w-full divide-y divide-gray-200 bg-white">
-          <TableHeader className="bg-gray-100">
+      <div className="overflow-x-auto max-h-[80vh] rounded-2xl shadow-md border border-border">
+        <Table className="min-w-full divide-y divide-border bg-card text-sm">
+          <TableHeader className="bg-muted/50 backdrop-blur-sm sticky top-0 z-10">
             <TableRow>
               {columns.map((col) => (
                 <TableHead
                   key={col.field}
-                  className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                  className="px-4 py-3 text-left text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                 >
                   {col.headerName}
                 </TableHead>
               ))}
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-gray-100">
-            {data.length ? (
-              data.map((row, idx) => (
-                <TableRow key={idx} className="hover:bg-gray-50 transition">
-                  {columns.map(({ field, render }) => (
-                    <TableCell key={field} className="px-4 py-2 text-sm">
-                      {render ? render(row[field], row) : row[field]}
-                    </TableCell>
-                  ))}
+
+          <TableBody className="divide-y divide-border">
+            {data.length > 0 ? (
+              data.map((row, rowIndex) => (
+                <TableRow
+                  key={rowIndex}
+                  className="hover:bg-secondary/30 transition-colors duration-150 group"
+                >
+                  {columns.map((col) => {
+                    const value = row[col.field];
+                    const params = { value, row };
+                    return (
+                      <TableCell
+                        key={col.field}
+                        className="px-4 py-2 whitespace-nowrap text-foreground group-hover:text-primary transition-colors duration-200"
+                      >
+                        {col.renderCell ? col.renderCell(params) : value}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-center py-6 text-sm text-gray-500"
+                  className="px-4 py-10 text-center text-muted-foreground"
                 >
                   No data available.
                 </TableCell>
@@ -172,7 +202,6 @@ const BuildingDrawer = ({
         location: data.location || "",
         area: data.area || "",
         status: data.status || "",
-        // description: data.description || "",
       });
     } else if (isCreate) {
       setFormData({
@@ -180,7 +209,6 @@ const BuildingDrawer = ({
         location: "",
         area: "",
         status: "",
-        // description: "",
       });
     }
   }, [data, mode]);
@@ -201,7 +229,9 @@ const BuildingDrawer = ({
           isView ? (
             <div className="flex gap-2 justify-between">
               <div className="flex gap-2">
-                <Button type="primary" onClick={() => setDrawerMode("edit")}>Edit</Button>
+                <Button type="primary" onClick={() => setDrawerMode("edit")}>
+                  Edit
+                </Button>
                 <Button variant="destructive" onClick={handleDelete}>
                   Delete
                 </Button>
@@ -212,7 +242,9 @@ const BuildingDrawer = ({
             </div>
           ) : (
             <div className="flex gap-2 justify-between">
-              <Button type="primary" onClick={handleSubmit}>Save</Button>
+              <Button type="primary" onClick={handleSubmit}>
+                Save
+              </Button>
 
               <Button variant="outline" onClick={onClose}>
                 Cancel

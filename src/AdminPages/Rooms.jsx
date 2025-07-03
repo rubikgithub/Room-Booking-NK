@@ -20,12 +20,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { $ajax_post } from "../Library";
-function ToggleButton({ isChecked = false, setIsChecked = () => { }, onChange = () => { }, viewMode = false }) {
+import { useTheme } from "@/components/theme-provider";
 
-
+function ToggleButton({
+  isChecked = false,
+  setIsChecked = () => {},
+  onChange = () => {},
+  viewMode = false,
+}) {
   const handleToggle = () => {
     setIsChecked(!isChecked);
-    onChange(!isChecked)
+    onChange(!isChecked);
   };
 
   return (
@@ -40,22 +45,28 @@ function ToggleButton({ isChecked = false, setIsChecked = () => { }, onChange = 
       />
       <label
         htmlFor="checkbox"
-        className={`flex items-center p-1 rounded-lg w-12 h-6 cursor-pointer transition-all duration-300 ${isChecked ? 'bg-red-200' : 'bg-green-200'
-          }`}
+        className={`flex items-center p-1 rounded-lg w-12 h-6 cursor-pointer transition-all duration-300 ${
+          isChecked ? "bg-red-200" : "bg-green-200"
+        }`}
       >
         <span
-          className={`block w-[17px] h-[17px] rounded-full transition-transform duration-300 ${isChecked ? 'bg-red-600 translate-x-[23px]' : 'bg-green-600 translate-x-0'
-            }`}
+          className={`block w-[17px] h-[17px] rounded-full transition-transform duration-300 ${
+            isChecked
+              ? "bg-red-600 translate-x-[23px]"
+              : "bg-green-600 translate-x-0"
+          }`}
         ></span>
       </label>
     </div>
   );
 }
+
 const Rooms = () => {
   const [data, setData] = useState([]);
   const [selectedRow, setSelectedRow] = useState(null);
   const [openDrawer, setOpenDrawer] = useState(false);
   const [drawerMode, setDrawerMode] = useState("view");
+  const { theme } = useTheme();
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageModalOpen, setImageModalOpen] = useState(false);
@@ -85,7 +96,10 @@ const Rooms = () => {
       type: "text",
       renderCell: (params) => (
         <a
-          style={{ cursor: "pointer", color: "blue" }}
+          style={{
+            cursor: "pointer",
+            color: theme === "dark" ? "#f7b00f" : "blue",
+          }}
           onClick={() => handleOpenDrawer(params?.row, "view")}
         >
           {params?.value}
@@ -112,15 +126,23 @@ const Rooms = () => {
       headerName: "Area (sq ft)",
       type: "number",
     },
-    // {
-    //   field: "features",
-    //   headerName: "Additional Features",
-    //   type: "text",
-    // },
     {
       field: "status",
       headerName: "Status",
       type: "text",
+      renderCell: (params) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium transition-colors duration-200 ${
+            params?.value?.toLowerCase() === "active"
+              ? "bg-green-100 text-green-800 hover:bg-green-200"
+              : params?.value?.toLowerCase() === "inactive"
+              ? "bg-red-100 text-red-800 hover:bg-red-200"
+              : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+          }`}
+        >
+          {params?.value?.charAt(0).toUpperCase() + params?.value?.slice(1)}
+        </span>
+      ),
     },
     {
       field: "image",
@@ -182,37 +204,38 @@ const Rooms = () => {
     getRooms();
   }, []);
 
-
   return (
     <div>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end">
         <Button
-          className="ml-auto hover:bg-gray-100 border-1 border-gray-200"
           onClick={() => handleOpenDrawer(null, "create")}
+          className="mb-4 border border-border cursor-pointer hover:bg-accent hover:text-accent-foreground"
         >
           Add Room
         </Button>
       </div>
-      <div className="overflow-x-auto rounded-lg shadow border border-gray-200">
-        <Table className="min-w-full divide-y divide-gray-200 bg-white">
-          <TableHeader className="bg-gray-100">
+
+      <div className="overflow-x-auto max-h-[80vh] rounded-2xl shadow-md border border-border">
+        <Table className="min-w-full divide-y divide-border bg-card text-sm">
+          <TableHeader className="bg-muted/50 backdrop-blur-sm sticky top-0 z-10">
             <TableRow>
               {columns.map((col) => (
                 <TableHead
                   key={col.field}
-                  className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                  className="px-3 py-3 text-left text-xs font-semibold tracking-wider text-muted-foreground uppercase"
                 >
                   {col.headerName}
                 </TableHead>
               ))}
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-gray-100">
+
+          <TableBody className="divide-y divide-border">
             {data.length > 0 ? (
               data.map((row, rowIndex) => (
                 <TableRow
                   key={rowIndex}
-                  className="hover:bg-gray-50 transition-colors duration-150"
+                  className="hover:bg-secondary/30 transition-colors duration-150 group"
                 >
                   {columns.map((col) => {
                     const value = row[col.field];
@@ -220,7 +243,7 @@ const Rooms = () => {
                     return (
                       <TableCell
                         key={col.field}
-                        className="px-4 py-2 text-sm text-gray-800"
+                        className="px-3 py-3 whitespace-nowrap text-foreground group-hover:text-primary transition-colors duration-200"
                       >
                         {col.renderCell ? col.renderCell(params) : value}
                       </TableCell>
@@ -232,7 +255,7 @@ const Rooms = () => {
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="px-4 py-6 text-center text-sm text-gray-500"
+                  className="px-3 py-10 text-center text-muted-foreground"
                 >
                   No data available.
                 </TableCell>
@@ -268,10 +291,11 @@ const Rooms = () => {
                   key={index}
                   src={img?.path}
                   alt="thumb"
-                  className={`max-w-12 max-h-12  rounded cursor-pointer border ${index === currentImageIndex
-                    ? "border-blue-500"
-                    : "border-gray-300"
-                    }`}
+                  className={`max-w-12 max-h-12  rounded cursor-pointer border ${
+                    index === currentImageIndex
+                      ? "border-blue-500"
+                      : "border-gray-300"
+                  }`}
                   onClick={() => setCurrentImageIndex(index)}
                 />
               ))}
@@ -288,15 +312,10 @@ export default Rooms;
 const roomTypes = [
   { value: "Conference Room", label: "Conference Room" },
   { value: "Meeting Room", label: "Meeting Room" },
-  // { value: "Training Room", label: "Training Room" },
   { value: "ClassRoom", label: "ClassRoom" },
   { value: "Cabinet", label: "Cabinet" },
   { value: "Multi-use", label: "Multi - use" },
 ];
-
-
-
-
 
 const room_features = [
   { value: "chairs", label: "Chairs" },
@@ -318,6 +337,7 @@ const boardOptions = [
   { value: "Medium", label: "Medium" },
   { value: "Large", label: "Large" },
 ];
+
 const RoomsDrawer = ({
   open,
   mode,
@@ -344,6 +364,7 @@ const RoomsDrawer = ({
 
   const [buildings, setBuildings] = useState([]);
   const [isChecked, setIsChecked] = useState(false);
+
   const handleChange = (key, value) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
@@ -455,7 +476,7 @@ const RoomsDrawer = ({
         area: data.area || "",
         features: data.features || "",
         image: data.image || [],
-        room_features: data?.room_features || []
+        room_features: data?.room_features || [],
       });
     } else if (isCreate) {
       setFormData({
@@ -467,7 +488,7 @@ const RoomsDrawer = ({
         area: "",
         features: "",
         image: [],
-        room_features: []
+        room_features: [],
       });
     }
   }, [data, mode]);
@@ -477,11 +498,16 @@ const RoomsDrawer = ({
       let updatedRoomFeatures = { ...prevData.room_features };
 
       if (field === "room_features") {
-        // Handle multi-select for room_features
-        const selectedValues = value.map((item) => item.value || item); // Extract values from { value, label } or plain array
-        const featureKeys = ["chairs", "tables", "markers", "dusters", "projector", "board"];
+        const selectedValues = value.map((item) => item.value || item);
+        const featureKeys = [
+          "chairs",
+          "tables",
+          "markers",
+          "dusters",
+          "projector",
+          "board",
+        ];
 
-        // Update enabled status for all features
         featureKeys.forEach((key) => {
           const isEnabled = selectedValues.includes(key);
           updatedRoomFeatures[key] = {
@@ -489,27 +515,24 @@ const RoomsDrawer = ({
             enabled: isEnabled,
           };
 
-          // Remove quantities/counts/sizes when feature is disabled
           if (!isEnabled) {
             if (key === "chairs") delete updatedRoomFeatures[key].quantity;
             if (key === "tables") delete updatedRoomFeatures[key].count;
             if (key === "markers") delete updatedRoomFeatures[key].count;
-            // if (key === "dusters") delete updatedRoomFeatures[key].count;
             if (key === "board") delete updatedRoomFeatures[key].size;
           }
         });
       } else if (field === "chairsQuantity") {
-        console.log(value?.value, value)
         updatedRoomFeatures.chairs = {
           ...updatedRoomFeatures.chairs,
           enabled: true,
-          quantity: value.value || value, // Handle Select value
+          quantity: value.value || value,
         };
       } else if (field === "tablesCount") {
         updatedRoomFeatures.tables = {
           ...updatedRoomFeatures.tables,
           enabled: true,
-          count: value.value || value, // Handle Input value
+          count: value.value || value,
         };
       } else if (field === "markersCount") {
         updatedRoomFeatures.markers = {
@@ -521,13 +544,12 @@ const RoomsDrawer = ({
         updatedRoomFeatures.dusters = {
           ...updatedRoomFeatures.dusters,
           enabled: true,
-          // count: parseInt(value, 10) || 0,
         };
       } else if (field === "boardSize") {
         updatedRoomFeatures.board = {
           ...updatedRoomFeatures.board,
           enabled: true,
-          size: value.value || value, // Handle Select value
+          size: value.value || value,
         };
       }
 
@@ -538,7 +560,6 @@ const RoomsDrawer = ({
     });
   };
 
-
   return (
     <Drawer
       title={isCreate ? "Create Room" : isEdit ? "Edit Room" : "View Room"}
@@ -548,7 +569,9 @@ const RoomsDrawer = ({
         isView ? (
           <div className="flex justify-between gap-2">
             <div className="flex gap-2">
-              <Button type="primary" onClick={() => setDrawerMode("edit")}>Edit</Button>
+              <Button type="primary" onClick={() => setDrawerMode("edit")}>
+                Edit
+              </Button>
               <Button variant="destructive" onClick={handleDelete}>
                 Delete
               </Button>
@@ -559,7 +582,9 @@ const RoomsDrawer = ({
           </div>
         ) : (
           <div className="flex justify-between gap-2">
-            <Button type="primary" onClick={handleSubmit}>Save</Button>
+            <Button type="primary" onClick={handleSubmit}>
+              Save
+            </Button>
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
@@ -575,7 +600,6 @@ const RoomsDrawer = ({
       id="2"
     >
       <div className="p-4 space-y-4 overflow-y-auto">
-        {/* Fields */}
         <FormRow cols={1} fieldAlign="side">
           <FormControl viewMode={isView} label="Name" required>
             <Input
@@ -642,14 +666,6 @@ const RoomsDrawer = ({
               placeholder="Enter Description"
             />
           </FormControl>
-          {/* 
-          <FormControl viewMode={isView} label="Additional Features">
-            <Input
-              value={formData.features}
-              onChange={(e) => handleChange("features", e)}
-              placeholder="Enter Additional Features"
-            />
-          </FormControl> */}
 
           <FormControl viewMode={isView} label="Room Features" required>
             <Select
@@ -667,8 +683,16 @@ const RoomsDrawer = ({
               dataActions={true}
             />
           </FormControl>
-          <FormControl viewMode={isView} label="AC" required>  <ToggleButton viewMode={isView} isChecked={isChecked} setIsChecked={setIsChecked} onChange={(val) => handleChange("AC", val)} /> </FormControl>
-          {/* Conditional Chairs Quantity Dropdown */}
+
+          <FormControl viewMode={isView} label="AC" required>
+            <ToggleButton
+              viewMode={isView}
+              isChecked={isChecked}
+              setIsChecked={setIsChecked}
+              onChange={(val) => handleChange("AC", val)}
+            />
+          </FormControl>
+
           {formData?.room_features?.chairs?.enabled && (
             <FormControl viewMode={isView} label="Chairs Quantity" required>
               <Select
@@ -682,23 +706,15 @@ const RoomsDrawer = ({
             </FormControl>
           )}
 
-          {/* Conditional Tables Count Input */}
           {formData?.room_features?.tables?.enabled && (
             <FormControl viewMode={isView} label="Tables Count" required>
               <Select
                 disabled={isView}
                 selectOptions={[
-                  {
-                    value: "5-10", label: "5-10"
-                  },
-                  {
-                    value: "10-15", label: "10-15"
-                  },
-                  {
-                    value: "15-20", label: "15-20"
-                  },
+                  { value: "5-10", label: "5-10" },
+                  { value: "10-15", label: "10-15" },
+                  { value: "15-20", label: "15-20" },
                 ]}
-
                 value={formData.room_features.tables.count || ""}
                 defaultValue={formData.room_features.tables.count || ""}
                 onChange={(e) => handleChanges("tablesCount", e)}
@@ -707,46 +723,23 @@ const RoomsDrawer = ({
             </FormControl>
           )}
 
-          {/* Conditional Markers Count Input */}
           {formData?.room_features?.markers?.enabled && (
-
             <FormControl viewMode={isView} label="Markers Count" required>
               <Select
                 disabled={isView}
                 selectOptions={[
-                  {
-                    value: "2-5,", label: "2-5,"
-                  },
-                  {
-                    value: "5-10", label: "5-10"
-                  },
-                  {
-                    value: "10-15", label: "10-15"
-                  },
+                  { value: "2-5", label: "2-5" },
+                  { value: "5-10", label: "5-10" },
+                  { value: "10-15", label: "10-15" },
                 ]}
                 value={formData.room_features.markers.count || ""}
                 defaultValue={formData.room_features.markers.count || ""}
                 onChange={(e) => handleChanges("markersCount", e)}
                 customClass="custom-select"
               />
-
             </FormControl>
           )}
 
-          {/* Conditional Dusters Count Input */}
-          {/* {formData?.room_features?.dusters?.enabled && (
-            <FormControl viewMode={isView} label="Dusters Count" required>
-              <Input
-                type="number"
-                value={formData.room_features.dusters.count || ""}
-                onChange={(e) => handleChanges("dustersCount", e)}
-                placeholder="Enter number of dusters"
-                disabled={isView}
-              />
-            </FormControl>
-          )} */}
-
-          {/* Conditional Board Size Dropdown */}
           {formData?.room_features?.board?.enabled && (
             <FormControl viewMode={isView} label="Board Size" required>
               <Select
@@ -759,9 +752,7 @@ const RoomsDrawer = ({
               />
             </FormControl>
           )}
-          {/* <FormControl label="Images" viewMode={isView}>
-            
-          </FormControl> */}
+
           <span className="text-[#2b2065] font-semibold">Images</span>
           <div className="space-y-2 mt-2">
             {formData.image.length > 0 ? (

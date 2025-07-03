@@ -9,9 +9,16 @@ import {
 } from "@/components/ui/table";
 import { $ajax_post } from "../../Library";
 import { clerk } from "../../LoginRegister/clerk";
+import { useTheme } from "@/components/theme-provider";
 
 const MyBookings = () => {
   const [myBookings, setMyBookings] = useState([]);
+  const { theme } = useTheme();
+
+  const handleOpenDrawer = (row) => {
+    // Add your drawer opening logic here
+    console.log("Opening drawer for:", row);
+  };
 
   const columns = [
     {
@@ -20,7 +27,15 @@ const MyBookings = () => {
       type: "text",
       renderCell: (params) => {
         return (
-          <a style={{ cursor: "pointer", color: "blue" }} onClick={() => handleOpenDrawer(params?.row)}>{params?.value}</a>
+          <a
+            style={{
+              cursor: "pointer",
+              color: theme === "dark" ? "#f7b00f" : "blue",
+            }}
+            onClick={() => handleOpenDrawer(params?.row)}
+          >
+            {params?.value}
+          </a>
         );
       },
     },
@@ -45,44 +60,76 @@ const MyBookings = () => {
       headerName: "User Name",
       type: "text",
       renderCell: (params) => {
-        return <span>{params?.row?.user?.first_name} {params?.row?.user?.last_name}</span>;
+        return (
+          <span>
+            {params?.row?.user?.first_name} {params?.row?.user?.last_name}
+          </span>
+        );
       },
     },
     {
       field: "status",
       headerName: "Status",
       type: "text",
-      // renderCell: (params) => (
-      //   <span>{statusText[params.value] || params.value}</span>
-      // ),
+      renderCell: (params) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium transition-colors duration-200 ${
+            params?.value?.toLowerCase() === "confirmed" ||
+            params?.value?.toLowerCase() === "approved"
+              ? "bg-green-100 text-green-800 hover:bg-green-200"
+              : params?.value?.toLowerCase() === "cancelled" ||
+                params?.value?.toLowerCase() === "rejected"
+              ? "bg-red-100 text-red-800 hover:bg-red-200"
+              : params?.value?.toLowerCase() === "pending"
+              ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+              : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+          }`}
+        >
+          {params?.value?.charAt(0).toUpperCase() + params?.value?.slice(1)}
+        </span>
+      ),
     },
     {
       field: "date",
       headerName: "Booking Date",
       type: "date",
+      renderCell: (params) => {
+        const date = new Date(params?.value);
+        return <span>{date.toLocaleDateString()}</span>;
+      },
     },
     {
       field: "created_at",
       headerName: "Booking On",
       type: "date",
+      renderCell: (params) => {
+        const date = new Date(params?.value);
+        return <span>{date.toLocaleDateString()}</span>;
+      },
     },
     {
       field: "start_time",
       headerName: "Start Time",
       type: "text",
+      renderCell: (params) => (
+        <span className="font-mono text-sm">{params?.value}</span>
+      ),
     },
     {
       field: "end_time",
       headerName: "End Time",
       type: "text",
+      renderCell: (params) => (
+        <span className="font-mono text-sm">{params?.value}</span>
+      ),
     },
   ];
 
   const getMyBookings = () => {
-    console.log(clerk?.user?.id, 'clerk.user')
+    console.log(clerk?.user?.id, "clerk.user");
     if (!clerk?.user?.id) return;
     $ajax_post(`myBookings/${clerk?.user?.id}`, {}, function (response) {
-      console.log(response, 'mybookings');
+      console.log(response, "mybookings");
       setMyBookings(response || []);
     });
   };
@@ -94,55 +141,58 @@ const MyBookings = () => {
   return (
     <>
       <div>
-        <Table className="w-full mt-2 shadow-sm border border-gray-200 rounded-md p-2">
-          <TableHeader>
-            <TableRow>
-              {columns.map((col) => (
-                <TableHead
-                  key={col.field}
-                  className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
-                >
-                  {col.headerName}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody className="divide-y divide-gray-100">
-            {myBookings.length > 0 ? (
-              myBookings.map((row, rowIndex) => (
-                <TableRow
-                  key={rowIndex}
-                  className="hover:bg-gray-50 transition-colors duration-150"
-                >
-                  {columns.map((col) => {
-                    const value = row[col.field];
-                    const params = { value, row };
-                    return (
-                      <TableCell
-                        key={col.field}
-                        className="px-4 py-2 text-sm text-gray-800"
-                      >
-                        {col.renderCell ? col.renderCell(params) : value}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))
-            ) : (
+        <div className="overflow-x-auto max-h-[80vh] rounded-2xl shadow-md border border-border">
+          <Table className="min-w-full divide-y divide-border bg-card text-sm">
+            <TableHeader className="bg-muted/50 backdrop-blur-sm sticky top-0 z-10">
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="px-4 py-6 text-center text-sm text-gray-500"
-                >
-                  No data available.
-                </TableCell>
+                {columns.map((col) => (
+                  <TableHead
+                    key={col.field}
+                    className="px-3 py-2 text-left text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+                  >
+                    {col.headerName}
+                  </TableHead>
+                ))}
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
+            </TableHeader>
+
+            <TableBody className="divide-y divide-border">
+              {myBookings.length > 0 ? (
+                myBookings.map((row, rowIndex) => (
+                  <TableRow
+                    key={rowIndex}
+                    className="hover:bg-secondary/30 transition-colors duration-150 group"
+                  >
+                    {columns.map((col) => {
+                      const value = row[col.field];
+                      const params = { value, row };
+                      return (
+                        <TableCell
+                          key={col.field}
+                          className="px-2 py-2 whitespace-nowrap text-foreground group-hover:text-primary transition-colors duration-200"
+                        >
+                          {col.renderCell ? col.renderCell(params) : value}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="px-4 py-10 text-center text-muted-foreground"
+                  >
+                    No bookings found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default MyBookings
+export default MyBookings;
